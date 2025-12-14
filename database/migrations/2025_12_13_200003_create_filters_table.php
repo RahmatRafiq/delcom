@@ -18,7 +18,7 @@ return new class extends Migration
                 'username',     // Username pattern
                 'url',          // URL pattern
                 'emoji_spam',   // Too many emojis
-                'repeat_char'   // Repeated characters
+                'repeat_char',   // Repeated characters
             ]);
             $table->string('pattern', 500)->comment('The pattern to match');
             $table->enum('match_type', [
@@ -26,14 +26,14 @@ return new class extends Migration
                 'contains',
                 'starts_with',
                 'ends_with',
-                'regex'
+                'regex',
             ])->default('contains');
             $table->boolean('case_sensitive')->default(false);
             $table->enum('action', [
                 'delete',   // Delete the comment
                 'hide',     // Hide the comment (platform-specific)
                 'flag',     // Flag for manual review
-                'report'    // Report to platform
+                'report',    // Report to platform
             ])->default('delete');
             $table->integer('priority')->default(0)->comment('Higher priority filters are checked first');
             $table->unsignedInteger('hit_count')->default(0)->comment('Number of times this filter matched');

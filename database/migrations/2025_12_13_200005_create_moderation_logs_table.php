@@ -25,12 +25,12 @@ return new class extends Migration
                 'hidden',
                 'flagged',
                 'reported',
-                'failed'
+                'failed',
             ]);
             $table->enum('action_source', [
                 'background_job',   // Tier 1: API-based deletion
                 'extension',        // Tier 2: Extension-based deletion
-                'manual'            // User manually deleted via dashboard
+                'manual',            // User manually deleted via dashboard
             ]);
             $table->text('failure_reason')->nullable()->comment('Error message if action failed');
             $table->timestamp('processed_at');

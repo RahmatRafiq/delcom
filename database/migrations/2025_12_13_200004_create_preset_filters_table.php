@@ -17,7 +17,7 @@ return new class extends Migration
                 'hate_speech',
                 'scam',
                 'self_promotion',
-                'inappropriate'
+                'inappropriate',
             ]);
             $table->json('filters_data')->comment('JSON array of filter definitions');
             $table->boolean('is_active')->default(true);
