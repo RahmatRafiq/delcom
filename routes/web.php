@@ -93,6 +93,21 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('moderation-logs/stats', [\App\Http\Controllers\ModerationLogController::class, 'stats'])->name('moderation-logs.stats');
         Route::get('moderation-logs/export', [\App\Http\Controllers\ModerationLogController::class, 'export'])->name('moderation-logs.export');
 
+        // Connected Accounts
+        Route::get('connected-accounts', [\App\Http\Controllers\ConnectedAccountController::class, 'index'])->name('connected-accounts.index');
+        Route::put('connected-accounts/{id}', [\App\Http\Controllers\ConnectedAccountController::class, 'update'])->name('connected-accounts.update');
+        Route::delete('connected-accounts/{id}', [\App\Http\Controllers\ConnectedAccountController::class, 'destroy'])->name('connected-accounts.destroy');
+        Route::post('connected-accounts/{platformId}/connect', [\App\Http\Controllers\ConnectedAccountController::class, 'connect'])->name('connected-accounts.connect');
+
+        // Subscription Plans (placeholder - implement with Stripe later)
+        Route::get('subscription/plans', function () {
+            $plans = \App\Models\Plan::active()->orderBy('sort_order')->get();
+
+            return \Inertia\Inertia::render('Subscription/Plans', [
+                'plans' => $plans,
+            ]);
+        })->name('subscription.plans');
+
         Route::middleware('role:admin')->group(function () {
             Route::post('/menus/update-order', [\App\Http\Controllers\MenuController::class, 'updateOrder'])->name('menus.updateOrder');
             Route::get('menus/manage', [\App\Http\Controllers\MenuController::class, 'manage'])->name('menus.manage');
@@ -117,5 +132,5 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
 });
 
-require __DIR__ . '/settings.php';
-require __DIR__ . '/auth.php';
+require __DIR__.'/settings.php';
+require __DIR__.'/auth.php';
