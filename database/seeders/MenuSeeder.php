@@ -56,6 +56,13 @@ class MenuSeeder extends Seeder
             'parent_id' => $moderation->id,
             'order' => 4,
         ]);
+        Menu::create([
+            'title' => 'Connected Accounts',
+            'route' => 'connected-accounts.index',
+            'icon' => 'Link2',
+            'parent_id' => $moderation->id,
+            'order' => 5,
+        ]);
 
         $users = Menu::create([
             'title' => 'Users Management',
