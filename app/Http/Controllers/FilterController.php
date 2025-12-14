@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Helpers\DataTable;
-use App\Http\Controllers\Controller;
 use App\Models\Filter;
 use App\Models\FilterGroup;
 use App\Services\FilterMatcher;

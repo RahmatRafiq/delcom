@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Helpers\DataTable;
-use App\Http\Controllers\Controller;
 use App\Models\ModerationLog;
 use App\Models\Platform;
 use App\Models\UserPlatform;
