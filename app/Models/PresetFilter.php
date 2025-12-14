@@ -23,9 +23,13 @@ class PresetFilter extends Model
      * Categories available.
      */
     public const CATEGORY_SPAM = 'spam';
+
     public const CATEGORY_HATE_SPEECH = 'hate_speech';
+
     public const CATEGORY_SCAM = 'scam';
+
     public const CATEGORY_SELF_PROMOTION = 'self_promotion';
+
     public const CATEGORY_INAPPROPRIATE = 'inappropriate';
 
     /**

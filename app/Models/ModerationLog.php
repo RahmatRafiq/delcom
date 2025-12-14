@@ -32,16 +32,22 @@ class ModerationLog extends Model
      * Action taken values.
      */
     public const ACTION_DELETED = 'deleted';
+
     public const ACTION_HIDDEN = 'hidden';
+
     public const ACTION_FLAGGED = 'flagged';
+
     public const ACTION_REPORTED = 'reported';
+
     public const ACTION_FAILED = 'failed';
 
     /**
      * Action source values.
      */
     public const SOURCE_BACKGROUND_JOB = 'background_job';
+
     public const SOURCE_EXTENSION = 'extension';
+
     public const SOURCE_MANUAL = 'manual';
 
     /**

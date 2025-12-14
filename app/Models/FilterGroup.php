@@ -74,7 +74,7 @@ class FilterGroup extends Model
     {
         return $query->where(function ($q) use ($platform) {
             $q->whereNull('applies_to_platforms')
-              ->orWhereJsonContains('applies_to_platforms', $platform);
+                ->orWhereJsonContains('applies_to_platforms', $platform);
         });
     }
 }

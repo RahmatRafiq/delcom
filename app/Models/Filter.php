@@ -31,28 +31,41 @@ class Filter extends Model
      * Filter types available.
      */
     public const TYPE_KEYWORD = 'keyword';
+
     public const TYPE_PHRASE = 'phrase';
+
     public const TYPE_REGEX = 'regex';
+
     public const TYPE_USERNAME = 'username';
+
     public const TYPE_URL = 'url';
+
     public const TYPE_EMOJI_SPAM = 'emoji_spam';
+
     public const TYPE_REPEAT_CHAR = 'repeat_char';
 
     /**
      * Match types available.
      */
     public const MATCH_EXACT = 'exact';
+
     public const MATCH_CONTAINS = 'contains';
+
     public const MATCH_STARTS_WITH = 'starts_with';
+
     public const MATCH_ENDS_WITH = 'ends_with';
+
     public const MATCH_REGEX = 'regex';
 
     /**
      * Actions available.
      */
     public const ACTION_DELETE = 'delete';
+
     public const ACTION_HIDE = 'hide';
+
     public const ACTION_FLAG = 'flag';
+
     public const ACTION_REPORT = 'report';
 
     /**
