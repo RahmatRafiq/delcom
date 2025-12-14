@@ -28,6 +28,8 @@ return Application::configure(basePath: dirname(__DIR__))
             'role' => \Spatie\Permission\Middleware\RoleMiddleware::class,
             'permission' => \Spatie\Permission\Middleware\PermissionMiddleware::class,
             'role_or_permission' => \Spatie\Permission\Middleware\RoleOrPermissionMiddleware::class,
+            'subscription.limit' => \App\Http\Middleware\CheckSubscriptionLimit::class,
+            'platform.access' => \App\Http\Middleware\CheckPlatformAccess::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
