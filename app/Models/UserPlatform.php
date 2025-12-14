@@ -12,6 +12,7 @@ class UserPlatform extends Model
     protected $fillable = [
         'user_id',
         'platform_id',
+        'connection_method',
         'platform_user_id',
         'platform_username',
         'platform_channel_id',
@@ -115,11 +116,11 @@ class UserPlatform extends Model
      */
     public function needsScanning(): bool
     {
-        if (!$this->is_active || !$this->auto_moderation_enabled) {
+        if (! $this->is_active || ! $this->auto_moderation_enabled) {
             return false;
         }
 
-        if (!$this->last_scanned_at) {
+        if (! $this->last_scanned_at) {
             return true;
         }
 
@@ -153,7 +154,7 @@ class UserPlatform extends Model
             ->autoModeration()
             ->where(function ($q) {
                 $q->whereNull('last_scanned_at')
-                  ->orWhereRaw('last_scanned_at < NOW() - INTERVAL scan_frequency_minutes MINUTE');
+                    ->orWhereRaw('last_scanned_at < NOW() - INTERVAL scan_frequency_minutes MINUTE');
             });
     }
 }

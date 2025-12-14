@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Platform extends Model
@@ -27,6 +28,59 @@ class Platform extends Model
     public function userPlatforms(): HasMany
     {
         return $this->hasMany(UserPlatform::class);
+    }
+
+    /**
+     * Get the connection methods for this platform.
+     */
+    public function connectionMethods(): HasMany
+    {
+        return $this->hasMany(PlatformConnectionMethod::class);
+    }
+
+    /**
+     * Get the plans that can access this platform.
+     */
+    public function plans(): BelongsToMany
+    {
+        return $this->belongsToMany(Plan::class, 'plan_platforms')
+            ->withPivot('allowed_method')
+            ->withTimestamps();
+    }
+
+    /**
+     * Get available connection methods for this platform.
+     */
+    public function getAvailableConnectionMethods(): \Illuminate\Support\Collection
+    {
+        return $this->connectionMethods()->active()->pluck('connection_method');
+    }
+
+    /**
+     * Check if platform supports a specific connection method.
+     */
+    public function supportsMethod(string $method): bool
+    {
+        return $this->connectionMethods()
+            ->where('connection_method', $method)
+            ->where('is_active', true)
+            ->exists();
+    }
+
+    /**
+     * Check if platform supports API connection.
+     */
+    public function supportsApi(): bool
+    {
+        return $this->supportsMethod('api');
+    }
+
+    /**
+     * Check if platform supports extension connection.
+     */
+    public function supportsExtension(): bool
+    {
+        return $this->supportsMethod('extension');
     }
 
     /**
