@@ -79,3 +79,112 @@ export interface AppSetting {
     maintenance_mode: boolean;
     maintenance_message?: string;
 }
+
+// =====================================================
+// DelCom Types - Comment Moderation System
+// =====================================================
+
+export interface Platform {
+    id: number;
+    name: string;
+    display_name: string;
+    tier: 'api' | 'extension';
+    api_base_url: string | null;
+    oauth_authorize_url: string | null;
+    oauth_token_url: string | null;
+    is_active: boolean;
+    created_at: string;
+    updated_at: string;
+}
+
+export interface FilterGroup {
+    id: number;
+    user_id: number;
+    name: string;
+    description: string | null;
+    is_active: boolean;
+    applies_to_platforms: string[] | null;
+    created_at: string;
+    updated_at: string;
+    filters?: Filter[];
+    filters_count?: number;
+}
+
+export type FilterType = 'keyword' | 'phrase' | 'regex' | 'username' | 'url' | 'emoji_spam' | 'repeat_char';
+export type FilterMatchType = 'exact' | 'contains' | 'starts_with' | 'ends_with' | 'regex';
+export type FilterAction = 'delete' | 'hide' | 'flag' | 'report';
+
+export interface Filter {
+    id: number;
+    filter_group_id: number;
+    type: FilterType;
+    pattern: string;
+    match_type: FilterMatchType;
+    case_sensitive: boolean;
+    action: FilterAction;
+    priority: number;
+    hit_count: number;
+    is_active: boolean;
+    created_at: string;
+    updated_at: string;
+    filter_group?: FilterGroup;
+}
+
+export interface PresetFilter {
+    id: number;
+    name: string;
+    description: string | null;
+    category: string;
+    filters_data: PresetFilterData[];
+    is_active: boolean;
+    created_at: string;
+    updated_at: string;
+}
+
+export interface PresetFilterData {
+    type: FilterType;
+    pattern: string;
+    match_type: FilterMatchType;
+    action?: FilterAction;
+}
+
+export type ModerationActionTaken = 'deleted' | 'hidden' | 'flagged' | 'reported' | 'failed';
+export type ModerationActionSource = 'background_job' | 'extension' | 'manual';
+
+export interface ModerationLog {
+    id: number;
+    user_id: number;
+    user_platform_id: number;
+    platform_comment_id: string;
+    video_id: string | null;
+    post_id: string | null;
+    commenter_username: string | null;
+    commenter_id: string | null;
+    comment_text: string | null;
+    matched_filter_id: number | null;
+    matched_pattern: string | null;
+    action_taken: ModerationActionTaken;
+    action_source: ModerationActionSource;
+    failure_reason: string | null;
+    processed_at: string;
+    created_at: string;
+    updated_at: string;
+    user_platform?: UserPlatform;
+    matched_filter?: Filter;
+}
+
+export interface UserPlatform {
+    id: number;
+    user_id: number;
+    platform_id: number;
+    platform_user_id: string | null;
+    platform_username: string | null;
+    platform_channel_id: string | null;
+    is_active: boolean;
+    auto_moderation_enabled: boolean;
+    scan_frequency_minutes: number;
+    last_scanned_at: string | null;
+    created_at: string;
+    updated_at: string;
+    platform?: Platform;
+}
