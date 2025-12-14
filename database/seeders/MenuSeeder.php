@@ -21,10 +21,46 @@ class MenuSeeder extends Seeder
             'icon' => 'FileText',
             'order' => 2,
         ]);
+
+        // Comment Moderation
+        $moderation = Menu::create([
+            'title' => 'Comment Moderation',
+            'icon' => 'MessageSquareX',
+            'order' => 3,
+        ]);
+        Menu::create([
+            'title' => 'Filter Groups',
+            'route' => 'filter-groups.index',
+            'icon' => 'FolderKanban',
+            'parent_id' => $moderation->id,
+            'order' => 1,
+        ]);
+        Menu::create([
+            'title' => 'Filters',
+            'route' => 'filters.index',
+            'icon' => 'Filter',
+            'parent_id' => $moderation->id,
+            'order' => 2,
+        ]);
+        Menu::create([
+            'title' => 'Preset Filters',
+            'route' => 'preset-filters.index',
+            'icon' => 'Sparkles',
+            'parent_id' => $moderation->id,
+            'order' => 3,
+        ]);
+        Menu::create([
+            'title' => 'Moderation Logs',
+            'route' => 'moderation-logs.index',
+            'icon' => 'ScrollText',
+            'parent_id' => $moderation->id,
+            'order' => 4,
+        ]);
+
         $users = Menu::create([
             'title' => 'Users Management',
             'icon' => 'Users',
-            'order' => 3,
+            'order' => 4,
             'permission' => 'view-users',
         ]);
         Menu::create([
@@ -56,7 +92,7 @@ class MenuSeeder extends Seeder
             'route' => 'app-settings.index',
             'icon' => 'Settings',
             'permission' => 'manage-settings',
-            'order' => 4,
+            'order' => 5,
         ]);
 
         Menu::create([
@@ -64,14 +100,14 @@ class MenuSeeder extends Seeder
             'route' => 'menus.manage',
             'icon' => 'Settings',
             'permission' => 'manage-settings',
-            'order' => 5,
+            'order' => 6,
         ]);
         Menu::create([
             'title' => 'Activity Logs',
             'route' => 'activity-logs.index',
             'icon' => 'ListChecks',
             'permission' => 'view-activity-logs',
-            'order' => 6,
+            'order' => 7,
         ]);
 
     }

@@ -18,6 +18,13 @@ class DatabaseSeeder extends Seeder
             UserSeeder::class,
             AppSettingSeeder::class,
             MenuSeeder::class,
+            // DelCom seeders
+            PlatformSeeder::class,
+            PresetFilterSeeder::class,
+            UserPlatformSeeder::class,
+            FilterGroupSeeder::class,
+            FilterSeeder::class,
+            ModerationLogSeeder::class,
         ]);
     }
 }
