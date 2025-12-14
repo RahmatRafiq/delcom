@@ -26,7 +26,7 @@ class UserPlatformSeeder extends Seeder
         UserPlatform::updateOrCreate(
             ['user_id' => $admin->id, 'platform_id' => $youtube->id],
             [
-                'platform_user_id' => 'UCadmin' . fake()->regexify('[A-Za-z0-9]{18}'),
+                'platform_user_id' => 'UCadmin'.fake()->regexify('[A-Za-z0-9]{18}'),
                 'platform_username' => 'AdminChannel',
                 'is_active' => true,
                 'auto_moderation_enabled' => true,
@@ -48,7 +48,7 @@ class UserPlatformSeeder extends Seeder
             UserPlatform::updateOrCreate(
                 ['user_id' => $user->id, 'platform_id' => $youtube->id],
                 [
-                    'platform_user_id' => 'UCuser' . fake()->regexify('[A-Za-z0-9]{19}'),
+                    'platform_user_id' => 'UCuser'.fake()->regexify('[A-Za-z0-9]{19}'),
                     'platform_username' => 'UserChannel',
                     'is_active' => true,
                     'auto_moderation_enabled' => false,

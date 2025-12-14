@@ -20,6 +20,9 @@ class DatabaseSeeder extends Seeder
             MenuSeeder::class,
             // DelCom seeders
             PlatformSeeder::class,
+            PlanSeeder::class,
+            PlatformConnectionMethodSeeder::class,
+            PlanPlatformSeeder::class,
             PresetFilterSeeder::class,
             UserPlatformSeeder::class,
             FilterGroupSeeder::class,
