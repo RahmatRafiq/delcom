@@ -12,6 +12,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('user_id')->constrained()->onDelete('cascade');
             $table->foreignId('platform_id')->constrained()->onDelete('cascade');
+            $table->enum('connection_method', ['api', 'extension'])->default('api')->comment('Connection method: api or extension');
             $table->string('platform_user_id', 255)->nullable()->comment('User ID on the platform');
             $table->string('platform_username', 255)->nullable()->comment('Username on the platform');
             $table->string('platform_channel_id', 255)->nullable()->comment('Channel/Page ID if applicable');
