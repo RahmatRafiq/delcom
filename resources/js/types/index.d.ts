@@ -49,6 +49,10 @@ export interface User {
     roles: string[];
     permissions: string[];
     is_admin: boolean;
+    // Subscription fields
+    subscription?: Subscription;
+    current_plan?: Plan;
+    usage_stats?: UsageStats;
     [key: string]: unknown; // This allows for additional properties...
 }
 
@@ -84,6 +88,90 @@ export interface AppSetting {
 // DelCom Types - Comment Moderation System
 // =====================================================
 
+// Subscription & Plans
+export interface Plan {
+    id: number;
+    slug: 'free' | 'basic' | 'pro' | 'enterprise';
+    name: string;
+    description: string | null;
+    price_monthly: number;
+    price_yearly: number;
+    monthly_action_limit: number; // -1 = unlimited
+    max_platforms: number;
+    scan_frequency_minutes: number;
+    features: string[] | null;
+    is_active: boolean;
+    sort_order: number;
+    created_at: string;
+    updated_at: string;
+    platforms?: Platform[];
+}
+
+export type SubscriptionStatus = 'active' | 'canceled' | 'past_due' | 'trialing' | 'paused' | 'expired';
+export type BillingCycle = 'monthly' | 'yearly';
+
+export interface Subscription {
+    id: number;
+    user_id: number;
+    plan_id: number;
+    stripe_subscription_id: string | null;
+    stripe_customer_id: string | null;
+    billing_cycle: BillingCycle;
+    status: SubscriptionStatus;
+    trial_ends_at: string | null;
+    current_period_start: string | null;
+    current_period_end: string | null;
+    canceled_at: string | null;
+    ends_at: string | null;
+    created_at: string;
+    updated_at: string;
+    plan?: Plan;
+}
+
+export interface UsageStats {
+    used: number;
+    limit: number | 'unlimited';
+    remaining: number | 'unlimited';
+    percentage: number;
+    reset_date: string;
+}
+
+export interface UsageRecord {
+    id: number;
+    user_id: number;
+    year: number;
+    month: number;
+    actions_count: number;
+    last_action_at: string | null;
+    created_at: string;
+    updated_at: string;
+}
+
+export type ConnectionMethod = 'api' | 'extension';
+export type AllowedMethod = 'api' | 'extension' | 'any';
+
+export interface PlatformConnectionMethod {
+    id: number;
+    platform_id: number;
+    connection_method: ConnectionMethod;
+    requires_business_account: boolean;
+    requires_paid_api: boolean;
+    notes: string | null;
+    is_active: boolean;
+    created_at: string;
+    updated_at: string;
+    platform?: Platform;
+}
+
+export interface PlanPlatform {
+    plan_id: number;
+    platform_id: number;
+    allowed_method: AllowedMethod;
+    created_at: string;
+    updated_at: string;
+}
+
+// Platform
 export interface Platform {
     id: number;
     name: string;
@@ -95,6 +183,8 @@ export interface Platform {
     is_active: boolean;
     created_at: string;
     updated_at: string;
+    connection_methods?: PlatformConnectionMethod[];
+    plans?: Plan[];
 }
 
 export interface FilterGroup {
@@ -177,6 +267,7 @@ export interface UserPlatform {
     id: number;
     user_id: number;
     platform_id: number;
+    connection_method: ConnectionMethod;
     platform_user_id: string | null;
     platform_username: string | null;
     platform_channel_id: string | null;
