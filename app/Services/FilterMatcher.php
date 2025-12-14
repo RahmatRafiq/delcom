@@ -17,6 +17,7 @@ class FilterMatcher
                 return $filter;
             }
         }
+
         return null;
     }
 
@@ -92,6 +93,7 @@ class FilterMatcher
         if (str_contains($pattern, '*')) {
             // Convert wildcard pattern to regex
             $regexPattern = str_replace(['*', '.'], ['.*', '\\.'], $pattern);
+
             return (bool) @preg_match("/{$regexPattern}/i", $text);
         }
 
@@ -104,21 +106,22 @@ class FilterMatcher
     private function matchEmojiSpam(string $text, int $threshold): bool
     {
         // Match common emoji Unicode ranges
-        $emojiPattern = '/[\x{1F600}-\x{1F64F}]' .  // Emoticons
-                        '|[\x{1F300}-\x{1F5FF}]' .  // Misc Symbols and Pictographs
-                        '|[\x{1F680}-\x{1F6FF}]' .  // Transport and Map
-                        '|[\x{1F1E0}-\x{1F1FF}]' .  // Flags
-                        '|[\x{2600}-\x{26FF}]' .    // Misc symbols
-                        '|[\x{2700}-\x{27BF}]' .    // Dingbats
-                        '|[\x{FE00}-\x{FE0F}]' .    // Variation Selectors
-                        '|[\x{1F900}-\x{1F9FF}]' .  // Supplemental Symbols and Pictographs
-                        '|[\x{1FA00}-\x{1FA6F}]' .  // Chess Symbols
-                        '|[\x{1FA70}-\x{1FAFF}]' .  // Symbols and Pictographs Extended-A
-                        '|[\x{231A}-\x{231B}]' .    // Watch, Hourglass
-                        '|[\x{23E9}-\x{23F3}]' .    // Some media controls
+        $emojiPattern = '/[\x{1F600}-\x{1F64F}]'.  // Emoticons
+                        '|[\x{1F300}-\x{1F5FF}]'.  // Misc Symbols and Pictographs
+                        '|[\x{1F680}-\x{1F6FF}]'.  // Transport and Map
+                        '|[\x{1F1E0}-\x{1F1FF}]'.  // Flags
+                        '|[\x{2600}-\x{26FF}]'.    // Misc symbols
+                        '|[\x{2700}-\x{27BF}]'.    // Dingbats
+                        '|[\x{FE00}-\x{FE0F}]'.    // Variation Selectors
+                        '|[\x{1F900}-\x{1F9FF}]'.  // Supplemental Symbols and Pictographs
+                        '|[\x{1FA00}-\x{1FA6F}]'.  // Chess Symbols
+                        '|[\x{1FA70}-\x{1FAFF}]'.  // Symbols and Pictographs Extended-A
+                        '|[\x{231A}-\x{231B}]'.    // Watch, Hourglass
+                        '|[\x{23E9}-\x{23F3}]'.    // Some media controls
                         '|[\x{23F8}-\x{23FA}]/u';   // More media controls
 
         preg_match_all($emojiPattern, $text, $matches);
+
         return count($matches[0]) >= $threshold;
     }
 
@@ -128,7 +131,7 @@ class FilterMatcher
     private function matchRepeatChar(string $text, int $threshold): bool
     {
         // Match any character repeated N or more times consecutively
-        return (bool) preg_match('/(.)\1{' . ($threshold - 1) . ',}/u', $text);
+        return (bool) preg_match('/(.)\1{'.($threshold - 1).',}/u', $text);
     }
 
     /**

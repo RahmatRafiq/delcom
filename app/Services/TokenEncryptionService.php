@@ -24,6 +24,7 @@ class TokenEncryptionService
             return Crypt::decryptString($value);
         } catch (DecryptException $e) {
             report($e);
+
             return null;
         }
     }
