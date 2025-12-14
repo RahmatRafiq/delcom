@@ -31,6 +31,9 @@ class User extends Authenticatable implements HasMedia
         'password',
         'provider',
         'provider_id',
+        'subscription_tier',
+        'extension_auth_token',
+        'extension_token_expires_at',
     ];
 
     /**
@@ -41,6 +44,7 @@ class User extends Authenticatable implements HasMedia
     protected $hidden = [
         'password',
         'remember_token',
+        'extension_auth_token',
     ];
 
     /**
@@ -51,6 +55,7 @@ class User extends Authenticatable implements HasMedia
     protected $casts = [
         'email_verified_at' => 'datetime',
         'password' => 'hashed',
+        'extension_token_expires_at' => 'datetime',
     ];
 
     /**
@@ -59,6 +64,64 @@ class User extends Authenticatable implements HasMedia
     public function galleries(): HasMany
     {
         return $this->hasMany(Gallery::class);
+    }
+
+    /**
+     * Get the connected platforms for this user.
+     */
+    public function platforms(): HasMany
+    {
+        return $this->hasMany(UserPlatform::class);
+    }
+
+    /**
+     * Get the filter groups for this user.
+     */
+    public function filterGroups(): HasMany
+    {
+        return $this->hasMany(FilterGroup::class);
+    }
+
+    /**
+     * Get the moderation logs for this user.
+     */
+    public function moderationLogs(): HasMany
+    {
+        return $this->hasMany(ModerationLog::class);
+    }
+
+    /**
+     * Generate a new extension authentication token.
+     */
+    public function generateExtensionToken(): string
+    {
+        $token = \Illuminate\Support\Str::random(64);
+        $this->update([
+            'extension_auth_token' => hash('sha256', $token),
+            'extension_token_expires_at' => now()->addDays(30),
+        ]);
+        return $token;
+    }
+
+    /**
+     * Get active filters for a specific platform.
+     */
+    public function getActiveFilters(?string $platform = null): \Illuminate\Support\Collection
+    {
+        $query = Filter::whereHas('filterGroup', function ($q) use ($platform) {
+            $q->where('user_id', $this->id)
+              ->where('is_active', true);
+
+            if ($platform) {
+                $q->where(function ($subQ) use ($platform) {
+                    $subQ->whereNull('applies_to_platforms')
+                         ->orWhereJsonContains('applies_to_platforms', $platform);
+                });
+            }
+        })->where('is_active', true)
+          ->orderBy('priority', 'desc');
+
+        return $query->get();
     }
 
     /**
