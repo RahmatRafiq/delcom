@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\ModerationLog;
 use App\Models\User;
 use App\Models\UserPlatform;
+use App\Services\GoogleCloudQuotaService;
 use App\Services\YouTubeRateLimiter;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
@@ -19,10 +20,14 @@ class DashboardController extends Controller
         $data = [];
 
         if ($isAdmin) {
-            $rateLimiter = new YouTubeRateLimiter;
+            $quotaService = new GoogleCloudQuotaService;
+
+            $quota = $quotaService->isConfigured()
+                ? $quotaService->getYouTubeQuotaStats()
+                : (new YouTubeRateLimiter)->getQuotaStats();
 
             $data['adminStats'] = [
-                'quota' => $rateLimiter->getQuotaStats(),
+                'quota' => $quota,
                 'totalUsers' => User::count(),
                 'totalConnectedPlatforms' => UserPlatform::where('is_active', true)->count(),
                 'todayModerations' => ModerationLog::whereDate('processed_at', today())->count(),
