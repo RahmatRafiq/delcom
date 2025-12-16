@@ -14,6 +14,15 @@ Route::get('/', function () {
     ]);
 })->name('home');
 
+// Legal Pages (Public)
+Route::get('/privacy-policy', function () {
+    return Inertia::render('Legal/PrivacyPolicy');
+})->name('privacy-policy');
+
+Route::get('/terms-of-service', function () {
+    return Inertia::render('Legal/TermsOfService');
+})->name('terms-of-service');
+
 Route::get('auth/{provider}', [SocialAuthController::class, 'redirectToProvider'])->name('auth.redirect');
 Route::get('auth/{provider}/callback', [SocialAuthController::class, 'handleProviderCallback'])->name('auth.callback');
 

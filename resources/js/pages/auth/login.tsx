@@ -118,6 +118,16 @@ export default function Login({ status, canResetPassword }: LoginProps) {
                         Sign up
                     </TextLink>
                 </div>
+
+                <div className="text-muted-foreground text-center text-xs">
+                    <a href={route('privacy-policy')} className="hover:text-primary hover:underline">
+                        Privacy Policy
+                    </a>
+                    {' · '}
+                    <a href={route('terms-of-service')} className="hover:text-primary hover:underline">
+                        Terms of Service
+                    </a>
+                </div>
             </form>
 
             {status && <div className="mb-4 text-center text-sm font-medium text-green-600">{status}</div>}

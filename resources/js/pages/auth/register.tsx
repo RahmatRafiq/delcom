@@ -102,7 +102,18 @@ export default function Register() {
                         <InputError message={errors.password_confirmation} />
                     </div>
 
-                    <Button type="submit" className="mt-2 w-full" tabIndex={5} disabled={processing}>
+                    <p className="text-muted-foreground text-center text-xs">
+                        By creating an account, you agree to our{' '}
+                        <a href={route('terms-of-service')} className="text-primary underline hover:no-underline" target="_blank">
+                            Terms of Service
+                        </a>{' '}
+                        and{' '}
+                        <a href={route('privacy-policy')} className="text-primary underline hover:no-underline" target="_blank">
+                            Privacy Policy
+                        </a>
+                    </p>
+
+                    <Button type="submit" className="w-full" tabIndex={5} disabled={processing}>
                         {processing && <LoaderCircle className="h-4 w-4 animate-spin" />}
                         Create account
                     </Button>
