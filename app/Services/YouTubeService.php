@@ -17,9 +17,12 @@ class YouTubeService
 
     private ?string $accessToken = null;
 
+    private YouTubeRateLimiter $rateLimiter;
+
     public function __construct(UserPlatform $userPlatform)
     {
         $this->userPlatform = $userPlatform;
+        $this->rateLimiter = new YouTubeRateLimiter();
     }
 
     /**
@@ -28,6 +31,57 @@ class YouTubeService
     public static function for(UserPlatform $userPlatform): self
     {
         return new self($userPlatform);
+    }
+
+    /**
+     * Get the rate limiter instance.
+     */
+    public function getRateLimiter(): YouTubeRateLimiter
+    {
+        return $this->rateLimiter;
+    }
+
+    /**
+     * Check if we can make an API call (rate limit + quota check).
+     */
+    private function canMakeRequest(string $operation = 'list_videos'): bool
+    {
+        $user = $this->userPlatform->user;
+
+        // Check user burst rate limit
+        if ($this->rateLimiter->isRateLimited($user)) {
+            Log::warning('YouTubeService: User rate limited', [
+                'user_id' => $user->id,
+            ]);
+
+            return false;
+        }
+
+        // Check global quota
+        if (! $this->rateLimiter->hasQuotaFor($operation)) {
+            Log::warning('YouTubeService: Daily quota exhausted', [
+                'operation' => $operation,
+                'remaining' => $this->rateLimiter->getRemainingDailyQuota(),
+            ]);
+
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * Track API usage after a successful call.
+     */
+    private function trackUsage(string $operation, int $count = 1): void
+    {
+        $user = $this->userPlatform->user;
+
+        // Increment burst rate counter
+        $this->rateLimiter->incrementRequestCount($user);
+
+        // Track quota usage
+        $this->rateLimiter->trackQuotaUsage($operation, $count);
     }
 
     /**
@@ -121,10 +175,16 @@ class YouTubeService
      */
     public function getChannel(): ?array
     {
+        if (! $this->canMakeRequest('list_videos')) {
+            return null;
+        }
+
         $response = $this->client()->get(self::API_BASE.'/channels', [
             'part' => 'snippet,contentDetails,statistics',
             'id' => $this->userPlatform->platform_channel_id,
         ]);
+
+        $this->trackUsage('list_videos');
 
         if ($response->failed()) {
             Log::error('YouTubeService: Failed to get channel', [
@@ -142,7 +202,9 @@ class YouTubeService
      */
     public function getChannelVideos(int $maxResults = 50, ?string $pageToken = null): array
     {
-        $channelId = $this->userPlatform->platform_channel_id;
+        if (! $this->canMakeRequest('list_videos')) {
+            return ['items' => [], 'nextPageToken' => null, 'error' => 'rate_limited'];
+        }
 
         // First, get the uploads playlist ID
         $channel = $this->getChannel();
@@ -168,6 +230,8 @@ class YouTubeService
 
         $response = $this->client()->get(self::API_BASE.'/playlistItems', $params);
 
+        $this->trackUsage('list_videos');
+
         if ($response->failed()) {
             Log::error('YouTubeService: Failed to get channel videos', [
                 'error' => $response->json(),
@@ -190,6 +254,10 @@ class YouTubeService
      */
     public function getVideoComments(string $videoId, int $maxResults = 100, ?string $pageToken = null): array
     {
+        if (! $this->canMakeRequest('list_comments')) {
+            return ['items' => [], 'nextPageToken' => null, 'error' => 'rate_limited'];
+        }
+
         $params = [
             'part' => 'snippet',
             'videoId' => $videoId,
@@ -203,6 +271,8 @@ class YouTubeService
         }
 
         $response = $this->client()->get(self::API_BASE.'/commentThreads', $params);
+
+        $this->trackUsage('list_comments');
 
         if ($response->failed()) {
             $error = $response->json();
@@ -269,6 +339,10 @@ class YouTubeService
      */
     public function setModerationStatus(string $commentId, string $status = 'rejected'): array
     {
+        if (! $this->canMakeRequest('set_moderation_status')) {
+            return ['success' => false, 'error' => 'Rate limit exceeded or quota exhausted'];
+        }
+
         // Valid statuses: heldForReview, published, rejected
         // Note: 'rejected' effectively hides/removes the comment
         $this->ensureValidToken();
@@ -279,6 +353,8 @@ class YouTubeService
                 'id' => $commentId,
                 'moderationStatus' => $status,
             ]);
+
+        $this->trackUsage('set_moderation_status');
 
         if ($response->successful() || $response->status() === 204) {
             Log::info('YouTubeService: Comment moderation status set', [

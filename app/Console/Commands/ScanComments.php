@@ -6,6 +6,7 @@ use App\Jobs\ScanYouTubeCommentsJob;
 use App\Models\User;
 use App\Models\UserPlatform;
 use App\Services\FilterMatcher;
+use App\Services\YouTubeRateLimiter;
 use App\Services\YouTubeService;
 use Illuminate\Console\Command;
 
@@ -20,7 +21,8 @@ class ScanComments extends Command
         {--videos=10 : Maximum number of videos to scan}
         {--comments=100 : Maximum comments per video}
         {--dry-run : Show what would be done without executing actions}
-        {--sync : Run synchronously instead of queuing}';
+        {--sync : Run synchronously instead of queuing}
+        {--stats : Show API quota statistics}';
 
     /**
      * The console command description.
@@ -32,6 +34,11 @@ class ScanComments extends Command
      */
     public function handle(FilterMatcher $filterMatcher): int
     {
+        // Show stats if requested
+        if ($this->option('stats')) {
+            return $this->showQuotaStats();
+        }
+
         $userOption = $this->option('user');
         $platformName = $this->option('platform') ?? 'youtube';
         $maxVideos = (int) $this->option('videos');
@@ -200,5 +207,49 @@ class ScanComments extends Command
         $job->handle($filterMatcher);
 
         $this->info('  Scan completed.');
+    }
+
+    /**
+     * Show API quota statistics.
+     */
+    private function showQuotaStats(): int
+    {
+        $limiter = new YouTubeRateLimiter();
+        $stats = $limiter->getQuotaStats();
+
+        $this->info('YouTube API Quota Statistics');
+        $this->newLine();
+
+        $this->table(
+            ['Metric', 'Value'],
+            [
+                ['Daily Limit', number_format($stats['limit']).' units'],
+                ['Used Today', number_format($stats['used']).' units'],
+                ['Remaining', number_format($stats['remaining']).' units'],
+                ['Usage', $stats['percentage'].'%'],
+                ['Can Delete', $stats['can_delete_comments'].' comments'],
+                ['Resets At', $stats['reset_at']],
+            ]
+        );
+
+        $this->newLine();
+        $this->info('Quota Costs:');
+        $this->table(
+            ['Operation', 'Cost'],
+            [
+                ['List Videos', '1 unit'],
+                ['List Comments', '1 unit'],
+                ['Delete Comment', '50 units'],
+                ['Search', '100 units'],
+            ]
+        );
+
+        // Show warning if quota is low
+        if ($stats['percentage'] >= 80) {
+            $this->newLine();
+            $this->error('⚠️  Warning: Quota usage is above 80%!');
+        }
+
+        return Command::SUCCESS;
     }
 }
