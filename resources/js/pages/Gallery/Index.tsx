@@ -4,6 +4,7 @@ import HeadingSmall from '@/components/heading-small';
 import PageContainer from '@/components/page-container';
 import { useConfirmation } from '@/hooks/use-confirmation';
 import AppLayout from '@/layouts/app-layout';
+import type { FilemanagerFolder, GalleryProps } from '@/types';
 import { toast } from '@/utils/toast';
 import { Head, router, useForm, useRemember } from '@inertiajs/react';
 import React from 'react';
@@ -11,7 +12,7 @@ import GalleryGrid from './GalleryGrid';
 import GalleryHeader from './GalleryHeader';
 import GalleryPagination from './GalleryPagination';
 import GalleryUploadForm from './GalleryUploadForm';
-import Sidebar, { FilemanagerFolder } from './Sidebar';
+import Sidebar from './Sidebar';
 
 export default function Gallery({
     media,
@@ -34,10 +35,7 @@ export default function Gallery({
 
     const [currentFolderId, setCurrentFolderId] = React.useState<number | null>(selected_folder_id ?? null);
 
-    const [expanded, setExpanded] = useRemember<{ [id: number]: boolean }>(
-        {},
-        'gallery-folders-expanded'
-    );
+    const [expanded, setExpanded] = useRemember<{ [id: number]: boolean }>({}, 'gallery-folders-expanded');
 
     const createFolder = async (name: string, parent_id: number | null = null) => {
         await router.post(
@@ -51,7 +49,7 @@ export default function Gallery({
                 onError: () => {
                     toast.error('Failed to create folder');
                 },
-            }
+            },
         );
     };
 
@@ -67,7 +65,7 @@ export default function Gallery({
                 onError: () => {
                     toast.error('Failed to rename folder');
                 },
-            }
+            },
         );
     };
 
@@ -154,10 +152,10 @@ export default function Gallery({
             <Head title="File Manager" />
             <PageContainer maxWidth="7xl">
                 <Heading title="File Manager" description="Manage your application's files and folders." />
-                <div className="flex flex-row items-start gap-6 mt-4 min-h-[60vh]">
-                    <aside className="hidden md:block w-64 min-w-[240px] h-full">
-                        <div className="bg-card rounded shadow p-0 h-full flex flex-col">
-                            <div className="p-4 border-b">
+                <div className="mt-4 flex min-h-[60vh] flex-row items-start gap-6">
+                    <aside className="hidden h-full w-64 min-w-[240px] md:block">
+                        <div className="bg-card flex h-full flex-col rounded p-0 shadow">
+                            <div className="border-b p-4">
                                 <HeadingSmall title="Folders" description="Browse and organize your folders." />
                             </div>
                             <div className="flex-1 overflow-y-auto">
@@ -174,8 +172,8 @@ export default function Gallery({
                             </div>
                         </div>
                     </aside>
-                    <div className="flex-1 flex flex-col gap-4">
-                        <nav className="text-xs text-muted-foreground mb-2 flex items-center gap-1">
+                    <div className="flex flex-1 flex-col gap-4">
+                        <nav className="text-muted-foreground mb-2 flex items-center gap-1 text-xs">
                             {breadcrumbs.map((bc, i) => (
                                 <span key={i} className="flex items-center gap-1">
                                     {i > 0 && <span className="mx-1">/</span>}

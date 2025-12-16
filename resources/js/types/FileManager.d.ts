@@ -1,4 +1,4 @@
-interface MediaItem {
+export interface MediaItem {
     id: number;
     file_name: string;
     name: string;
@@ -7,18 +7,20 @@ interface MediaItem {
     collection_name: string;
 }
 
-interface PaginationLink {
+export interface PaginationLink {
     url: string | null;
     label: string;
     active: boolean;
 }
-interface FilemanagerFolder {
+
+export interface FilemanagerFolder {
     id: number;
     name: string;
     parent_id: number | null;
     path?: string | null;
 }
-interface GalleryProps {
+
+export interface GalleryProps {
     media: {
         data: MediaItem[];
         links?: PaginationLink[];

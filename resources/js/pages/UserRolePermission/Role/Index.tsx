@@ -28,10 +28,14 @@ export default function RoleIndexAccordion({ success }: { success?: string }) {
             render: (data: Role[keyof Role] | null) => {
                 const value = typeof data === 'string' ? data : '';
                 if (!value) return '';
-                return value.split(',').map((perm) =>
-                    `<span class='inline-flex items-center justify-center rounded-md border px-2 py-0.5 text-xs font-medium w-fit whitespace-nowrap shrink-0 bg-primary text-primary-foreground mr-1 mb-1'>${perm.trim()}</span>`
-                ).join('');
-            }
+                return value
+                    .split(',')
+                    .map(
+                        (perm) =>
+                            `<span class='inline-flex items-center justify-center rounded-md border px-2 py-0.5 text-xs font-medium w-fit whitespace-nowrap shrink-0 bg-primary text-primary-foreground mr-1 mb-1'>${perm.trim()}</span>`,
+                    )
+                    .join('');
+            },
         },
         {
             data: null,
@@ -65,30 +69,30 @@ export default function RoleIndexAccordion({ success }: { success?: string }) {
             <PageContainer maxWidth="full">
                 <Heading title="Role Management" />
                 <HeadingSmall title="Roles" description="Manage roles for your application" />
-                    <div className="mb-4 flex items-center justify-end">
-                        <Link href={route('roles.create')}>
-                            <Button>Create Role</Button>
-                        </Link>
-                    </div>
-                    {success && <div className="mb-2 rounded bg-green-100 p-2 text-green-800">{success}</div>}
-                    <DataTableWrapper<Role>
-                        ref={dtRef}
-                        ajax={{
-                            url: route('roles.json'),
-                            type: 'POST',
-                        }}
-                        columns={columns}
-                        onRowDelete={handleDelete}
-                        confirmationConfig={{
-                            delete: {
-                                title: 'Delete Role Confirmation',
-                                message: 'Are you sure you want to delete this role? This action cannot be undone.',
-                                confirmText: 'Delete',
-                                cancelText: 'Cancel',
-                                successMessage: 'Role deleted successfully',
-                            },
-                        }}
-                    />
+                <div className="mb-4 flex items-center justify-end">
+                    <Link href={route('roles.create')}>
+                        <Button>Create Role</Button>
+                    </Link>
+                </div>
+                {success && <div className="mb-2 rounded bg-green-100 p-2 text-green-800">{success}</div>}
+                <DataTableWrapper<Role>
+                    ref={dtRef}
+                    ajax={{
+                        url: route('roles.json'),
+                        type: 'POST',
+                    }}
+                    columns={columns}
+                    onRowDelete={handleDelete}
+                    confirmationConfig={{
+                        delete: {
+                            title: 'Delete Role Confirmation',
+                            message: 'Are you sure you want to delete this role? This action cannot be undone.',
+                            confirmText: 'Delete',
+                            cancelText: 'Cancel',
+                            successMessage: 'Role deleted successfully',
+                        },
+                    }}
+                />
             </PageContainer>
         </AppLayout>
     );

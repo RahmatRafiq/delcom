@@ -19,11 +19,8 @@ export function useMenus() {
     useEffect(() => {
         setLoading(true);
         let url = '/dashboard/menus/json';
-        if (
-            typeof window !== 'undefined' &&
-            typeof (window as unknown as { route?: unknown }).route === 'function'
-        ) {
-            url = ((window as unknown as { route: (name: string) => string }).route)('menus.json');
+        if (typeof window !== 'undefined' && typeof (window as unknown as { route?: unknown }).route === 'function') {
+            url = (window as unknown as { route: (name: string) => string }).route('menus.json');
         }
         fetch(url)
             .then((res) => {

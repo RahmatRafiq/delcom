@@ -1,26 +1,19 @@
 import Heading from '@/components/heading';
 import HeadingSmall from '@/components/heading-small';
 import PageContainer from '@/components/page-container';
+import CustomSelect from '@/components/select';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogFooter,
-    DialogHeader,
-    DialogTitle,
-} from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import CustomSelect from '@/components/select';
 import AppLayout from '@/layouts/app-layout';
 import { BreadcrumbItem, FilterGroup, PresetFilter } from '@/types';
 import { Head, Link, router } from '@inertiajs/react';
 import axios from 'axios';
+import { AlertTriangle, Download, Filter, Megaphone, Shield, Skull } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import { AlertTriangle, Download, Filter, Shield, Skull, Megaphone } from 'lucide-react';
 
 interface Props {
     presets: PresetFilter[];
@@ -80,9 +73,7 @@ export default function PresetFiltersIndex({ groupedPresets, categories }: Props
 
         setImporting(true);
 
-        const data = createNewGroup
-            ? { new_group_name: newGroupName }
-            : { filter_group_id: selectedGroupId };
+        const data = createNewGroup ? { new_group_name: newGroupName } : { filter_group_id: selectedGroupId };
 
         router.post(route('preset-filters.import', selectedPreset.id), data, {
             onSuccess: () => {
@@ -135,7 +126,7 @@ export default function PresetFiltersIndex({ groupedPresets, categories }: Props
                                     </CardHeader>
                                     <CardContent className="flex-1">
                                         <div className="text-muted-foreground text-sm">
-                                            <span className="font-medium text-foreground">{preset.filters_data.length}</span> filter patterns
+                                            <span className="text-foreground font-medium">{preset.filters_data.length}</span> filter patterns
                                         </div>
                                         <div className="mt-2 flex flex-wrap gap-1">
                                             {preset.filters_data.slice(0, 5).map((f, i) => (
@@ -224,10 +215,7 @@ export default function PresetFiltersIndex({ groupedPresets, categories }: Props
                             <Button variant="outline" onClick={() => setImportDialogOpen(false)}>
                                 Cancel
                             </Button>
-                            <Button
-                                onClick={handleImport}
-                                disabled={importing || (createNewGroup ? !newGroupName : !selectedGroupId)}
-                            >
+                            <Button onClick={handleImport} disabled={importing || (createNewGroup ? !newGroupName : !selectedGroupId)}>
                                 {importing ? 'Importing...' : 'Import Filters'}
                             </Button>
                         </DialogFooter>

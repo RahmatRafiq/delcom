@@ -1,18 +1,7 @@
-import React from 'react';
-import {
-    DndContext,
-    closestCenter,
-    PointerSensor,
-    useSensor,
-    useSensors,
-    DragEndEvent,
-} from '@dnd-kit/core';
-import {
-    SortableContext,
-    verticalListSortingStrategy,
-    useSortable,
-} from '@dnd-kit/sortable';
+import { closestCenter, DndContext, DragEndEvent, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
+import { SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
+import React from 'react';
 
 export interface TreeDnDProps<T> {
     items: T[];
@@ -23,15 +12,18 @@ export interface TreeDnDProps<T> {
     renderItem: (item: T) => React.ReactNode;
 }
 
-function DefaultTreeItem<T>({ item, children, getId, renderItem }: { item: T; children?: React.ReactNode; getId: (item: T) => string | number; renderItem: (item: T) => React.ReactNode }) {
-    const {
-        attributes,
-        listeners,
-        setNodeRef,
-        transform,
-        transition,
-        isDragging,
-    } = useSortable({ id: String(getId(item)) });
+function DefaultTreeItem<T>({
+    item,
+    children,
+    getId,
+    renderItem,
+}: {
+    item: T;
+    children?: React.ReactNode;
+    getId: (item: T) => string | number;
+    renderItem: (item: T) => React.ReactNode;
+}) {
+    const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: String(getId(item)) });
     const style = {
         transform: CSS.Transform.toString(transform),
         transition,
@@ -48,7 +40,19 @@ function DefaultTreeItem<T>({ item, children, getId, renderItem }: { item: T; ch
     );
 }
 
-function Tree<T>({ items, getId, getChildren, setChildren, renderItem }: { items: T[]; getId: (item: T) => string | number; getChildren: (item: T) => T[] | undefined; setChildren: (item: T, children: T[]) => T; renderItem: (item: T) => React.ReactNode }) {
+function Tree<T>({
+    items,
+    getId,
+    getChildren,
+    setChildren,
+    renderItem,
+}: {
+    items: T[];
+    getId: (item: T) => string | number;
+    getChildren: (item: T) => T[] | undefined;
+    setChildren: (item: T, children: T[]) => T;
+    renderItem: (item: T) => React.ReactNode;
+}) {
     if (!items || items.length === 0) {
         return <div className="text-muted-foreground text-sm">No data found.</div>;
     }
@@ -61,8 +65,14 @@ function Tree<T>({ items, getId, getChildren, setChildren, renderItem }: { items
                         <React.Fragment key={getId(item)}>
                             <DefaultTreeItem item={item} getId={getId} renderItem={renderItem}>
                                 {children && children.length > 0 && (
-                                    <div className="ml-6 mt-1">
-                                        <Tree items={children} getId={getId} getChildren={getChildren} setChildren={setChildren} renderItem={renderItem} />
+                                    <div className="mt-1 ml-6">
+                                        <Tree
+                                            items={children}
+                                            getId={getId}
+                                            getChildren={getChildren}
+                                            setChildren={setChildren}
+                                            renderItem={renderItem}
+                                        />
                                     </div>
                                 )}
                             </DefaultTreeItem>
@@ -74,7 +84,13 @@ function Tree<T>({ items, getId, getChildren, setChildren, renderItem }: { items
     );
 }
 
-function removeNode<T>(items: T[], id: string, getId: (item: T) => string | number, getChildren: (item: T) => T[] | undefined, setChildren: (item: T, children: T[]) => T): [T | null, T[]] {
+function removeNode<T>(
+    items: T[],
+    id: string,
+    getId: (item: T) => string | number,
+    getChildren: (item: T) => T[] | undefined,
+    setChildren: (item: T, children: T[]) => T,
+): [T | null, T[]] {
     let removed: T | null = null;
     function walk(list: T[]): T[] {
         return list.reduce<T[]>((acc, item) => {
@@ -96,13 +112,21 @@ function removeNode<T>(items: T[], id: string, getId: (item: T) => string | numb
     return [removed, newTree];
 }
 
-function insertNode<T>(items: T[], node: T, parentId: string | null, atIndex: number, getId: (item: T) => string | number, getChildren: (item: T) => T[] | undefined, setChildren: (item: T, children: T[]) => T): T[] {
+function insertNode<T>(
+    items: T[],
+    node: T,
+    parentId: string | null,
+    atIndex: number,
+    getId: (item: T) => string | number,
+    getChildren: (item: T) => T[] | undefined,
+    setChildren: (item: T, children: T[]) => T,
+): T[] {
     if (parentId == null) {
         const newTree = [...items];
         newTree.splice(atIndex, 0, node);
         return newTree;
     }
-    return items.map(item => {
+    return items.map((item) => {
         if (String(getId(item)) === parentId) {
             const children = Array.isArray(getChildren(item)) ? [...(getChildren(item) as T[])] : [];
             children.splice(atIndex, 0, node);
@@ -116,7 +140,13 @@ function insertNode<T>(items: T[], node: T, parentId: string | null, atIndex: nu
     });
 }
 
-function findParentAndIndex<T>(items: T[], id: string, getId: (item: T) => string | number, getChildren: (item: T) => T[] | undefined, parentId: string | null = null): { parentId: string | null, index: number } | null {
+function findParentAndIndex<T>(
+    items: T[],
+    id: string,
+    getId: (item: T) => string | number,
+    getChildren: (item: T) => T[] | undefined,
+    parentId: string | null = null,
+): { parentId: string | null; index: number } | null {
     for (let i = 0; i < items.length; i++) {
         if (String(getId(items[i])) === id) return { parentId, index: i };
         const children = getChildren(items[i]);
@@ -129,9 +159,7 @@ function findParentAndIndex<T>(items: T[], id: string, getId: (item: T) => strin
 }
 
 export default function TreeDnD<T>({ items, onChange, getId, getChildren, setChildren, renderItem }: TreeDnDProps<T>) {
-    const sensors = useSensors(
-        useSensor(PointerSensor, { activationConstraint: { distance: 5 } })
-    );
+    const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
 
     const handleDragEnd = (event: DragEndEvent) => {
         const { active, over } = event;
@@ -152,24 +180,12 @@ export default function TreeDnD<T>({ items, onChange, getId, getChildren, setChi
             targetIndex = to.index;
         }
 
-        const newTree = insertNode(
-            treeWithoutNode,
-            removedNode,
-            to.parentId,
-            targetIndex,
-            getId,
-            getChildren,
-            setChildren
-        );
+        const newTree = insertNode(treeWithoutNode, removedNode, to.parentId, targetIndex, getId, getChildren, setChildren);
         onChange(newTree);
     };
 
     return (
-        <DndContext
-            sensors={sensors}
-            collisionDetection={closestCenter}
-            onDragEnd={handleDragEnd}
-        >
+        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
             <Tree items={items} getId={getId} getChildren={getChildren} setChildren={setChildren} renderItem={renderItem} />
         </DndContext>
     );

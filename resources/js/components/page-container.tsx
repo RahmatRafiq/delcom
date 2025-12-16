@@ -7,7 +7,7 @@ type PageContainerProps = {
     className?: string;
     centered?: boolean;
     centerWidth?: 'sm' | 'md' | 'lg' | 'xl' | '2xl' | '4xl' | '7xl';
-}
+};
 
 const maxWidthClasses = {
     sm: 'max-w-sm mx-auto',

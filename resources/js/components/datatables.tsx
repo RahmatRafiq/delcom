@@ -1,13 +1,13 @@
+import ConfirmationDialog from '@/components/confirmation-dialog';
+import { useConfirmation } from '@/hooks/use-confirmation';
 import { AjaxConfig, DataTableOptions, DataTableWrapperProps, DataTableWrapperRef, ExpandConfig } from '@/types/DataTables';
+import { toast } from '@/utils/toast';
 import DT from 'datatables.net-dt';
 import 'datatables.net-dt/css/dataTables.dataTables.css';
+import DataTable, { DataTableRef } from 'datatables.net-react';
 import 'datatables.net-responsive-dt';
 import 'datatables.net-responsive-dt/css/responsive.dataTables.css';
-import DataTable, { DataTableRef } from 'datatables.net-react';
 import { forwardRef, useEffect, useImperativeHandle, useRef } from 'react';
-import { useConfirmation } from '@/hooks/use-confirmation';
-import ConfirmationDialog from '@/components/confirmation-dialog';
-import { toast } from '@/utils/toast';
 
 export type { AjaxConfig, DataTableOptions, DataTableWrapperProps, DataTableWrapperRef, ExpandConfig };
 
@@ -25,16 +25,16 @@ const DataTableWrapperInner = forwardRef<DataTableWrapperRef, DataTableWrapperPr
 
     const processedColumns = expand?.enabled
         ? [
-            {
-                data: null,
-                title: expand.columnTitle || '',
-                orderable: false,
-                searchable: false,
-                className: 'details-control',
-                render: (): string => `<span style="cursor: pointer;">${expand.expandIcon || '+'}</span>`,
-            },
-            ...columns,
-        ]
+              {
+                  data: null,
+                  title: expand.columnTitle || '',
+                  orderable: false,
+                  searchable: false,
+                  className: 'details-control',
+                  render: (): string => `<span style="cursor: pointer;">${expand.expandIcon || '+'}</span>`,
+              },
+              ...columns,
+          ]
         : columns; // Clean approach - no control column, click on row to expand
 
     useImperativeHandle(ref, () => ({
@@ -188,8 +188,8 @@ const DataTableWrapperInner = forwardRef<DataTableWrapperRef, DataTableWrapperPr
             ],
             details: {
                 type: 'inline',
-                target: 'tr'
-            }
+                target: 'tr',
+            },
         },
     };
 
@@ -219,11 +219,7 @@ const DataTableWrapperInner = forwardRef<DataTableWrapperRef, DataTableWrapperPr
                     </tr>
                 </thead>
             </DataTable>
-            <ConfirmationDialog
-                state={confirmationState}
-                onConfirm={handleConfirm}
-                onCancel={handleCancel}
-            />
+            <ConfirmationDialog state={confirmationState} onConfirm={handleConfirm} onCancel={handleCancel} />
         </>
     );
 });

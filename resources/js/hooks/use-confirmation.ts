@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef } from 'react';
+import { useCallback, useRef, useState } from 'react';
 
 export interface ConfirmationOptions {
     title?: string;
@@ -26,9 +26,7 @@ export function useConfirmation() {
     const onConfirmRef = useRef<(() => void) | null>(null);
     const onCancelRef = useRef<(() => void) | null>(null);
 
-    const openConfirmation = useCallback((
-        options: ConfirmationOptions & { onConfirm: () => void; onCancel?: () => void }
-    ) => {
+    const openConfirmation = useCallback((options: ConfirmationOptions & { onConfirm: () => void; onCancel?: () => void }) => {
         onConfirmRef.current = options.onConfirm;
         onCancelRef.current = options.onCancel || null;
 
@@ -44,7 +42,7 @@ export function useConfirmation() {
     }, []);
 
     const closeConfirmation = useCallback(() => {
-        setState(prev => ({ ...prev, isOpen: false }));
+        setState((prev) => ({ ...prev, isOpen: false }));
         onConfirmRef.current = null;
         onCancelRef.current = null;
     }, []);

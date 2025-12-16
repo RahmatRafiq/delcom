@@ -37,14 +37,10 @@ export default function ConfirmationDialog({ state, onConfirm, onCancel }: Confi
                         {state.icon || getDefaultIcon()}
                         <AlertDialogTitle>{state.title}</AlertDialogTitle>
                     </div>
-                    <AlertDialogDescription className="text-left">
-                        {state.message}
-                    </AlertDialogDescription>
+                    <AlertDialogDescription className="text-left">{state.message}</AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
-                    <AlertDialogCancel onClick={onCancel}>
-                        {state.cancelText}
-                    </AlertDialogCancel>
+                    <AlertDialogCancel onClick={onCancel}>{state.cancelText}</AlertDialogCancel>
                     <AlertDialogAction
                         onClick={onConfirm}
                         variant={getButtonVariant()}

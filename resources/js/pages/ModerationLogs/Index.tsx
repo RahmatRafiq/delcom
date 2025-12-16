@@ -100,10 +100,7 @@ export default function ModerationLogsIndex({ platforms, usageStats, currentPlan
         window.location.href = route('moderation-logs.export');
     };
 
-    const platformOptions = [
-        { value: '', label: 'All Platforms' },
-        ...platforms.map((p) => ({ value: String(p.id), label: p.display_name })),
-    ];
+    const platformOptions = [{ value: '', label: 'All Platforms' }, ...platforms.map((p) => ({ value: String(p.id), label: p.display_name }))];
 
     const actionOptions = [
         { value: '', label: 'All Actions' },
@@ -199,8 +196,8 @@ export default function ModerationLogsIndex({ platforms, usageStats, currentPlan
                     <CardHeader className="pb-3">
                         <div className="flex items-center justify-between">
                             <div className="flex items-center gap-3">
-                                <span className="rounded-lg bg-primary/10 p-2.5">
-                                    <Crown className="h-6 w-6 text-primary" />
+                                <span className="bg-primary/10 rounded-lg p-2.5">
+                                    <Crown className="text-primary h-6 w-6" />
                                 </span>
                                 <div>
                                     <CardTitle className="text-base">{currentPlan?.name || 'Free'} Plan</CardTitle>
@@ -220,10 +217,12 @@ export default function ModerationLogsIndex({ platforms, usageStats, currentPlan
                             {/* Daily Limit */}
                             <div className="space-y-2 rounded-lg border p-4">
                                 <div className="flex items-center gap-2">
-                                    <Calendar className="h-4 w-4 text-muted-foreground" />
+                                    <Calendar className="text-muted-foreground h-4 w-4" />
                                     <span className="text-sm font-medium">Daily Limit</span>
-                                    {usageStats.daily_limit !== 'unlimited' && usageStats.daily_remaining <= 0 && (
-                                        <Badge variant="destructive" className="ml-auto">Reached</Badge>
+                                    {typeof usageStats.daily_remaining === 'number' && usageStats.daily_remaining <= 0 && (
+                                        <Badge variant="destructive" className="ml-auto">
+                                            Reached
+                                        </Badge>
                                     )}
                                 </div>
                                 <div className="flex items-center justify-between text-sm">
@@ -243,18 +242,19 @@ export default function ModerationLogsIndex({ platforms, usageStats, currentPlan
                                 <p className="text-muted-foreground text-xs">
                                     {usageStats.daily_remaining === 'unlimited'
                                         ? 'Unlimited deletions today'
-                                        : `${usageStats.daily_remaining} deletions remaining today`
-                                    }
+                                        : `${usageStats.daily_remaining} deletions remaining today`}
                                 </p>
                             </div>
 
                             {/* Monthly Limit */}
                             <div className="space-y-2 rounded-lg border p-4">
                                 <div className="flex items-center gap-2">
-                                    <Clock className="h-4 w-4 text-muted-foreground" />
+                                    <Clock className="text-muted-foreground h-4 w-4" />
                                     <span className="text-sm font-medium">Monthly Limit</span>
-                                    {usageStats.limit !== 'unlimited' && usageStats.remaining <= 0 && (
-                                        <Badge variant="destructive" className="ml-auto">Reached</Badge>
+                                    {typeof usageStats.remaining === 'number' && usageStats.remaining <= 0 && (
+                                        <Badge variant="destructive" className="ml-auto">
+                                            Reached
+                                        </Badge>
                                     )}
                                 </div>
                                 <div className="flex items-center justify-between text-sm">
@@ -266,16 +266,12 @@ export default function ModerationLogsIndex({ platforms, usageStats, currentPlan
                                     </span>
                                 </div>
                                 {usageStats.limit !== 'unlimited' && (
-                                    <Progress
-                                        value={usageStats.percentage}
-                                        className={`h-2 ${usageStats.percentage >= 80 ? 'bg-red-100' : ''}`}
-                                    />
+                                    <Progress value={usageStats.percentage} className={`h-2 ${usageStats.percentage >= 80 ? 'bg-red-100' : ''}`} />
                                 )}
                                 <p className="text-muted-foreground text-xs">
                                     {usageStats.remaining === 'unlimited'
                                         ? 'Unlimited deletions this month'
-                                        : `${usageStats.remaining} remaining • Resets ${usageStats.reset_date}`
-                                    }
+                                        : `${usageStats.remaining} remaining • Resets ${usageStats.reset_date}`}
                                 </p>
                             </div>
                         </div>
@@ -342,19 +338,11 @@ export default function ModerationLogsIndex({ platforms, usageStats, currentPlan
                         </div>
                         <div className="space-y-2">
                             <Label>From Date</Label>
-                            <Input
-                                type="date"
-                                value={filters.date_from}
-                                onChange={(e) => handleFilterChange('date_from', e.target.value)}
-                            />
+                            <Input type="date" value={filters.date_from} onChange={(e) => handleFilterChange('date_from', e.target.value)} />
                         </div>
                         <div className="space-y-2">
                             <Label>To Date</Label>
-                            <Input
-                                type="date"
-                                value={filters.date_to}
-                                onChange={(e) => handleFilterChange('date_to', e.target.value)}
-                            />
+                            <Input type="date" value={filters.date_to} onChange={(e) => handleFilterChange('date_to', e.target.value)} />
                         </div>
                         <div className="flex items-end gap-2">
                             <Button onClick={applyFilters} className="flex-1">

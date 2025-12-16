@@ -53,30 +53,30 @@ export default function PermissionIndex({ success }: { success?: string }) {
             <PageContainer maxWidth="full">
                 <Heading title="Permission Management" />
                 <HeadingSmall title="Permissions" description="Manage permissions for your application" />
-                    <div className="mb-4 flex items-center justify-end">
-                        <Link href={route('permissions.create')}>
-                            <Button>Create Permission</Button>
-                        </Link>
-                    </div>
-                    {success && <div className="mb-2 rounded bg-green-100 p-2 text-green-800">{success}</div>}
-                    <DataTableWrapper<Permission>
-                        ref={dtRef}
-                        ajax={{
-                            url: route('permissions.json'),
-                            type: 'POST',
-                        }}
-                        columns={columns}
-                        onRowDelete={handleDelete}
-                        confirmationConfig={{
-                            delete: {
-                                title: 'Delete Permission Confirmation',
-                                message: 'Are you sure you want to delete this permission? This action cannot be undone.',
-                                confirmText: 'Delete',
-                                cancelText: 'Cancel',
-                                successMessage: 'Permission deleted successfully',
-                            },
-                        }}
-                    />
+                <div className="mb-4 flex items-center justify-end">
+                    <Link href={route('permissions.create')}>
+                        <Button>Create Permission</Button>
+                    </Link>
+                </div>
+                {success && <div className="mb-2 rounded bg-green-100 p-2 text-green-800">{success}</div>}
+                <DataTableWrapper<Permission>
+                    ref={dtRef}
+                    ajax={{
+                        url: route('permissions.json'),
+                        type: 'POST',
+                    }}
+                    columns={columns}
+                    onRowDelete={handleDelete}
+                    confirmationConfig={{
+                        delete: {
+                            title: 'Delete Permission Confirmation',
+                            message: 'Are you sure you want to delete this permission? This action cannot be undone.',
+                            confirmText: 'Delete',
+                            cancelText: 'Cancel',
+                            successMessage: 'Permission deleted successfully',
+                        },
+                    }}
+                />
             </PageContainer>
         </AppLayout>
     );

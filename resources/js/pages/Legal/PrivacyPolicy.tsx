@@ -23,9 +23,9 @@ export default function PrivacyPolicy() {
                             <section className="mb-8">
                                 <h2 className="mb-4 text-xl font-semibold text-gray-900 dark:text-white">1. Introduction</h2>
                                 <p className="mb-4 text-gray-600 dark:text-gray-300">
-                                    Delcom ("we", "our", or "us") is a comment moderation platform that helps content creators
-                                    automatically filter and manage comments on their social media channels. This Privacy Policy
-                                    explains how we collect, use, and protect your information when you use our service.
+                                    Delcom ("we", "our", or "us") is a comment moderation platform that helps content creators automatically filter
+                                    and manage comments on their social media channels. This Privacy Policy explains how we collect, use, and protect
+                                    your information when you use our service.
                                 </p>
                             </section>
 
@@ -64,11 +64,21 @@ export default function PrivacyPolicy() {
                             <section className="mb-8">
                                 <h2 className="mb-4 text-xl font-semibold text-gray-900 dark:text-white">3. How We Use Your Information</h2>
                                 <ul className="mb-4 list-disc space-y-1 pl-6 text-gray-600 dark:text-gray-300">
-                                    <li><strong>Provide the Service:</strong> Scan comments on your channels and apply your moderation filters</li>
-                                    <li><strong>Moderation Logs:</strong> Keep records of actions taken for your review</li>
-                                    <li><strong>Usage Tracking:</strong> Monitor your subscription usage limits</li>
-                                    <li><strong>Improve Service:</strong> Analyze usage patterns to improve our product</li>
-                                    <li><strong>Communication:</strong> Send service-related notifications</li>
+                                    <li>
+                                        <strong>Provide the Service:</strong> Scan comments on your channels and apply your moderation filters
+                                    </li>
+                                    <li>
+                                        <strong>Moderation Logs:</strong> Keep records of actions taken for your review
+                                    </li>
+                                    <li>
+                                        <strong>Usage Tracking:</strong> Monitor your subscription usage limits
+                                    </li>
+                                    <li>
+                                        <strong>Improve Service:</strong> Analyze usage patterns to improve our product
+                                    </li>
+                                    <li>
+                                        <strong>Communication:</strong> Send service-related notifications
+                                    </li>
                                 </ul>
                             </section>
 
@@ -97,12 +107,14 @@ export default function PrivacyPolicy() {
 
                             <section className="mb-8">
                                 <h2 className="mb-4 text-xl font-semibold text-gray-900 dark:text-white">6. Third-Party Services</h2>
-                                <p className="mb-4 text-gray-600 dark:text-gray-300">
-                                    We integrate with the following third-party services:
-                                </p>
+                                <p className="mb-4 text-gray-600 dark:text-gray-300">We integrate with the following third-party services:</p>
                                 <ul className="mb-4 list-disc space-y-1 pl-6 text-gray-600 dark:text-gray-300">
-                                    <li><strong>Google/YouTube API:</strong> To access and moderate comments on your YouTube channel</li>
-                                    <li><strong>Stripe:</strong> For payment processing (we do not store credit card information)</li>
+                                    <li>
+                                        <strong>Google/YouTube API:</strong> To access and moderate comments on your YouTube channel
+                                    </li>
+                                    <li>
+                                        <strong>Stripe:</strong> For payment processing (we do not store credit card information)
+                                    </li>
                                 </ul>
                                 <p className="mb-4 text-gray-600 dark:text-gray-300">
                                     Delcom's use and transfer of information received from Google APIs adheres to the{' '}
@@ -122,10 +134,18 @@ export default function PrivacyPolicy() {
                                 <h2 className="mb-4 text-xl font-semibold text-gray-900 dark:text-white">7. Your Rights</h2>
                                 <p className="mb-4 text-gray-600 dark:text-gray-300">You have the right to:</p>
                                 <ul className="mb-4 list-disc space-y-1 pl-6 text-gray-600 dark:text-gray-300">
-                                    <li><strong>Access:</strong> View all data we have about you</li>
-                                    <li><strong>Export:</strong> Download your moderation logs</li>
-                                    <li><strong>Delete:</strong> Request deletion of your account and all associated data</li>
-                                    <li><strong>Revoke Access:</strong> Disconnect platforms and revoke OAuth permissions at any time</li>
+                                    <li>
+                                        <strong>Access:</strong> View all data we have about you
+                                    </li>
+                                    <li>
+                                        <strong>Export:</strong> Download your moderation logs
+                                    </li>
+                                    <li>
+                                        <strong>Delete:</strong> Request deletion of your account and all associated data
+                                    </li>
+                                    <li>
+                                        <strong>Revoke Access:</strong> Disconnect platforms and revoke OAuth permissions at any time
+                                    </li>
                                 </ul>
                             </section>
 
@@ -142,9 +162,8 @@ export default function PrivacyPolicy() {
                             <section className="mb-8">
                                 <h2 className="mb-4 text-xl font-semibold text-gray-900 dark:text-white">9. Changes to This Policy</h2>
                                 <p className="mb-4 text-gray-600 dark:text-gray-300">
-                                    We may update this Privacy Policy from time to time. We will notify you of any significant
-                                    changes via email or through the app. Continued use of the service after changes constitutes
-                                    acceptance of the updated policy.
+                                    We may update this Privacy Policy from time to time. We will notify you of any significant changes via email or
+                                    through the app. Continued use of the service after changes constitutes acceptance of the updated policy.
                                 </p>
                             </section>
 

@@ -82,50 +82,50 @@ export default function UserIndex({ filter: initialFilter, success }: { filter: 
             <Head title="Users" />
             <PageContainer maxWidth="full">
                 <Heading title="User Management" />
-                    <HeadingSmall title="Users" description="Manage application users and their roles" />
-                    <div className="mb-4 flex items-center justify-end">
-                        <Link href={route('users.create')}>
-                            <Button>Create User</Button>
-                        </Link>
-                    </div>
+                <HeadingSmall title="Users" description="Manage application users and their roles" />
+                <div className="mb-4 flex items-center justify-end">
+                    <Link href={route('users.create')}>
+                        <Button>Create User</Button>
+                    </Link>
+                </div>
 
-                    <ToggleTabs tabs={['active', 'trashed', 'all']} active={filter} onChange={handleFilterChange} />
+                <ToggleTabs tabs={['active', 'trashed', 'all']} active={filter} onChange={handleFilterChange} />
 
-                    {success && <div className="mb-2 rounded bg-green-100 p-2 text-green-800">{success}</div>}
-                    <DataTableWrapper<User>
-                        ref={dtRef}
-                        ajax={{
-                            url: route('users.json') + '?filter=' + filter,
-                            type: 'POST',
-                        }}
-                        columns={columns}
-                        onRowDelete={handleDelete}
-                        onRowRestore={handleRestore}
-                        onRowForceDelete={handleForceDelete}
-                        confirmationConfig={{
-                            delete: {
-                                title: 'Delete User Confirmation',
-                                message: 'Are you sure you want to delete this user? The user will be moved to trash.',
-                                confirmText: 'Delete',
-                                cancelText: 'Cancel',
-                                successMessage: 'User deleted successfully',
-                            },
-                            restore: {
-                                title: 'Restore User Confirmation',
-                                message: 'Are you sure you want to restore this user from trash?',
-                                confirmText: 'Restore',
-                                cancelText: 'Cancel',
-                                successMessage: 'User restored successfully',
-                            },
-                            forceDelete: {
-                                title: 'Permanent Delete Confirmation',
-                                message: 'Are you sure you want to permanently delete this user? This action cannot be undone!',
-                                confirmText: 'Permanently Delete',
-                                cancelText: 'Cancel',
-                                successMessage: 'User permanently deleted successfully',
-                            },
-                        }}
-                    />
+                {success && <div className="mb-2 rounded bg-green-100 p-2 text-green-800">{success}</div>}
+                <DataTableWrapper<User>
+                    ref={dtRef}
+                    ajax={{
+                        url: route('users.json') + '?filter=' + filter,
+                        type: 'POST',
+                    }}
+                    columns={columns}
+                    onRowDelete={handleDelete}
+                    onRowRestore={handleRestore}
+                    onRowForceDelete={handleForceDelete}
+                    confirmationConfig={{
+                        delete: {
+                            title: 'Delete User Confirmation',
+                            message: 'Are you sure you want to delete this user? The user will be moved to trash.',
+                            confirmText: 'Delete',
+                            cancelText: 'Cancel',
+                            successMessage: 'User deleted successfully',
+                        },
+                        restore: {
+                            title: 'Restore User Confirmation',
+                            message: 'Are you sure you want to restore this user from trash?',
+                            confirmText: 'Restore',
+                            cancelText: 'Cancel',
+                            successMessage: 'User restored successfully',
+                        },
+                        forceDelete: {
+                            title: 'Permanent Delete Confirmation',
+                            message: 'Are you sure you want to permanently delete this user? This action cannot be undone!',
+                            confirmText: 'Permanently Delete',
+                            cancelText: 'Cancel',
+                            successMessage: 'User permanently deleted successfully',
+                        },
+                    }}
+                />
             </PageContainer>
         </AppLayout>
     );

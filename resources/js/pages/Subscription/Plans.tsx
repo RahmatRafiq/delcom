@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import AppLayout from '@/layouts/app-layout';
 import { BreadcrumbItem, Plan } from '@/types';
 import { Head } from '@inertiajs/react';
-import { Check, Crown, Zap, Building2, Sparkles } from 'lucide-react';
+import { Building2, Check, Crown, Sparkles, Zap } from 'lucide-react';
 
 interface Props {
     plans: Plan[];
@@ -36,11 +36,10 @@ export default function SubscriptionPlans({ plans }: Props) {
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Subscription Plans" />
             <PageContainer maxWidth="7xl">
-                <div className="text-center mb-10">
+                <div className="mb-10 text-center">
                     <Heading title="Choose Your Plan" />
-                    <p className="text-muted-foreground mt-2 max-w-2xl mx-auto">
-                        Select the plan that best fits your comment moderation needs.
-                        Upgrade anytime to unlock more platforms and actions.
+                    <p className="text-muted-foreground mx-auto mt-2 max-w-2xl">
+                        Select the plan that best fits your comment moderation needs. Upgrade anytime to unlock more platforms and actions.
                     </p>
                 </div>
 
@@ -50,9 +49,14 @@ export default function SubscriptionPlans({ plans }: Props) {
                     ))}
                 </div>
 
-                <div className="mt-12 text-center text-muted-foreground text-sm">
+                <div className="text-muted-foreground mt-12 text-center text-sm">
                     <p>All plans include 14-day free trial. No credit card required.</p>
-                    <p className="mt-1">Need custom solutions? <a href="#" className="underline">Contact us</a></p>
+                    <p className="mt-1">
+                        Need custom solutions?{' '}
+                        <a href="#" className="underline">
+                            Contact us
+                        </a>
+                    </p>
                 </div>
             </PageContainer>
         </AppLayout>
@@ -66,53 +70,33 @@ function PlanCard({ plan }: { plan: Plan }) {
 
     return (
         <Card className={`relative flex flex-col ${isPopular ? 'border-primary shadow-lg' : ''}`}>
-            {isPopular && (
-                <Badge className="absolute -top-3 left-1/2 -translate-x-1/2 bg-primary">
-                    Most Popular
-                </Badge>
-            )}
+            {isPopular && <Badge className="bg-primary absolute -top-3 left-1/2 -translate-x-1/2">Most Popular</Badge>}
 
-            <CardHeader className="text-center pb-2">
-                <div className={`mx-auto rounded-lg p-3 w-fit ${planColors[plan.slug]}`}>
-                    {planIcons[plan.slug]}
-                </div>
+            <CardHeader className="pb-2 text-center">
+                <div className={`mx-auto w-fit rounded-lg p-3 ${planColors[plan.slug]}`}>{planIcons[plan.slug]}</div>
                 <CardTitle className="mt-4">{plan.name}</CardTitle>
-                <CardDescription className="min-h-[40px]">
-                    {plan.description}
-                </CardDescription>
+                <CardDescription className="min-h-[40px]">{plan.description}</CardDescription>
             </CardHeader>
 
             <CardContent className="flex-1">
-                <div className="text-center mb-6">
-                    <span className="text-4xl font-bold">
-                        ${plan.price_monthly}
-                    </span>
+                <div className="mb-6 text-center">
+                    <span className="text-4xl font-bold">${plan.price_monthly}</span>
                     <span className="text-muted-foreground">/month</span>
                     {plan.price_yearly > 0 && (
-                        <p className="text-sm text-muted-foreground mt-1">
+                        <p className="text-muted-foreground mt-1 text-sm">
                             ${plan.price_yearly}/year (save ${(plan.price_monthly * 12 - plan.price_yearly).toFixed(0)})
                         </p>
                     )}
                 </div>
 
-                <div className="space-y-3 mb-6">
+                <div className="mb-6 space-y-3">
                     <div className="flex items-center gap-2 text-sm">
                         <Check className="h-4 w-4 text-green-600" />
-                        <span>
-                            {isUnlimited
-                                ? 'Unlimited actions/month'
-                                : `${plan.monthly_action_limit.toLocaleString()} actions/month`
-                            }
-                        </span>
+                        <span>{isUnlimited ? 'Unlimited actions/month' : `${plan.monthly_action_limit.toLocaleString()} actions/month`}</span>
                     </div>
                     <div className="flex items-center gap-2 text-sm">
                         <Check className="h-4 w-4 text-green-600" />
-                        <span>
-                            {plan.max_platforms === -1
-                                ? 'Unlimited platforms'
-                                : `Up to ${plan.max_platforms} platforms`
-                            }
-                        </span>
+                        <span>{plan.max_platforms === -1 ? 'Unlimited platforms' : `Up to ${plan.max_platforms} platforms`}</span>
                     </div>
                     {features.map((feature, idx) => (
                         <div key={idx} className="flex items-center gap-2 text-sm">
@@ -124,10 +108,7 @@ function PlanCard({ plan }: { plan: Plan }) {
             </CardContent>
 
             <CardFooter>
-                <Button
-                    className="w-full"
-                    variant={isPopular ? 'default' : 'outline'}
-                >
+                <Button className="w-full" variant={isPopular ? 'default' : 'outline'}>
                     {plan.slug === 'free' ? 'Current Plan' : 'Upgrade Now'}
                 </Button>
             </CardFooter>

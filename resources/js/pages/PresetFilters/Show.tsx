@@ -4,14 +4,7 @@ import PageContainer from '@/components/page-container';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import {
-    Table,
-    TableBody,
-    TableCell,
-    TableHead,
-    TableHeader,
-    TableRow,
-} from '@/components/ui/table';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import AppLayout from '@/layouts/app-layout';
 import { BreadcrumbItem, PresetFilter, PresetFilterData } from '@/types';
 import { Head, Link } from '@inertiajs/react';
@@ -74,7 +67,7 @@ export default function PresetFilterShow({ preset }: Props) {
                     <CardContent>
                         <div className="flex items-center gap-4">
                             <div className="text-muted-foreground">
-                                <span className="font-semibold text-foreground">{preset.filters_data.length}</span> filter patterns
+                                <span className="text-foreground font-semibold">{preset.filters_data.length}</span> filter patterns
                             </div>
                         </div>
                     </CardContent>
@@ -111,7 +104,9 @@ export default function PresetFilterShow({ preset }: Props) {
                                             </span>
                                         </TableCell>
                                         <TableCell>
-                                            <span className={`inline-flex items-center justify-center rounded-full px-2 py-0.5 text-xs font-medium ${actionConfig.class}`}>
+                                            <span
+                                                className={`inline-flex items-center justify-center rounded-full px-2 py-0.5 text-xs font-medium ${actionConfig.class}`}
+                                            >
                                                 {actionConfig.label}
                                             </span>
                                         </TableCell>

@@ -41,10 +41,7 @@ export default function FiltersIndex({ filterGroups, selectedGroupId }: Props) {
     const dtRef = useRef<DataTableWrapperRef>(null);
     const [currentGroupId, setCurrentGroupId] = useState<string | null>(selectedGroupId ?? null);
 
-    const groupOptions = [
-        { value: '', label: 'All Groups' },
-        ...filterGroups.map((g) => ({ value: String(g.id), label: g.name })),
-    ];
+    const groupOptions = [{ value: '', label: 'All Groups' }, ...filterGroups.map((g) => ({ value: String(g.id), label: g.name }))];
 
     useEffect(() => {
         if (dtRef.current) {

@@ -109,10 +109,7 @@ export default function FilterForm({ filter, filterGroups, selectedGroupId }: Pr
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title={isEdit ? 'Edit Filter' : 'Create Filter'} />
             <div className="mx-auto max-w-2xl px-4 py-6">
-                <HeadingSmall
-                    title={isEdit ? 'Edit Filter' : 'Create Filter'}
-                    description="Define a pattern to automatically moderate comments"
-                />
+                <HeadingSmall title={isEdit ? 'Edit Filter' : 'Create Filter'} description="Define a pattern to automatically moderate comments" />
                 <form onSubmit={handleSubmit} className="mt-6 space-y-6">
                     <div className="space-y-2">
                         <Label htmlFor="filter_group_id">Filter Group</Label>
@@ -144,9 +141,7 @@ export default function FilterForm({ filter, filterGroups, selectedGroupId }: Pr
                     </div>
 
                     <div className="space-y-2">
-                        <Label htmlFor="pattern">
-                            {isSpecialType ? 'Threshold (number)' : 'Pattern'}
-                        </Label>
+                        <Label htmlFor="pattern">{isSpecialType ? 'Threshold (number)' : 'Pattern'}</Label>
                         {isSpecialType ? (
                             <Input
                                 id="pattern"
@@ -155,7 +150,9 @@ export default function FilterForm({ filter, filterGroups, selectedGroupId }: Pr
                                 max="100"
                                 value={data.pattern}
                                 onChange={(e) => setData('pattern', e.target.value)}
-                                placeholder={data.type === 'emoji_spam' ? 'e.g., 10 (trigger when 10+ emojis)' : 'e.g., 5 (trigger when 5+ repeated chars)'}
+                                placeholder={
+                                    data.type === 'emoji_spam' ? 'e.g., 10 (trigger when 10+ emojis)' : 'e.g., 5 (trigger when 5+ repeated chars)'
+                                }
                                 required
                             />
                         ) : (
@@ -178,7 +175,9 @@ export default function FilterForm({ filter, filterGroups, selectedGroupId }: Pr
                                 id="match_type"
                                 options={matchTypeOptions}
                                 value={matchTypeOptions.find((o) => o.value === data.match_type)}
-                                onChange={(selected) => setData('match_type', ((selected as { value: string })?.value ?? 'contains') as FilterMatchType)}
+                                onChange={(selected) =>
+                                    setData('match_type', ((selected as { value: string })?.value ?? 'contains') as FilterMatchType)
+                                }
                                 formatOptionLabel={(option: { value: string; label: string; description?: string }) => (
                                     <div>
                                         <div className="font-medium">{option.label}</div>
@@ -235,11 +234,7 @@ export default function FilterForm({ filter, filterGroups, selectedGroupId }: Pr
                             </div>
                         )}
                         <div className="flex items-center space-x-2">
-                            <Checkbox
-                                id="is_active"
-                                checked={data.is_active}
-                                onCheckedChange={(checked) => setData('is_active', checked === true)}
-                            />
+                            <Checkbox id="is_active" checked={data.is_active} onCheckedChange={(checked) => setData('is_active', checked === true)} />
                             <Label htmlFor="is_active" className="cursor-pointer">
                                 Active
                             </Label>
@@ -266,7 +261,9 @@ export default function FilterForm({ filter, filterGroups, selectedGroupId }: Pr
                                 </Button>
                             </div>
                             {testResult !== null && (
-                                <div className={`mt-2 rounded p-2 text-sm ${testResult ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'}`}>
+                                <div
+                                    className={`mt-2 rounded p-2 text-sm ${testResult ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'}`}
+                                >
                                     {testResult ? 'Pattern matches the test text' : 'Pattern does not match the test text'}
                                 </div>
                             )}

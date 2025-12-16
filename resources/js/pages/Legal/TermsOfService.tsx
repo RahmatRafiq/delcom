@@ -23,18 +23,17 @@ export default function TermsOfService() {
                             <section className="mb-8">
                                 <h2 className="mb-4 text-xl font-semibold text-gray-900 dark:text-white">1. Acceptance of Terms</h2>
                                 <p className="mb-4 text-gray-600 dark:text-gray-300">
-                                    By accessing or using Delcom ("the Service"), you agree to be bound by these Terms of Service.
-                                    If you do not agree to these terms, please do not use the Service.
+                                    By accessing or using Delcom ("the Service"), you agree to be bound by these Terms of Service. If you do not agree
+                                    to these terms, please do not use the Service.
                                 </p>
                             </section>
 
                             <section className="mb-8">
                                 <h2 className="mb-4 text-xl font-semibold text-gray-900 dark:text-white">2. Description of Service</h2>
                                 <p className="mb-4 text-gray-600 dark:text-gray-300">
-                                    Delcom is an automated comment moderation platform that helps content creators filter and
-                                    manage comments on their social media channels, including but not limited to YouTube.
-                                    The Service uses filters and rules you define to automatically detect and take action on
-                                    unwanted comments such as spam, hate speech, and scams.
+                                    Delcom is an automated comment moderation platform that helps content creators filter and manage comments on their
+                                    social media channels, including but not limited to YouTube. The Service uses filters and rules you define to
+                                    automatically detect and take action on unwanted comments such as spam, hate speech, and scams.
                                 </p>
                             </section>
 
@@ -51,8 +50,8 @@ export default function TermsOfService() {
                             <section className="mb-8">
                                 <h2 className="mb-4 text-xl font-semibold text-gray-900 dark:text-white">4. Platform Authorization</h2>
                                 <p className="mb-4 text-gray-600 dark:text-gray-300">
-                                    To use the Service, you must authorize Delcom to access your social media accounts through OAuth.
-                                    By doing so, you:
+                                    To use the Service, you must authorize Delcom to access your social media accounts through OAuth. By doing so,
+                                    you:
                                 </p>
                                 <ul className="mb-4 list-disc space-y-1 pl-6 text-gray-600 dark:text-gray-300">
                                     <li>Grant Delcom permission to read comments on your channels</li>
@@ -112,17 +111,16 @@ export default function TermsOfService() {
                             <section className="mb-8">
                                 <h2 className="mb-4 text-xl font-semibold text-gray-900 dark:text-white">9. Disclaimer of Warranties</h2>
                                 <p className="mb-4 text-gray-600 dark:text-gray-300">
-                                    THE SERVICE IS PROVIDED "AS IS" AND "AS AVAILABLE" WITHOUT WARRANTIES OF ANY KIND,
-                                    EITHER EXPRESS OR IMPLIED. WE DO NOT WARRANT THAT THE SERVICE WILL BE UNINTERRUPTED,
-                                    ERROR-FREE, OR COMPLETELY SECURE.
+                                    THE SERVICE IS PROVIDED "AS IS" AND "AS AVAILABLE" WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED. WE
+                                    DO NOT WARRANT THAT THE SERVICE WILL BE UNINTERRUPTED, ERROR-FREE, OR COMPLETELY SECURE.
                                 </p>
                             </section>
 
                             <section className="mb-8">
                                 <h2 className="mb-4 text-xl font-semibold text-gray-900 dark:text-white">10. Limitation of Liability</h2>
                                 <p className="mb-4 text-gray-600 dark:text-gray-300">
-                                    TO THE MAXIMUM EXTENT PERMITTED BY LAW, DELCOM SHALL NOT BE LIABLE FOR ANY INDIRECT,
-                                    INCIDENTAL, SPECIAL, CONSEQUENTIAL, OR PUNITIVE DAMAGES, INCLUDING BUT NOT LIMITED TO:
+                                    TO THE MAXIMUM EXTENT PERMITTED BY LAW, DELCOM SHALL NOT BE LIABLE FOR ANY INDIRECT, INCIDENTAL, SPECIAL,
+                                    CONSEQUENTIAL, OR PUNITIVE DAMAGES, INCLUDING BUT NOT LIMITED TO:
                                 </p>
                                 <ul className="mb-4 list-disc space-y-1 pl-6 text-gray-600 dark:text-gray-300">
                                     <li>Loss of revenue or profits</li>
@@ -135,8 +133,8 @@ export default function TermsOfService() {
                             <section className="mb-8">
                                 <h2 className="mb-4 text-xl font-semibold text-gray-900 dark:text-white">11. Indemnification</h2>
                                 <p className="mb-4 text-gray-600 dark:text-gray-300">
-                                    You agree to indemnify and hold harmless Delcom from any claims, damages, or expenses
-                                    arising from your use of the Service or violation of these Terms.
+                                    You agree to indemnify and hold harmless Delcom from any claims, damages, or expenses arising from your use of the
+                                    Service or violation of these Terms.
                                 </p>
                             </section>
 
@@ -152,25 +150,22 @@ export default function TermsOfService() {
                             <section className="mb-8">
                                 <h2 className="mb-4 text-xl font-semibold text-gray-900 dark:text-white">13. Changes to Terms</h2>
                                 <p className="mb-4 text-gray-600 dark:text-gray-300">
-                                    We reserve the right to modify these Terms at any time. We will notify users of significant
-                                    changes via email or through the Service. Continued use after changes constitutes acceptance
-                                    of the new Terms.
+                                    We reserve the right to modify these Terms at any time. We will notify users of significant changes via email or
+                                    through the Service. Continued use after changes constitutes acceptance of the new Terms.
                                 </p>
                             </section>
 
                             <section className="mb-8">
                                 <h2 className="mb-4 text-xl font-semibold text-gray-900 dark:text-white">14. Governing Law</h2>
                                 <p className="mb-4 text-gray-600 dark:text-gray-300">
-                                    These Terms shall be governed by and construed in accordance with the laws of Indonesia,
-                                    without regard to its conflict of law provisions.
+                                    These Terms shall be governed by and construed in accordance with the laws of Indonesia, without regard to its
+                                    conflict of law provisions.
                                 </p>
                             </section>
 
                             <section className="mb-8">
                                 <h2 className="mb-4 text-xl font-semibold text-gray-900 dark:text-white">15. Contact</h2>
-                                <p className="mb-4 text-gray-600 dark:text-gray-300">
-                                    For questions about these Terms, contact us at:
-                                </p>
+                                <p className="mb-4 text-gray-600 dark:text-gray-300">For questions about these Terms, contact us at:</p>
                                 <ul className="mb-4 list-disc space-y-1 pl-6 text-gray-600 dark:text-gray-300">
                                     <li>Email: legal@delcom.app</li>
                                 </ul>

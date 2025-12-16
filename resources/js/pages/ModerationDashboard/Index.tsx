@@ -154,8 +154,8 @@ export default function ModerationDashboard({ quotaStats, platforms, todayStats,
                         <CardHeader className="pb-3">
                             <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-3">
-                                    <span className="rounded-lg bg-primary/10 p-2.5">
-                                        <Crown className="h-6 w-6 text-primary" />
+                                    <span className="bg-primary/10 rounded-lg p-2.5">
+                                        <Crown className="text-primary h-6 w-6" />
                                     </span>
                                     <div>
                                         <CardTitle className="text-base">{currentPlan?.name || 'Free'} Plan</CardTitle>
@@ -175,10 +175,12 @@ export default function ModerationDashboard({ quotaStats, platforms, todayStats,
                                 {/* Daily Limit */}
                                 <div className="space-y-2 rounded-lg border p-4">
                                     <div className="flex items-center gap-2">
-                                        <Calendar className="h-4 w-4 text-muted-foreground" />
+                                        <Calendar className="text-muted-foreground h-4 w-4" />
                                         <span className="text-sm font-medium">Daily Limit</span>
                                         {isDailyLimitReached && (
-                                            <Badge variant="destructive" className="ml-auto">Reached</Badge>
+                                            <Badge variant="destructive" className="ml-auto">
+                                                Reached
+                                            </Badge>
                                         )}
                                     </div>
                                     <div className="flex items-center justify-between text-sm">
@@ -198,18 +200,19 @@ export default function ModerationDashboard({ quotaStats, platforms, todayStats,
                                     <p className="text-muted-foreground text-xs">
                                         {usageStats.daily_remaining === 'unlimited'
                                             ? 'Unlimited deletions today'
-                                            : `${usageStats.daily_remaining} deletions remaining today`
-                                        }
+                                            : `${usageStats.daily_remaining} deletions remaining today`}
                                     </p>
                                 </div>
 
                                 {/* Monthly Limit */}
                                 <div className="space-y-2 rounded-lg border p-4">
                                     <div className="flex items-center gap-2">
-                                        <Clock className="h-4 w-4 text-muted-foreground" />
+                                        <Clock className="text-muted-foreground h-4 w-4" />
                                         <span className="text-sm font-medium">Monthly Limit</span>
                                         {isMonthlyLimitReached && (
-                                            <Badge variant="destructive" className="ml-auto">Reached</Badge>
+                                            <Badge variant="destructive" className="ml-auto">
+                                                Reached
+                                            </Badge>
                                         )}
                                     </div>
                                     <div className="flex items-center justify-between text-sm">
@@ -221,16 +224,12 @@ export default function ModerationDashboard({ quotaStats, platforms, todayStats,
                                         </span>
                                     </div>
                                     {usageStats.limit !== 'unlimited' && (
-                                        <Progress
-                                            value={usageStats.percentage}
-                                            className={usageStats.percentage >= 80 ? 'bg-red-100' : ''}
-                                        />
+                                        <Progress value={usageStats.percentage} className={usageStats.percentage >= 80 ? 'bg-red-100' : ''} />
                                     )}
                                     <p className="text-muted-foreground text-xs">
                                         {usageStats.remaining === 'unlimited'
                                             ? 'Unlimited deletions this month'
-                                            : `${usageStats.remaining} remaining • Resets ${usageStats.reset_date}`
-                                        }
+                                            : `${usageStats.remaining} remaining • Resets ${usageStats.reset_date}`}
                                     </p>
                                 </div>
                             </div>
@@ -244,8 +243,7 @@ export default function ModerationDashboard({ quotaStats, platforms, todayStats,
                             <AlertDescription>
                                 {isDailyLimitReached
                                     ? 'Daily action limit reached. Try again tomorrow or upgrade your plan.'
-                                    : 'Monthly action limit reached. Upgrade your plan to continue moderating.'
-                                }
+                                    : 'Monthly action limit reached. Upgrade your plan to continue moderating.'}
                             </AlertDescription>
                         </Alert>
                     )}
@@ -260,7 +258,9 @@ export default function ModerationDashboard({ quotaStats, platforms, todayStats,
                             <CardContent>
                                 <div className="space-y-2">
                                     <div className="flex items-center justify-between text-sm">
-                                        <span>{quotaStats.used.toLocaleString()} / {quotaStats.limit.toLocaleString()}</span>
+                                        <span>
+                                            {quotaStats.used.toLocaleString()} / {quotaStats.limit.toLocaleString()}
+                                        </span>
                                         <span className="text-muted-foreground">{quotaStats.percentage}%</span>
                                     </div>
                                     <Progress value={quotaStats.percentage} className={quotaStats.percentage >= 80 ? 'bg-red-100' : ''} />
@@ -356,7 +356,7 @@ export default function ModerationDashboard({ quotaStats, platforms, todayStats,
                                             </div>
                                             <div className="flex items-center space-x-4">
                                                 <div className="text-right text-sm">
-                                                    <div className="flex items-center text-muted-foreground">
+                                                    <div className="text-muted-foreground flex items-center">
                                                         <Clock className="mr-1 h-3 w-3" />
                                                         {platform.last_scanned_ago || 'Never scanned'}
                                                     </div>
@@ -366,11 +366,7 @@ export default function ModerationDashboard({ quotaStats, platforms, todayStats,
                                                         </Badge>
                                                     )}
                                                 </div>
-                                                <Button
-                                                    size="sm"
-                                                    onClick={() => handleScan(platform.id)}
-                                                    disabled={scanningPlatform === platform.id}
-                                                >
+                                                <Button size="sm" onClick={() => handleScan(platform.id)} disabled={scanningPlatform === platform.id}>
                                                     {scanningPlatform === platform.id ? (
                                                         <>
                                                             <RefreshCw className="mr-2 h-4 w-4 animate-spin" />

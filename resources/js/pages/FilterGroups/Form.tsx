@@ -88,10 +88,7 @@ export default function FilterGroupForm({ filterGroup, platforms }: Props) {
                             options={platformOptions}
                             value={platformOptions.filter((option) => data.applies_to_platforms?.includes(option.value))}
                             onChange={(newValue) =>
-                                setData(
-                                    'applies_to_platforms',
-                                    Array.isArray(newValue) ? newValue.map((option) => option.value) : [],
-                                )
+                                setData('applies_to_platforms', Array.isArray(newValue) ? newValue.map((option) => option.value) : [])
                             }
                             placeholder="Select platforms (optional)"
                         />
@@ -99,11 +96,7 @@ export default function FilterGroupForm({ filterGroup, platforms }: Props) {
                     </div>
 
                     <div className="flex items-center space-x-2">
-                        <Checkbox
-                            id="is_active"
-                            checked={data.is_active}
-                            onCheckedChange={(checked) => setData('is_active', checked === true)}
-                        />
+                        <Checkbox id="is_active" checked={data.is_active} onCheckedChange={(checked) => setData('is_active', checked === true)} />
                         <Label htmlFor="is_active" className="cursor-pointer">
                             Active
                         </Label>
