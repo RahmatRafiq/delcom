@@ -59,4 +59,13 @@ class UsageRecord extends Model
             ->where('month', $month)
             ->value('actions_count') ?? 0;
     }
+
+    /**
+     * Record a moderation action for a user.
+     * Alias for incrementForUser with optional action type logging.
+     */
+    public static function recordAction(int $userId, string $actionType = 'moderation'): self
+    {
+        return self::incrementForUser($userId);
+    }
 }
