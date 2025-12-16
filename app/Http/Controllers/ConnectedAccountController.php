@@ -19,7 +19,6 @@ class ConnectedAccountController extends Controller
     public function index()
     {
         $user = Auth::user();
-        $rateLimiter = new YouTubeRateLimiter;
 
         $platforms = Platform::active()->with('connectionMethods')->get();
         $userPlatforms = UserPlatform::where('user_id', $user->id)
@@ -91,8 +90,7 @@ class ConnectedAccountController extends Controller
         $currentPlan = $user->getCurrentPlan();
         $usageStats = $user->getUsageStats();
 
-        // Get API quota stats
-        $quotaStats = $rateLimiter->getQuotaStats();
+        $quotaStats = $user->hasRole('admin') ? (new YouTubeRateLimiter)->getQuotaStats() : null;
 
         return Inertia::render('ConnectedAccounts/Index', [
             'platforms' => $platformsWithStatus,

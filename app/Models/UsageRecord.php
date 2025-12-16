@@ -46,23 +46,22 @@ class UsageRecord extends Model
     {
         $now = now();
 
-        return self::where('user_id', $userId)
-            ->where('year', $now->year)
-            ->where('month', $now->month)
-            ->value('actions_count') ?? 0;
+        return ModerationLog::where('user_id', $userId)
+            ->whereYear('processed_at', $now->year)
+            ->whereMonth('processed_at', $now->month)
+            ->whereIn('action_taken', ['deleted', 'hidden', 'reported'])
+            ->count();
     }
 
     public static function getMonthlyUsage(int $userId, int $year, int $month): int
     {
-        return self::where('user_id', $userId)
-            ->where('year', $year)
-            ->where('month', $month)
-            ->value('actions_count') ?? 0;
+        return ModerationLog::where('user_id', $userId)
+            ->whereYear('processed_at', $year)
+            ->whereMonth('processed_at', $month)
+            ->whereIn('action_taken', ['deleted', 'hidden', 'reported'])
+            ->count();
     }
 
-    /**
-     * Get today's usage count from ModerationLog (successful actions only).
-     */
     public static function getTodayUsage(int $userId): int
     {
         return ModerationLog::where('user_id', $userId)

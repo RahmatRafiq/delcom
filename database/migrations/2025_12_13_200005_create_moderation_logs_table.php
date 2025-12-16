@@ -39,6 +39,7 @@ return new class extends Migration
             $table->index(['user_id', 'processed_at'], 'idx_user_date');
             $table->index(['user_platform_id', 'processed_at'], 'idx_platform_date');
             $table->index('action_taken', 'idx_action');
+            $table->index('platform_comment_id', 'idx_platform_comment');
         });
     }
 

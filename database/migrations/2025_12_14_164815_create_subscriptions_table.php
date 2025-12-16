@@ -17,7 +17,7 @@ return new class extends Migration
             $table->foreignId('plan_id')->constrained()->onDelete('restrict');
             $table->string('stripe_subscription_id')->nullable()->unique();
             $table->string('stripe_customer_id')->nullable();
-            $table->enum('billing_cycle', ['monthly', 'yearly'])->default('monthly');
+            $table->enum('billing_cycle', ['free', 'monthly', 'yearly'])->default('monthly');
             $table->enum('status', ['active', 'canceled', 'past_due', 'trialing', 'paused', 'expired'])->default('active');
             $table->timestamp('trial_ends_at')->nullable();
             $table->timestamp('current_period_start')->nullable();

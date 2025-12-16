@@ -19,6 +19,8 @@ class YouTubeService
 
     private YouTubeRateLimiter $rateLimiter;
 
+    private ?array $cachedChannel = null;
+
     public function __construct(UserPlatform $userPlatform)
     {
         $this->userPlatform = $userPlatform;
@@ -170,11 +172,12 @@ class YouTubeService
         }
     }
 
-    /**
-     * Get channel information.
-     */
     public function getChannel(): ?array
     {
+        if ($this->cachedChannel !== null) {
+            return $this->cachedChannel;
+        }
+
         if (! $this->canMakeRequest('list_videos')) {
             return null;
         }
@@ -194,7 +197,9 @@ class YouTubeService
             return null;
         }
 
-        return $response->json()['items'][0] ?? null;
+        $this->cachedChannel = $response->json()['items'][0] ?? null;
+
+        return $this->cachedChannel;
     }
 
     /**
@@ -379,14 +384,17 @@ class YouTubeService
         ];
     }
 
-    /**
-     * Ban a user from commenting on the channel.
-     */
     public function banUser(string $channelIdToBan): array
     {
+        if (! $this->canMakeRequest('set_moderation_status')) {
+            return ['success' => false, 'error' => 'Rate limit exceeded or quota exhausted'];
+        }
+
         $response = $this->client()->post(self::API_BASE.'/comments/markAsSpam', [
             'id' => $channelIdToBan,
         ]);
+
+        $this->trackUsage('set_moderation_status');
 
         if ($response->successful()) {
             return ['success' => true];
@@ -398,17 +406,20 @@ class YouTubeService
         ];
     }
 
-    /**
-     * Get comment replies.
-     */
     public function getCommentReplies(string $parentId, int $maxResults = 100): array
     {
+        if (! $this->canMakeRequest('list_comments')) {
+            return ['items' => [], 'error' => 'rate_limited'];
+        }
+
         $response = $this->client()->get(self::API_BASE.'/comments', [
             'part' => 'snippet',
             'parentId' => $parentId,
             'maxResults' => min($maxResults, 100),
             'textFormat' => 'plainText',
         ]);
+
+        $this->trackUsage('list_comments');
 
         if ($response->failed()) {
             return ['items' => []];

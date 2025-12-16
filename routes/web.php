@@ -28,9 +28,9 @@ Route::get('auth/{provider}/callback', [SocialAuthController::class, 'handleProv
 
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::prefix('dashboard')->group(function () {
-        Route::get('/', function () {
-            return Inertia::render('dashboard');
-        })->middleware('permission:view-dashboard')->name('dashboard');
+        Route::get('/', [\App\Http\Controllers\DashboardController::class, 'index'])
+            ->middleware('permission:view-dashboard')
+            ->name('dashboard');
 
         Route::get('/activity-logs', [ActivityLogController::class, 'index'])->name('activity-logs.index');
 

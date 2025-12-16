@@ -13,6 +13,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 class ScanYouTubeCommentsJob implements ShouldQueue
@@ -165,7 +166,6 @@ class ScanYouTubeCommentsJob implements ShouldQueue
                     'action' => $matchedFilter->action,
                 ]);
 
-                // Execute action based on filter setting
                 $result = $this->executeAction(
                     $youtube,
                     $comment,
@@ -173,36 +173,33 @@ class ScanYouTubeCommentsJob implements ShouldQueue
                     $videoId
                 );
 
-                if ($result['success']) {
-                    $totalActioned++;
+                DB::transaction(function () use ($user, $comment, $videoId, $matchedFilter, $result, &$totalActioned, &$totalFailed) {
+                    if ($result['success']) {
+                        $totalActioned++;
+                        $matchedFilter->incrementHitCount();
+                        UsageRecord::recordAction($user->id, 'comment_moderated');
+                    } else {
+                        $totalFailed++;
+                    }
 
-                    // Increment filter hit count
-                    $matchedFilter->incrementHitCount();
-
-                    // Record usage
-                    UsageRecord::recordAction($user->id, 'comment_moderated');
-                } else {
-                    $totalFailed++;
-                }
-
-                // Create moderation log
-                ModerationLog::create([
-                    'user_id' => $user->id,
-                    'user_platform_id' => $this->userPlatform->id,
-                    'platform_comment_id' => $comment['id'],
-                    'video_id' => $videoId,
-                    'commenter_username' => $comment['authorDisplayName'],
-                    'commenter_id' => $comment['authorChannelId'],
-                    'comment_text' => mb_substr($comment['textOriginal'], 0, 1000),
-                    'matched_filter_id' => $matchedFilter->id,
-                    'matched_pattern' => $matchedFilter->pattern,
-                    'action_taken' => $result['success']
-                        ? $this->mapActionToLogAction($matchedFilter->action)
-                        : ModerationLog::ACTION_FAILED,
-                    'action_source' => ModerationLog::SOURCE_BACKGROUND_JOB,
-                    'failure_reason' => $result['error'] ?? null,
-                    'processed_at' => now(),
-                ]);
+                    ModerationLog::create([
+                        'user_id' => $user->id,
+                        'user_platform_id' => $this->userPlatform->id,
+                        'platform_comment_id' => $comment['id'],
+                        'video_id' => $videoId,
+                        'commenter_username' => $comment['authorDisplayName'],
+                        'commenter_id' => $comment['authorChannelId'],
+                        'comment_text' => mb_substr($comment['textOriginal'], 0, 1000),
+                        'matched_filter_id' => $matchedFilter->id,
+                        'matched_pattern' => $matchedFilter->pattern,
+                        'action_taken' => $result['success']
+                            ? $this->mapActionToLogAction($matchedFilter->action)
+                            : ModerationLog::ACTION_FAILED,
+                        'action_source' => ModerationLog::SOURCE_BACKGROUND_JOB,
+                        'failure_reason' => $result['error'] ?? null,
+                        'processed_at' => now(),
+                    ]);
+                });
             }
         }
 

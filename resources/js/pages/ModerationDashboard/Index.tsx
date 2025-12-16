@@ -59,7 +59,7 @@ interface CurrentPlan {
 }
 
 interface Props {
-    quotaStats: QuotaStats;
+    quotaStats: QuotaStats | null;
     platforms: Platform[];
     todayStats: TodayStats;
     recentLogs: RecentLog[];
@@ -248,26 +248,27 @@ export default function ModerationDashboard({ quotaStats, platforms, todayStats,
                         </Alert>
                     )}
 
-                    {/* Quota & Stats Row */}
-                    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-                        {/* Quota Card */}
-                        <Card>
-                            <CardHeader className="pb-2">
-                                <CardTitle className="text-sm font-medium">API Quota</CardTitle>
-                            </CardHeader>
-                            <CardContent>
-                                <div className="space-y-2">
-                                    <div className="flex items-center justify-between text-sm">
-                                        <span>
-                                            {quotaStats.used.toLocaleString()} / {quotaStats.limit.toLocaleString()}
-                                        </span>
-                                        <span className="text-muted-foreground">{quotaStats.percentage}%</span>
+                    {/* Stats Row */}
+                    <div className={`grid gap-4 md:grid-cols-2 ${quotaStats ? 'lg:grid-cols-4' : 'lg:grid-cols-3'}`}>
+                        {quotaStats && (
+                            <Card>
+                                <CardHeader className="pb-2">
+                                    <CardTitle className="text-sm font-medium">API Quota (Admin)</CardTitle>
+                                </CardHeader>
+                                <CardContent>
+                                    <div className="space-y-2">
+                                        <div className="flex items-center justify-between text-sm">
+                                            <span>
+                                                {quotaStats.used.toLocaleString()} / {quotaStats.limit.toLocaleString()}
+                                            </span>
+                                            <span className="text-muted-foreground">{quotaStats.percentage}%</span>
+                                        </div>
+                                        <Progress value={quotaStats.percentage} className={quotaStats.percentage >= 80 ? 'bg-red-100' : ''} />
+                                        <p className="text-muted-foreground text-xs">Can delete ~{quotaStats.can_delete_comments} more comments</p>
                                     </div>
-                                    <Progress value={quotaStats.percentage} className={quotaStats.percentage >= 80 ? 'bg-red-100' : ''} />
-                                    <p className="text-muted-foreground text-xs">Can delete ~{quotaStats.can_delete_comments} more comments</p>
-                                </div>
-                            </CardContent>
-                        </Card>
+                                </CardContent>
+                            </Card>
+                        )}
 
                         {/* Today Scanned */}
                         <Card>
@@ -318,12 +319,11 @@ export default function ModerationDashboard({ quotaStats, platforms, todayStats,
                         </Card>
                     </div>
 
-                    {/* Quota Warning */}
-                    {quotaStats.percentage >= 80 && (
+                    {quotaStats && quotaStats.percentage >= 80 && (
                         <Alert variant="destructive">
                             <AlertCircle className="h-4 w-4" />
                             <AlertDescription>
-                                API quota is at {quotaStats.percentage}%. Consider reducing scan frequency or upgrading your plan.
+                                API quota is at {quotaStats.percentage}%. Consider reducing scan frequency.
                             </AlertDescription>
                         </Alert>
                     )}

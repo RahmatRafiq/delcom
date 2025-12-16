@@ -20,8 +20,7 @@ class ModerationDashboardController extends Controller
         $user = Auth::user();
         $rateLimiter = new YouTubeRateLimiter;
 
-        // Get quota stats
-        $quotaStats = $rateLimiter->getQuotaStats();
+        $quotaStats = $user->hasRole('admin') ? $rateLimiter->getQuotaStats() : null;
 
         // Get user's connected platforms with scan info
         $platforms = UserPlatform::with('platform')
@@ -187,6 +186,12 @@ class ModerationDashboardController extends Controller
      */
     public function quotaStats()
     {
+        $user = Auth::user();
+
+        if (! $user->hasRole('admin')) {
+            return response()->json(['error' => 'Unauthorized'], 403);
+        }
+
         $rateLimiter = new YouTubeRateLimiter;
 
         return response()->json($rateLimiter->getQuotaStats());
