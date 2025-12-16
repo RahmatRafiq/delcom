@@ -2,8 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use App\Jobs\ScanYouTubeCommentsJob;
+use App\Models\ModerationLog;
 use App\Models\Platform;
 use App\Models\UserPlatform;
+use App\Services\YouTubeRateLimiter;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
@@ -16,6 +19,8 @@ class ConnectedAccountController extends Controller
     public function index()
     {
         $user = Auth::user();
+        $rateLimiter = new YouTubeRateLimiter();
+
         $platforms = Platform::active()->with('connectionMethods')->get();
         $userPlatforms = UserPlatform::where('user_id', $user->id)
             ->with('platform')
@@ -45,6 +50,16 @@ class ConnectedAccountController extends Controller
                 $key = $platform->id.'_'.$method;
                 $userPlatform = $userPlatforms->get($key);
                 if ($userPlatform) {
+                    // Get today's stats for this connection
+                    $todayDeleted = ModerationLog::where('user_platform_id', $userPlatform->id)
+                        ->whereDate('processed_at', today())
+                        ->where('action_taken', 'deleted')
+                        ->count();
+                    $todayFailed = ModerationLog::where('user_platform_id', $userPlatform->id)
+                        ->whereDate('processed_at', today())
+                        ->where('action_taken', 'failed')
+                        ->count();
+
                     $connections[$method] = [
                         'id' => $userPlatform->id,
                         'platform_username' => $userPlatform->platform_username,
@@ -52,8 +67,11 @@ class ConnectedAccountController extends Controller
                         'auto_moderation_enabled' => $userPlatform->auto_moderation_enabled,
                         'scan_frequency_minutes' => $userPlatform->scan_frequency_minutes,
                         'last_scanned_at' => $userPlatform->last_scanned_at?->toDateTimeString(),
+                        'last_scanned_ago' => $userPlatform->last_scanned_at?->diffForHumans(),
                         'token_expires_at' => $userPlatform->token_expires_at?->toDateTimeString(),
                         'is_token_expired' => $userPlatform->isTokenExpired(),
+                        'today_deleted' => $todayDeleted,
+                        'today_failed' => $todayFailed,
                     ];
                 }
             }
@@ -73,6 +91,9 @@ class ConnectedAccountController extends Controller
         $currentPlan = $user->getCurrentPlan();
         $usageStats = $user->getUsageStats();
 
+        // Get API quota stats
+        $quotaStats = $rateLimiter->getQuotaStats();
+
         return Inertia::render('ConnectedAccounts/Index', [
             'platforms' => $platformsWithStatus,
             'subscription' => [
@@ -85,7 +106,53 @@ class ConnectedAccountController extends Controller
                 ] : null,
                 'usage' => $usageStats,
             ],
+            'quotaStats' => $quotaStats,
         ]);
+    }
+
+    /**
+     * Trigger a scan for a specific platform connection.
+     */
+    public function scan(Request $request, int $id)
+    {
+        $user = Auth::user();
+
+        $userPlatform = UserPlatform::where('id', $id)
+            ->where('user_id', $user->id)
+            ->where('is_active', true)
+            ->first();
+
+        if (! $userPlatform) {
+            return back()->with('error', 'Platform not found or not connected.');
+        }
+
+        // Check rate limits
+        $rateLimiter = new YouTubeRateLimiter();
+        if ($rateLimiter->isRateLimited($user)) {
+            return back()->with('error', 'Too many requests. Please wait a moment.');
+        }
+
+        if (! $rateLimiter->hasQuotaFor('delete_comment', 10)) {
+            return back()->with('error', 'Daily API quota exhausted. Try again tomorrow.');
+        }
+
+        // Check user's plan limits (daily and monthly)
+        if (! $user->canPerformAction()) {
+            $reason = $user->getActionBlockedReason();
+            if ($reason === 'daily_limit_reached') {
+                return back()->with('error', 'Daily action limit reached. Try again tomorrow or upgrade your plan.');
+            }
+
+            return back()->with('error', 'Monthly action limit reached. Upgrade your plan.');
+        }
+
+        // Dispatch the scan job
+        $maxVideos = $request->input('max_videos', 10);
+        $maxComments = $request->input('max_comments', 100);
+
+        ScanYouTubeCommentsJob::dispatch($userPlatform, $maxVideos, $maxComments);
+
+        return back()->with('success', 'Scan started! Results will appear shortly.');
     }
 
     /**

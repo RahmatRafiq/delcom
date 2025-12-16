@@ -61,6 +61,17 @@ class UsageRecord extends Model
     }
 
     /**
+     * Get today's usage count from ModerationLog (successful actions only).
+     */
+    public static function getTodayUsage(int $userId): int
+    {
+        return ModerationLog::where('user_id', $userId)
+            ->whereDate('processed_at', today())
+            ->whereIn('action_taken', ['deleted', 'hidden', 'reported'])
+            ->count();
+    }
+
+    /**
      * Record a moderation action for a user.
      * Alias for incrementForUser with optional action type logging.
      */

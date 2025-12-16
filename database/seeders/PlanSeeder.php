@@ -17,6 +17,7 @@ class PlanSeeder extends Seeder
                 'price_monthly' => 0,
                 'price_yearly' => 0,
                 'monthly_action_limit' => 100,
+                'daily_action_limit' => 10, // 10 comments per day
                 'max_platforms' => 1,
                 'scan_frequency_minutes' => 120,
                 'features' => ['basic_filters', 'manual_moderation'],
@@ -29,6 +30,7 @@ class PlanSeeder extends Seeder
                 'price_monthly' => 9.99,
                 'price_yearly' => 99.99,
                 'monthly_action_limit' => 1000,
+                'daily_action_limit' => 50, // 50 comments per day
                 'max_platforms' => 3,
                 'scan_frequency_minutes' => 60,
                 'features' => ['basic_filters', 'custom_filters', 'export_logs', 'extension_platforms'],
@@ -41,6 +43,7 @@ class PlanSeeder extends Seeder
                 'price_monthly' => 29.99,
                 'price_yearly' => 299.99,
                 'monthly_action_limit' => 10000,
+                'daily_action_limit' => 500, // 500 comments per day
                 'max_platforms' => -1, // unlimited
                 'scan_frequency_minutes' => 30,
                 'features' => [
@@ -61,6 +64,7 @@ class PlanSeeder extends Seeder
                 'price_monthly' => 99.99,
                 'price_yearly' => 999.99,
                 'monthly_action_limit' => -1, // unlimited
+                'daily_action_limit' => -1, // unlimited
                 'max_platforms' => -1, // unlimited
                 'scan_frequency_minutes' => 15,
                 'features' => [

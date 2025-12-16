@@ -144,6 +144,14 @@ class User extends Authenticatable implements HasMedia
     }
 
     /**
+     * Get today's usage count (from ModerationLog).
+     */
+    public function getTodayUsage(): int
+    {
+        return UsageRecord::getTodayUsage($this->id);
+    }
+
+    /**
      * Get remaining actions for this month.
      * Returns -1 for unlimited.
      */
@@ -161,13 +169,59 @@ class User extends Authenticatable implements HasMedia
     }
 
     /**
+     * Get remaining actions for today.
+     * Returns -1 for unlimited.
+     */
+    public function getRemainingDailyActions(): int
+    {
+        $plan = $this->getCurrentPlan();
+
+        if (! $plan || $plan->hasUnlimitedDailyActions()) {
+            return -1;
+        }
+
+        $used = $this->getTodayUsage();
+
+        return max(0, $plan->daily_action_limit - $used);
+    }
+
+    /**
      * Check if user can perform a moderation action.
+     * Checks both daily and monthly limits.
      */
     public function canPerformAction(): bool
     {
-        $remaining = $this->getRemainingActions();
+        // Check monthly limit
+        $monthlyRemaining = $this->getRemainingActions();
+        if ($monthlyRemaining !== -1 && $monthlyRemaining <= 0) {
+            return false;
+        }
 
-        return $remaining === -1 || $remaining > 0;
+        // Check daily limit
+        $dailyRemaining = $this->getRemainingDailyActions();
+        if ($dailyRemaining !== -1 && $dailyRemaining <= 0) {
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * Get the reason why user cannot perform action.
+     */
+    public function getActionBlockedReason(): ?string
+    {
+        $monthlyRemaining = $this->getRemainingActions();
+        if ($monthlyRemaining !== -1 && $monthlyRemaining <= 0) {
+            return 'monthly_limit_reached';
+        }
+
+        $dailyRemaining = $this->getRemainingDailyActions();
+        if ($dailyRemaining !== -1 && $dailyRemaining <= 0) {
+            return 'daily_limit_reached';
+        }
+
+        return null;
     }
 
     /**
@@ -186,15 +240,27 @@ class User extends Authenticatable implements HasMedia
     public function getUsageStats(): array
     {
         $plan = $this->getCurrentPlan();
-        $used = $this->getCurrentMonthUsage();
-        $limit = $plan?->monthly_action_limit ?? 100;
+
+        // Monthly stats
+        $monthlyUsed = $this->getCurrentMonthUsage();
+        $monthlyLimit = $plan?->monthly_action_limit ?? 100;
+
+        // Daily stats
+        $dailyUsed = $this->getTodayUsage();
+        $dailyLimit = $plan?->daily_action_limit ?? 10;
 
         return [
-            'used' => $used,
-            'limit' => $limit === -1 ? 'unlimited' : $limit,
-            'remaining' => $limit === -1 ? 'unlimited' : max(0, $limit - $used),
-            'percentage' => $limit === -1 ? 0 : min(100, round(($used / max(1, $limit)) * 100)),
+            // Monthly
+            'used' => $monthlyUsed,
+            'limit' => $monthlyLimit === -1 ? 'unlimited' : $monthlyLimit,
+            'remaining' => $monthlyLimit === -1 ? 'unlimited' : max(0, $monthlyLimit - $monthlyUsed),
+            'percentage' => $monthlyLimit === -1 ? 0 : min(100, round(($monthlyUsed / max(1, $monthlyLimit)) * 100)),
             'reset_date' => now()->endOfMonth()->addDay()->format('Y-m-d'),
+            // Daily
+            'daily_used' => $dailyUsed,
+            'daily_limit' => $dailyLimit === -1 ? 'unlimited' : $dailyLimit,
+            'daily_remaining' => $dailyLimit === -1 ? 'unlimited' : max(0, $dailyLimit - $dailyUsed),
+            'daily_percentage' => $dailyLimit === -1 ? 0 : min(100, round(($dailyUsed / max(1, $dailyLimit)) * 100)),
         ];
     }
 

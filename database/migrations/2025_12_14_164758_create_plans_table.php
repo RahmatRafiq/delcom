@@ -21,6 +21,7 @@ return new class extends Migration
             $table->string('stripe_monthly_price_id')->nullable();
             $table->string('stripe_yearly_price_id')->nullable();
             $table->integer('monthly_action_limit')->default(100);
+            $table->integer('daily_action_limit')->default(10);
             $table->integer('max_platforms')->default(1);
             $table->integer('scan_frequency_minutes')->default(60);
             $table->json('features')->nullable();

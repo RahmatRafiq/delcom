@@ -129,11 +129,17 @@ export interface Subscription {
 }
 
 export interface UsageStats {
+    // Monthly stats
     used: number;
     limit: number | 'unlimited';
     remaining: number | 'unlimited';
     percentage: number;
     reset_date: string;
+    // Daily stats
+    daily_used: number;
+    daily_limit: number | 'unlimited';
+    daily_remaining: number | 'unlimited';
+    daily_percentage: number;
 }
 
 export interface UsageRecord {

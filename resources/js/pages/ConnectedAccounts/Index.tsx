@@ -32,6 +32,7 @@ import {
     Crown,
     Zap,
     Building2,
+    Calendar,
 } from 'lucide-react';
 
 // Custom brand icons (Lucide deprecated brand icons)
@@ -205,6 +206,9 @@ export default function ConnectedAccountsIndex({ platforms, subscription }: Prop
     // Calculate usage display
     const usagePercentage = subscription.usage.percentage;
     const isUnlimited = subscription.usage.limit === 'unlimited';
+    const isDailyUnlimited = subscription.usage.daily_limit === 'unlimited';
+    const isDailyLimitReached = !isDailyUnlimited && subscription.usage.daily_remaining <= 0;
+    const isMonthlyLimitReached = !isUnlimited && subscription.usage.remaining <= 0;
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
@@ -228,12 +232,7 @@ export default function ConnectedAccountsIndex({ platforms, subscription }: Prop
                                     <CardTitle className="text-base">
                                         {subscription.plan?.name || 'Free'} Plan
                                     </CardTitle>
-                                    <CardDescription>
-                                        {isUnlimited
-                                            ? 'Unlimited actions'
-                                            : `${subscription.usage.used.toLocaleString()} / ${subscription.usage.limit.toLocaleString()} actions this month`
-                                        }
-                                    </CardDescription>
+                                    <CardDescription>Your moderation limits</CardDescription>
                                 </div>
                             </div>
                             <Button variant="outline" size="sm" asChild>
@@ -244,19 +243,71 @@ export default function ConnectedAccountsIndex({ platforms, subscription }: Prop
                             </Button>
                         </div>
                     </CardHeader>
-                    {!isUnlimited && (
-                        <CardContent className="pt-0">
-                            <div className="space-y-2">
-                                <Progress value={usagePercentage} className="h-2" />
+                    <CardContent>
+                        <div className="grid gap-4 md:grid-cols-2">
+                            {/* Daily Limit */}
+                            <div className="space-y-2 rounded-lg border p-4">
+                                <div className="flex items-center gap-2">
+                                    <Calendar className="h-4 w-4 text-muted-foreground" />
+                                    <span className="text-sm font-medium">Daily Limit</span>
+                                    {isDailyLimitReached && (
+                                        <Badge variant="destructive" className="ml-auto">Reached</Badge>
+                                    )}
+                                </div>
+                                <div className="flex items-center justify-between text-sm">
+                                    <span>
+                                        {subscription.usage.daily_used} / {isDailyUnlimited ? '∞' : subscription.usage.daily_limit}
+                                    </span>
+                                    <span className="text-muted-foreground">
+                                        {isDailyUnlimited ? 'Unlimited' : `${subscription.usage.daily_percentage}%`}
+                                    </span>
+                                </div>
+                                {!isDailyUnlimited && (
+                                    <Progress
+                                        value={subscription.usage.daily_percentage}
+                                        className={`h-2 ${subscription.usage.daily_percentage >= 80 ? 'bg-red-100' : ''}`}
+                                    />
+                                )}
                                 <p className="text-muted-foreground text-xs">
-                                    {subscription.usage.remaining === 'unlimited'
-                                        ? 'Unlimited'
-                                        : `${subscription.usage.remaining.toLocaleString()} actions remaining`
-                                    } • Resets {subscription.usage.reset_date}
+                                    {isDailyUnlimited
+                                        ? 'Unlimited deletions today'
+                                        : `${subscription.usage.daily_remaining} deletions remaining today`
+                                    }
                                 </p>
                             </div>
-                        </CardContent>
-                    )}
+
+                            {/* Monthly Limit */}
+                            <div className="space-y-2 rounded-lg border p-4">
+                                <div className="flex items-center gap-2">
+                                    <Clock className="h-4 w-4 text-muted-foreground" />
+                                    <span className="text-sm font-medium">Monthly Limit</span>
+                                    {isMonthlyLimitReached && (
+                                        <Badge variant="destructive" className="ml-auto">Reached</Badge>
+                                    )}
+                                </div>
+                                <div className="flex items-center justify-between text-sm">
+                                    <span>
+                                        {subscription.usage.used} / {isUnlimited ? '∞' : subscription.usage.limit}
+                                    </span>
+                                    <span className="text-muted-foreground">
+                                        {isUnlimited ? 'Unlimited' : `${subscription.usage.percentage}%`}
+                                    </span>
+                                </div>
+                                {!isUnlimited && (
+                                    <Progress
+                                        value={subscription.usage.percentage}
+                                        className={`h-2 ${subscription.usage.percentage >= 80 ? 'bg-red-100' : ''}`}
+                                    />
+                                )}
+                                <p className="text-muted-foreground text-xs">
+                                    {isUnlimited
+                                        ? 'Unlimited deletions this month'
+                                        : `${subscription.usage.remaining} remaining • Resets ${subscription.usage.reset_date}`
+                                    }
+                                </p>
+                            </div>
+                        </div>
+                    </CardContent>
                 </Card>
 
                 {/* Platforms Grid */}

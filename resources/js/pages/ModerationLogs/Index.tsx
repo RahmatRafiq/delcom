@@ -3,20 +3,31 @@ import Heading from '@/components/heading';
 import HeadingSmall from '@/components/heading-small';
 import PageContainer from '@/components/page-container';
 import CustomSelect from '@/components/select';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Progress } from '@/components/ui/progress';
 import AppLayout from '@/layouts/app-layout';
-import type { BreadcrumbItem, ModerationLog, Platform } from '@/types';
+import type { BreadcrumbItem, ModerationLog, Platform, UsageStats } from '@/types';
 import type { DataTableColumn } from '@/types/DataTables';
-import { Head } from '@inertiajs/react';
+import { Head, Link } from '@inertiajs/react';
 import axios from 'axios';
-import { Download, RefreshCw } from 'lucide-react';
+import { Calendar, Clock, Crown, Download, RefreshCw, Zap } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
+
+interface CurrentPlan {
+    name: string;
+    slug: string;
+    daily_action_limit: number;
+    monthly_action_limit: number;
+}
 
 interface Props {
     platforms: Platform[];
+    usageStats: UsageStats;
+    currentPlan: CurrentPlan | null;
 }
 
 interface Stats {
@@ -44,7 +55,7 @@ const sourceLabels: Record<string, string> = {
     manual: 'Manual',
 };
 
-export default function ModerationLogsIndex({ platforms }: Props) {
+export default function ModerationLogsIndex({ platforms, usageStats, currentPlan }: Props) {
     const dtRef = useRef<DataTableWrapperRef>(null);
     const [stats, setStats] = useState<Stats | null>(null);
     const [filters, setFilters] = useState({
@@ -182,6 +193,94 @@ export default function ModerationLogsIndex({ platforms }: Props) {
             <PageContainer maxWidth="full">
                 <Heading title="Comment Moderation" />
                 <HeadingSmall title="Moderation Logs" description="View all moderated comments across your connected platforms" />
+
+                {/* Plan & Usage Limits */}
+                <Card className="mb-6">
+                    <CardHeader className="pb-3">
+                        <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                                <span className="rounded-lg bg-primary/10 p-2.5">
+                                    <Crown className="h-6 w-6 text-primary" />
+                                </span>
+                                <div>
+                                    <CardTitle className="text-base">{currentPlan?.name || 'Free'} Plan</CardTitle>
+                                    <CardDescription>Your moderation limits</CardDescription>
+                                </div>
+                            </div>
+                            <Button variant="outline" size="sm" asChild>
+                                <Link href={route('subscription.plans')}>
+                                    <Zap className="mr-2 h-4 w-4" />
+                                    Upgrade
+                                </Link>
+                            </Button>
+                        </div>
+                    </CardHeader>
+                    <CardContent>
+                        <div className="grid gap-4 md:grid-cols-2">
+                            {/* Daily Limit */}
+                            <div className="space-y-2 rounded-lg border p-4">
+                                <div className="flex items-center gap-2">
+                                    <Calendar className="h-4 w-4 text-muted-foreground" />
+                                    <span className="text-sm font-medium">Daily Limit</span>
+                                    {usageStats.daily_limit !== 'unlimited' && usageStats.daily_remaining <= 0 && (
+                                        <Badge variant="destructive" className="ml-auto">Reached</Badge>
+                                    )}
+                                </div>
+                                <div className="flex items-center justify-between text-sm">
+                                    <span>
+                                        {usageStats.daily_used} / {usageStats.daily_limit === 'unlimited' ? '∞' : usageStats.daily_limit}
+                                    </span>
+                                    <span className="text-muted-foreground">
+                                        {usageStats.daily_limit === 'unlimited' ? 'Unlimited' : `${usageStats.daily_percentage}%`}
+                                    </span>
+                                </div>
+                                {usageStats.daily_limit !== 'unlimited' && (
+                                    <Progress
+                                        value={usageStats.daily_percentage}
+                                        className={`h-2 ${usageStats.daily_percentage >= 80 ? 'bg-red-100' : ''}`}
+                                    />
+                                )}
+                                <p className="text-muted-foreground text-xs">
+                                    {usageStats.daily_remaining === 'unlimited'
+                                        ? 'Unlimited deletions today'
+                                        : `${usageStats.daily_remaining} deletions remaining today`
+                                    }
+                                </p>
+                            </div>
+
+                            {/* Monthly Limit */}
+                            <div className="space-y-2 rounded-lg border p-4">
+                                <div className="flex items-center gap-2">
+                                    <Clock className="h-4 w-4 text-muted-foreground" />
+                                    <span className="text-sm font-medium">Monthly Limit</span>
+                                    {usageStats.limit !== 'unlimited' && usageStats.remaining <= 0 && (
+                                        <Badge variant="destructive" className="ml-auto">Reached</Badge>
+                                    )}
+                                </div>
+                                <div className="flex items-center justify-between text-sm">
+                                    <span>
+                                        {usageStats.used} / {usageStats.limit === 'unlimited' ? '∞' : usageStats.limit}
+                                    </span>
+                                    <span className="text-muted-foreground">
+                                        {usageStats.limit === 'unlimited' ? 'Unlimited' : `${usageStats.percentage}%`}
+                                    </span>
+                                </div>
+                                {usageStats.limit !== 'unlimited' && (
+                                    <Progress
+                                        value={usageStats.percentage}
+                                        className={`h-2 ${usageStats.percentage >= 80 ? 'bg-red-100' : ''}`}
+                                    />
+                                )}
+                                <p className="text-muted-foreground text-xs">
+                                    {usageStats.remaining === 'unlimited'
+                                        ? 'Unlimited deletions this month'
+                                        : `${usageStats.remaining} remaining • Resets ${usageStats.reset_date}`
+                                    }
+                                </p>
+                            </div>
+                        </div>
+                    </CardContent>
+                </Card>
 
                 {/* Stats Cards */}
                 {stats && (

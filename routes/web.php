@@ -102,11 +102,18 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('moderation-logs/stats', [\App\Http\Controllers\ModerationLogController::class, 'stats'])->name('moderation-logs.stats');
         Route::get('moderation-logs/export', [\App\Http\Controllers\ModerationLogController::class, 'export'])->name('moderation-logs.export');
 
+        // Moderation Dashboard
+        Route::get('moderation', [\App\Http\Controllers\ModerationDashboardController::class, 'index'])->name('moderation.index');
+        Route::post('moderation/scan/{userPlatformId}', [\App\Http\Controllers\ModerationDashboardController::class, 'scan'])->name('moderation.scan');
+        Route::post('moderation/scan-all', [\App\Http\Controllers\ModerationDashboardController::class, 'scanAll'])->name('moderation.scan-all');
+        Route::get('moderation/quota-stats', [\App\Http\Controllers\ModerationDashboardController::class, 'quotaStats'])->name('moderation.quota-stats');
+
         // Connected Accounts
         Route::get('connected-accounts', [\App\Http\Controllers\ConnectedAccountController::class, 'index'])->name('connected-accounts.index');
         Route::put('connected-accounts/{id}', [\App\Http\Controllers\ConnectedAccountController::class, 'update'])->name('connected-accounts.update');
         Route::delete('connected-accounts/{id}', [\App\Http\Controllers\ConnectedAccountController::class, 'destroy'])->name('connected-accounts.destroy');
         Route::post('connected-accounts/{platformId}/connect', [\App\Http\Controllers\ConnectedAccountController::class, 'connect'])->name('connected-accounts.connect');
+        Route::post('connected-accounts/{id}/scan', [\App\Http\Controllers\ConnectedAccountController::class, 'scan'])->name('connected-accounts.scan');
 
         // Subscription Plans (placeholder - implement with Stripe later)
         Route::get('subscription/plans', function () {

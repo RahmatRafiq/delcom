@@ -17,6 +17,7 @@ class Plan extends Model
         'stripe_monthly_price_id',
         'stripe_yearly_price_id',
         'monthly_action_limit',
+        'daily_action_limit',
         'max_platforms',
         'scan_frequency_minutes',
         'features',
@@ -51,6 +52,11 @@ class Plan extends Model
     public function hasUnlimitedActions(): bool
     {
         return $this->monthly_action_limit === -1;
+    }
+
+    public function hasUnlimitedDailyActions(): bool
+    {
+        return $this->daily_action_limit === -1;
     }
 
     public function hasUnlimitedPlatforms(): bool

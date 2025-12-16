@@ -14,11 +14,22 @@ class ModerationLogController extends Controller
 {
     public function index()
     {
-        $userPlatformIds = UserPlatform::where('user_id', Auth::id())->pluck('id');
+        $user = Auth::user();
         $platforms = Platform::where('is_active', true)->get();
+
+        // Get user's usage stats (daily and monthly limits)
+        $usageStats = $user->getUsageStats();
+        $currentPlan = $user->getCurrentPlan();
 
         return Inertia::render('ModerationLogs/Index', [
             'platforms' => $platforms,
+            'usageStats' => $usageStats,
+            'currentPlan' => $currentPlan ? [
+                'name' => $currentPlan->name,
+                'slug' => $currentPlan->slug,
+                'daily_action_limit' => $currentPlan->daily_action_limit,
+                'monthly_action_limit' => $currentPlan->monthly_action_limit,
+            ] : null,
         ]);
     }
 
