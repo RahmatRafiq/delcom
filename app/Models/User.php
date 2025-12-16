@@ -22,6 +22,28 @@ class User extends Authenticatable implements HasMedia
     use HasFactory, HasRoles, InteractsWithMedia, LogsActivity, Notifiable, SoftDeletes;
 
     /**
+     * Bootstrap the model and its traits.
+     */
+    protected static function boot(): void
+    {
+        parent::boot();
+
+        // Auto-assign free plan to new users
+        static::created(function (User $user) {
+            $freePlan = Plan::free();
+            if ($freePlan) {
+                $user->allSubscriptions()->create([
+                    'plan_id' => $freePlan->id,
+                    'status' => 'active',
+                    'billing_cycle' => 'free',
+                    'current_period_start' => now(),
+                    'current_period_end' => null, // Free plan doesn't expire
+                ]);
+            }
+        });
+    }
+
+    /**
      * The attributes that are mass assignable.
      *
      * @var list<string>

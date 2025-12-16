@@ -15,14 +15,16 @@ class DatabaseSeeder extends Seeder
             RoleSeeder::class,
             PermissionSeeder::class,
             RolePermissionSeeder::class,
-            UserSeeder::class,
             AppSettingSeeder::class,
             MenuSeeder::class,
-            // DelCom seeders
+            // DelCom seeders (Plans must be seeded before Users)
             PlatformSeeder::class,
             PlanSeeder::class,
             PlatformConnectionMethodSeeder::class,
             PlanPlatformSeeder::class,
+            // Users (will auto-get free subscription via model boot)
+            UserSeeder::class,
+            // Rest of DelCom seeders
             PresetFilterSeeder::class,
             UserPlatformSeeder::class,
             FilterGroupSeeder::class,

@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Models\Plan;
 use App\Models\User;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
@@ -43,6 +44,32 @@ class UserSeeder extends Seeder
 
         if ($userRole) {
             $user->assignRole($userRole);
+        }
+
+        // Ensure all users have a free subscription (for existing users from firstOrCreate)
+        $this->ensureFreeSubscription($admin);
+        $this->ensureFreeSubscription($user);
+    }
+
+    /**
+     * Ensure user has a free subscription if they don't have any active subscription.
+     */
+    private function ensureFreeSubscription(User $user): void
+    {
+        // Skip if user already has an active subscription
+        if ($user->subscription()->exists()) {
+            return;
+        }
+
+        $freePlan = Plan::free();
+        if ($freePlan) {
+            $user->allSubscriptions()->create([
+                'plan_id' => $freePlan->id,
+                'status' => 'active',
+                'billing_cycle' => 'free',
+                'current_period_start' => now(),
+                'current_period_end' => null,
+            ]);
         }
     }
 }
