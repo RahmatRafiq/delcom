@@ -147,7 +147,7 @@ class ScanComments extends Command
             return;
         }
 
-        $this->info("  Videos found: ".count($videosData['items']));
+        $this->info('  Videos found: '.count($videosData['items']));
 
         $totalComments = 0;
         $totalMatches = 0;
@@ -180,14 +180,14 @@ class ScanComments extends Command
                     $totalMatches++;
                     $this->warn("    [MATCH] Filter: {$matchedFilter->pattern}");
                     $this->line("            Action: {$matchedFilter->action}");
-                    $this->line("            Comment: ".mb_substr($comment['textOriginal'], 0, 80).'...');
+                    $this->line('            Comment: '.mb_substr($comment['textOriginal'], 0, 80).'...');
                     $this->line("            Author: {$comment['authorDisplayName']}");
                 }
             }
         }
 
         $this->newLine();
-        $this->info("  Summary:");
+        $this->info('  Summary:');
         $this->line("    Total comments scanned: {$totalComments}");
         $this->line("    Total matches found: {$totalMatches}");
     }
@@ -214,7 +214,7 @@ class ScanComments extends Command
      */
     private function showQuotaStats(): int
     {
-        $limiter = new YouTubeRateLimiter();
+        $limiter = new YouTubeRateLimiter;
         $stats = $limiter->getQuotaStats();
 
         $this->info('YouTube API Quota Statistics');

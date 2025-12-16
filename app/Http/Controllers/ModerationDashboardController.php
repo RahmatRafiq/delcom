@@ -18,7 +18,7 @@ class ModerationDashboardController extends Controller
     public function index()
     {
         $user = Auth::user();
-        $rateLimiter = new YouTubeRateLimiter();
+        $rateLimiter = new YouTubeRateLimiter;
 
         // Get quota stats
         $quotaStats = $rateLimiter->getQuotaStats();
@@ -113,7 +113,7 @@ class ModerationDashboardController extends Controller
         }
 
         // Check rate limits
-        $rateLimiter = new YouTubeRateLimiter();
+        $rateLimiter = new YouTubeRateLimiter;
         if ($rateLimiter->isRateLimited($user)) {
             return back()->with('error', 'Rate limit exceeded. Please wait a moment.');
         }
@@ -149,7 +149,7 @@ class ModerationDashboardController extends Controller
         $user = Auth::user();
 
         // Check rate limits first
-        $rateLimiter = new YouTubeRateLimiter();
+        $rateLimiter = new YouTubeRateLimiter;
         if ($rateLimiter->isRateLimited($user)) {
             return back()->with('error', 'Rate limit exceeded. Please wait a moment.');
         }
@@ -187,7 +187,7 @@ class ModerationDashboardController extends Controller
      */
     public function quotaStats()
     {
-        $rateLimiter = new YouTubeRateLimiter();
+        $rateLimiter = new YouTubeRateLimiter;
 
         return response()->json($rateLimiter->getQuotaStats());
     }

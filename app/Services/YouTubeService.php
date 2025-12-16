@@ -22,7 +22,7 @@ class YouTubeService
     public function __construct(UserPlatform $userPlatform)
     {
         $this->userPlatform = $userPlatform;
-        $this->rateLimiter = new YouTubeRateLimiter();
+        $this->rateLimiter = new YouTubeRateLimiter;
     }
 
     /**

@@ -19,7 +19,7 @@ class ConnectedAccountController extends Controller
     public function index()
     {
         $user = Auth::user();
-        $rateLimiter = new YouTubeRateLimiter();
+        $rateLimiter = new YouTubeRateLimiter;
 
         $platforms = Platform::active()->with('connectionMethods')->get();
         $userPlatforms = UserPlatform::where('user_id', $user->id)
@@ -127,7 +127,7 @@ class ConnectedAccountController extends Controller
         }
 
         // Check rate limits
-        $rateLimiter = new YouTubeRateLimiter();
+        $rateLimiter = new YouTubeRateLimiter;
         if ($rateLimiter->isRateLimited($user)) {
             return back()->with('error', 'Too many requests. Please wait a moment.');
         }
