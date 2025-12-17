@@ -76,22 +76,11 @@ class ModerationDashboardController extends Controller
                 ];
             });
 
-        // Get user's usage stats (daily and monthly limits)
-        $usageStats = $user->getUsageStats();
-        $currentPlan = $user->getCurrentPlan();
-
         return Inertia::render('ModerationDashboard/Index', [
             'quotaStats' => $quotaStats,
             'platforms' => $platforms,
             'todayStats' => $todayStats,
             'recentLogs' => $recentLogs,
-            'usageStats' => $usageStats,
-            'currentPlan' => $currentPlan ? [
-                'name' => $currentPlan->name,
-                'slug' => $currentPlan->slug,
-                'daily_action_limit' => $currentPlan->daily_action_limit,
-                'monthly_action_limit' => $currentPlan->monthly_action_limit,
-            ] : null,
         ]);
     }
 

@@ -1,5 +1,5 @@
-import { Head, Link, router } from '@inertiajs/react';
-import { Activity, AlertCircle, Calendar, CheckCircle, Clock, Crown, RefreshCw, Search, Trash2, XCircle, Youtube, Zap } from 'lucide-react';
+import { Head, router } from '@inertiajs/react';
+import { Activity, AlertCircle, CheckCircle, Clock, RefreshCw, Search, Trash2, XCircle, Youtube } from 'lucide-react';
 import { useState } from 'react';
 
 import Heading from '@/components/heading';
@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import AppLayout from '@/layouts/app-layout';
-import { type BreadcrumbItem, type UsageStats } from '@/types';
+import { type BreadcrumbItem } from '@/types';
 
 interface QuotaStats {
     used: number;
@@ -51,20 +51,11 @@ interface RecentLog {
     processed_ago: string;
 }
 
-interface CurrentPlan {
-    name: string;
-    slug: string;
-    daily_action_limit: number;
-    monthly_action_limit: number;
-}
-
 interface Props {
     quotaStats: QuotaStats | null;
     platforms: Platform[];
     todayStats: TodayStats;
     recentLogs: RecentLog[];
-    usageStats: UsageStats;
-    currentPlan: CurrentPlan | null;
 }
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -72,12 +63,9 @@ const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Moderation', href: '/dashboard/moderation' },
 ];
 
-export default function ModerationDashboard({ quotaStats, platforms, todayStats, recentLogs, usageStats, currentPlan }: Props) {
+export default function ModerationDashboard({ quotaStats, platforms, todayStats, recentLogs }: Props) {
     const [scanningPlatform, setScanningPlatform] = useState<number | null>(null);
     const [scanningAll, setScanningAll] = useState(false);
-
-    const isDailyLimitReached = usageStats.daily_remaining !== 'unlimited' && usageStats.daily_remaining <= 0;
-    const isMonthlyLimitReached = usageStats.remaining !== 'unlimited' && usageStats.remaining <= 0;
 
     const handleScan = (platformId: number) => {
         setScanningPlatform(platformId);
@@ -148,105 +136,6 @@ export default function ModerationDashboard({ quotaStats, platforms, todayStats,
                             )}
                         </Button>
                     </div>
-
-                    {/* Plan & Usage Limits */}
-                    <Card>
-                        <CardHeader className="pb-3">
-                            <div className="flex items-center justify-between">
-                                <div className="flex items-center gap-3">
-                                    <span className="bg-primary/10 rounded-lg p-2.5">
-                                        <Crown className="text-primary h-6 w-6" />
-                                    </span>
-                                    <div>
-                                        <CardTitle className="text-base">{currentPlan?.name || 'Free'} Plan</CardTitle>
-                                        <CardDescription>Your moderation limits</CardDescription>
-                                    </div>
-                                </div>
-                                <Button variant="outline" size="sm" asChild>
-                                    <Link href={route('subscription.plans')}>
-                                        <Zap className="mr-2 h-4 w-4" />
-                                        Upgrade
-                                    </Link>
-                                </Button>
-                            </div>
-                        </CardHeader>
-                        <CardContent>
-                            <div className="grid gap-4 md:grid-cols-2">
-                                {/* Daily Limit */}
-                                <div className="space-y-2 rounded-lg border p-4">
-                                    <div className="flex items-center gap-2">
-                                        <Calendar className="text-muted-foreground h-4 w-4" />
-                                        <span className="text-sm font-medium">Daily Limit</span>
-                                        {isDailyLimitReached && (
-                                            <Badge variant="destructive" className="ml-auto">
-                                                Reached
-                                            </Badge>
-                                        )}
-                                    </div>
-                                    <div className="flex items-center justify-between text-sm">
-                                        <span>
-                                            {usageStats.daily_used} / {usageStats.daily_limit === 'unlimited' ? '∞' : usageStats.daily_limit}
-                                        </span>
-                                        <span className="text-muted-foreground">
-                                            {usageStats.daily_limit === 'unlimited' ? 'Unlimited' : `${usageStats.daily_percentage}%`}
-                                        </span>
-                                    </div>
-                                    {usageStats.daily_limit !== 'unlimited' && (
-                                        <Progress
-                                            value={usageStats.daily_percentage}
-                                            className={usageStats.daily_percentage >= 80 ? 'bg-red-100' : ''}
-                                        />
-                                    )}
-                                    <p className="text-muted-foreground text-xs">
-                                        {usageStats.daily_remaining === 'unlimited'
-                                            ? 'Unlimited deletions today'
-                                            : `${usageStats.daily_remaining} deletions remaining today`}
-                                    </p>
-                                </div>
-
-                                {/* Monthly Limit */}
-                                <div className="space-y-2 rounded-lg border p-4">
-                                    <div className="flex items-center gap-2">
-                                        <Clock className="text-muted-foreground h-4 w-4" />
-                                        <span className="text-sm font-medium">Monthly Limit</span>
-                                        {isMonthlyLimitReached && (
-                                            <Badge variant="destructive" className="ml-auto">
-                                                Reached
-                                            </Badge>
-                                        )}
-                                    </div>
-                                    <div className="flex items-center justify-between text-sm">
-                                        <span>
-                                            {usageStats.used} / {usageStats.limit === 'unlimited' ? '∞' : usageStats.limit}
-                                        </span>
-                                        <span className="text-muted-foreground">
-                                            {usageStats.limit === 'unlimited' ? 'Unlimited' : `${usageStats.percentage}%`}
-                                        </span>
-                                    </div>
-                                    {usageStats.limit !== 'unlimited' && (
-                                        <Progress value={usageStats.percentage} className={usageStats.percentage >= 80 ? 'bg-red-100' : ''} />
-                                    )}
-                                    <p className="text-muted-foreground text-xs">
-                                        {usageStats.remaining === 'unlimited'
-                                            ? 'Unlimited deletions this month'
-                                            : `${usageStats.remaining} remaining • Resets ${usageStats.reset_date}`}
-                                    </p>
-                                </div>
-                            </div>
-                        </CardContent>
-                    </Card>
-
-                    {/* Limit Warning */}
-                    {(isDailyLimitReached || isMonthlyLimitReached) && (
-                        <Alert variant="destructive">
-                            <AlertCircle className="h-4 w-4" />
-                            <AlertDescription>
-                                {isDailyLimitReached
-                                    ? 'Daily action limit reached. Try again tomorrow or upgrade your plan.'
-                                    : 'Monthly action limit reached. Upgrade your plan to continue moderating.'}
-                            </AlertDescription>
-                        </Alert>
-                    )}
 
                     {/* Stats Row */}
                     <div className={`grid gap-4 md:grid-cols-2 ${quotaStats ? 'lg:grid-cols-4' : 'lg:grid-cols-3'}`}>
