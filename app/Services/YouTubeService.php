@@ -333,9 +333,24 @@ class YouTubeService
      */
     public function deleteComment(string $commentId): array
     {
+        Log::info('YouTubeService: Attempting to delete comment', [
+            'comment_id' => $commentId,
+            'user_platform_id' => $this->userPlatform->id,
+            'channel_id' => $this->userPlatform->platform_channel_id,
+        ]);
+
         // YouTube API delete requires query parameter, not body
         // Using setModerationStatus with 'rejected' is more reliable
-        return $this->setModerationStatus($commentId, 'rejected');
+        $result = $this->setModerationStatus($commentId, 'rejected');
+
+        Log::info('YouTubeService: Delete comment result', [
+            'comment_id' => $commentId,
+            'success' => $result['success'],
+            'error' => $result['error'] ?? null,
+            'reason' => $result['reason'] ?? null,
+        ]);
+
+        return $result;
     }
 
     /**
@@ -344,13 +359,28 @@ class YouTubeService
      */
     public function setModerationStatus(string $commentId, string $status = 'rejected'): array
     {
+        Log::info('YouTubeService: setModerationStatus called', [
+            'comment_id' => $commentId,
+            'status' => $status,
+            'user_platform_id' => $this->userPlatform->id,
+        ]);
+
         if (! $this->canMakeRequest('set_moderation_status')) {
+            Log::warning('YouTubeService: Cannot make request - rate limited or quota exhausted');
+
             return ['success' => false, 'error' => 'Rate limit exceeded or quota exhausted'];
         }
 
         // Valid statuses: heldForReview, published, rejected
         // Note: 'rejected' effectively hides/removes the comment
         $this->ensureValidToken();
+
+        Log::debug('YouTubeService: Sending API request to setModerationStatus', [
+            'endpoint' => self::API_BASE.'/comments/setModerationStatus',
+            'comment_id' => $commentId,
+            'status' => $status,
+            'token_length' => strlen($this->accessToken ?? ''),
+        ]);
 
         $response = Http::withToken($this->accessToken)
             ->asForm()
@@ -361,8 +391,14 @@ class YouTubeService
 
         $this->trackUsage('set_moderation_status');
 
+        Log::info('YouTubeService: API response received', [
+            'comment_id' => $commentId,
+            'http_status' => $response->status(),
+            'successful' => $response->successful(),
+        ]);
+
         if ($response->successful() || $response->status() === 204) {
-            Log::info('YouTubeService: Comment moderation status set', [
+            Log::info('YouTubeService: Comment moderation status set SUCCESSFULLY', [
                 'comment_id' => $commentId,
                 'status' => $status,
             ]);
@@ -374,7 +410,9 @@ class YouTubeService
         Log::error('YouTubeService: Failed to set moderation status', [
             'comment_id' => $commentId,
             'status' => $status,
+            'http_status' => $response->status(),
             'error' => $error,
+            'raw_body' => $response->body(),
         ]);
 
         return [
