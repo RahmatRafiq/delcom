@@ -108,6 +108,16 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('moderation/scan-all', [\App\Http\Controllers\ModerationDashboardController::class, 'scanAll'])->name('moderation.scan-all');
         Route::get('moderation/quota-stats', [\App\Http\Controllers\ModerationDashboardController::class, 'quotaStats'])->name('moderation.quota-stats');
 
+        // Review Queue (Pending Moderations)
+        Route::get('review-queue', [\App\Http\Controllers\PendingModerationController::class, 'index'])->name('review-queue.index');
+        Route::post('review-queue/json', [\App\Http\Controllers\PendingModerationController::class, 'json'])->name('review-queue.json');
+        Route::get('review-queue/stats', [\App\Http\Controllers\PendingModerationController::class, 'stats'])->name('review-queue.stats');
+        Route::post('review-queue/approve', [\App\Http\Controllers\PendingModerationController::class, 'approve'])->name('review-queue.approve');
+        Route::post('review-queue/dismiss', [\App\Http\Controllers\PendingModerationController::class, 'dismiss'])->name('review-queue.dismiss');
+        Route::post('review-queue/delete', [\App\Http\Controllers\PendingModerationController::class, 'executeDelete'])->name('review-queue.delete');
+        Route::post('review-queue/approve-all', [\App\Http\Controllers\PendingModerationController::class, 'approveAll'])->name('review-queue.approve-all');
+        Route::post('review-queue/dismiss-all', [\App\Http\Controllers\PendingModerationController::class, 'dismissAll'])->name('review-queue.dismiss-all');
+
         // Connected Accounts
         Route::get('connected-accounts', [\App\Http\Controllers\ConnectedAccountController::class, 'index'])->name('connected-accounts.index');
         Route::put('connected-accounts/{id}', [\App\Http\Controllers\ConnectedAccountController::class, 'update'])->name('connected-accounts.update');
