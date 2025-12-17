@@ -26,9 +26,9 @@ class PlatformSeeder extends Seeder
                 'name' => 'instagram',
                 'display_name' => 'Instagram',
                 'tier' => 'api',
-                'api_base_url' => 'https://graph.instagram.com',
-                'oauth_authorize_url' => 'https://api.instagram.com/oauth/authorize',
-                'oauth_token_url' => 'https://api.instagram.com/oauth/access_token',
+                'api_base_url' => 'https://graph.facebook.com/v21.0',
+                'oauth_authorize_url' => 'https://www.facebook.com/v21.0/dialog/oauth',
+                'oauth_token_url' => 'https://graph.facebook.com/v21.0/oauth/access_token',
                 'is_active' => true,
             ],
             [

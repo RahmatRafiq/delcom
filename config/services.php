@@ -62,16 +62,25 @@ return [
         ],
     ],
 
-    // Instagram (Meta/Facebook Graph API)
-    // Requires Instagram Business/Creator account linked to Facebook Page
-    'instagram' => [
-        'client_id' => env('INSTAGRAM_CLIENT_ID'),
-        'client_secret' => env('INSTAGRAM_CLIENT_SECRET'),
-        'redirect' => env('INSTAGRAM_REDIRECT_URI'),
+    // Facebook (for Instagram Business API)
+    // Instagram API requires Facebook OAuth + linked Instagram Business account
+    'facebook' => [
+        'client_id' => env('FACEBOOK_CLIENT_ID'),
+        'client_secret' => env('FACEBOOK_CLIENT_SECRET'),
+        'redirect' => env('FACEBOOK_REDIRECT_URI'),
         'scopes' => [
+            'public_profile',
+            'email',
+            'pages_show_list',
+            'pages_read_engagement',
             'instagram_basic',
             'instagram_manage_comments',
         ],
+    ],
+
+    // Instagram Graph API (uses Facebook OAuth tokens)
+    'instagram' => [
+        'graph_url' => 'https://graph.facebook.com/v21.0',
     ],
 
     // Twitter/X (OAuth 2.0)
