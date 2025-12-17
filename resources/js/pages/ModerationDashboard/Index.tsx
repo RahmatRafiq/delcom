@@ -1,5 +1,5 @@
 import { Head, router } from '@inertiajs/react';
-import { Activity, AlertCircle, CheckCircle, Clock, RefreshCw, Search, Trash2, XCircle, Youtube } from 'lucide-react';
+import { Activity, AlertCircle, AlertTriangle, CheckCircle, Clock, ListChecks, RefreshCw, Search, Trash2, XCircle, Youtube } from 'lucide-react';
 import { useState } from 'react';
 
 import Heading from '@/components/heading';
@@ -56,6 +56,7 @@ interface Props {
     platforms: Platform[];
     todayStats: TodayStats;
     recentLogs: RecentLog[];
+    pendingCount: number;
 }
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -63,7 +64,7 @@ const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Moderation', href: '/dashboard/moderation' },
 ];
 
-export default function ModerationDashboard({ quotaStats, platforms, todayStats, recentLogs }: Props) {
+export default function ModerationDashboard({ quotaStats, platforms, todayStats, recentLogs, pendingCount }: Props) {
     const [scanningPlatform, setScanningPlatform] = useState<number | null>(null);
     const [scanningAll, setScanningAll] = useState(false);
 
@@ -137,27 +138,44 @@ export default function ModerationDashboard({ quotaStats, platforms, todayStats,
                         </Button>
                     </div>
 
+                    {/* Pending Review Alert */}
+                    {pendingCount > 0 && (
+                        <Alert className="border-yellow-500 bg-yellow-50 dark:bg-yellow-950/20">
+                            <AlertTriangle className="h-4 w-4 text-yellow-600" />
+                            <AlertDescription className="flex items-center justify-between">
+                                <span>
+                                    <strong>{pendingCount}</strong> comment(s) pending review. Review before deleting to save API quota.
+                                </span>
+                                <Button size="sm" variant="outline" onClick={() => router.visit(route('review-queue.index'))}>
+                                    <ListChecks className="mr-2 h-4 w-4" />
+                                    Review Now
+                                </Button>
+                            </AlertDescription>
+                        </Alert>
+                    )}
+
                     {/* Stats Row */}
-                    <div className={`grid gap-4 md:grid-cols-2 ${quotaStats ? 'lg:grid-cols-4' : 'lg:grid-cols-3'}`}>
-                        {quotaStats && (
-                            <Card>
-                                <CardHeader className="pb-2">
-                                    <CardTitle className="text-sm font-medium">API Quota (Admin)</CardTitle>
-                                </CardHeader>
-                                <CardContent>
-                                    <div className="space-y-2">
-                                        <div className="flex items-center justify-between text-sm">
-                                            <span>
-                                                {quotaStats.used.toLocaleString()} / {quotaStats.limit.toLocaleString()}
-                                            </span>
-                                            <span className="text-muted-foreground">{quotaStats.percentage}%</span>
-                                        </div>
-                                        <Progress value={quotaStats.percentage} className={quotaStats.percentage >= 80 ? 'bg-red-100' : ''} />
-                                        <p className="text-muted-foreground text-xs">Can delete ~{quotaStats.can_delete_comments} more comments</p>
+                    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+                        {/* Pending Review */}
+                        <Card className={pendingCount > 0 ? 'border-yellow-500' : ''}>
+                            <CardHeader className="pb-2">
+                                <CardTitle className="text-sm font-medium">Pending Review</CardTitle>
+                            </CardHeader>
+                            <CardContent>
+                                <div className="flex items-center">
+                                    <ListChecks className={`mr-2 h-8 w-8 ${pendingCount > 0 ? 'text-yellow-500' : 'text-muted-foreground'}`} />
+                                    <div>
+                                        <p className="text-2xl font-bold">{pendingCount}</p>
+                                        <p className="text-muted-foreground text-xs">awaiting action</p>
                                     </div>
-                                </CardContent>
-                            </Card>
-                        )}
+                                </div>
+                                {pendingCount > 0 && (
+                                    <Button size="sm" variant="outline" className="mt-2 w-full" onClick={() => router.visit(route('review-queue.index'))}>
+                                        Review Queue
+                                    </Button>
+                                )}
+                            </CardContent>
+                        </Card>
 
                         {/* Today Scanned */}
                         <Card>
@@ -207,6 +225,26 @@ export default function ModerationDashboard({ quotaStats, platforms, todayStats,
                             </CardContent>
                         </Card>
                     </div>
+
+                    {quotaStats && (
+                        <Card>
+                            <CardHeader className="pb-2">
+                                <CardTitle className="text-sm font-medium">API Quota (Admin)</CardTitle>
+                            </CardHeader>
+                            <CardContent>
+                                <div className="space-y-2">
+                                    <div className="flex items-center justify-between text-sm">
+                                        <span>
+                                            {quotaStats.used.toLocaleString()} / {quotaStats.limit.toLocaleString()}
+                                        </span>
+                                        <span className="text-muted-foreground">{quotaStats.percentage}%</span>
+                                    </div>
+                                    <Progress value={quotaStats.percentage} className={quotaStats.percentage >= 80 ? 'bg-red-100' : ''} />
+                                    <p className="text-muted-foreground text-xs">Can delete ~{quotaStats.can_delete_comments} more comments</p>
+                                </div>
+                            </CardContent>
+                        </Card>
+                    )}
 
                     {quotaStats && quotaStats.percentage >= 80 && (
                         <Alert variant="destructive">
