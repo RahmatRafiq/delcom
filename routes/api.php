@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\ExtensionController;
 use Illuminate\Support\Facades\Route;
 
@@ -14,9 +15,21 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-// Extension API
-// TODO: Replace with JWT auth when implemented
-Route::prefix('extension')->middleware(['web', 'auth'])->group(function () {
+// Auth routes (public)
+Route::prefix('auth')->group(function () {
+    Route::post('login', [AuthController::class, 'login']);
+    Route::post('register', [AuthController::class, 'register']);
+});
+
+// Auth routes (protected)
+Route::prefix('auth')->middleware('auth:api')->group(function () {
+    Route::get('me', [AuthController::class, 'me']);
+    Route::post('logout', [AuthController::class, 'logout']);
+    Route::post('refresh', [AuthController::class, 'refresh']);
+});
+
+// Extension API (protected with JWT)
+Route::prefix('extension')->middleware('auth:api')->group(function () {
     // Connection verification
     Route::get('verify', [ExtensionController::class, 'verify']);
 
