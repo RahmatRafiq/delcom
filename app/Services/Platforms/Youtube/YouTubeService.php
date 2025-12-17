@@ -1,24 +1,22 @@
 <?php
 
-namespace App\Services;
+namespace App\Services\Platforms\Youtube;
 
+use App\Contracts\PlatformServiceInterface;
+use App\Models\UserContent;
 use App\Models\UserPlatform;
 use Illuminate\Http\Client\PendingRequest;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
-class YouTubeService
+class YouTubeService implements PlatformServiceInterface
 {
     private const API_BASE = 'https://www.googleapis.com/youtube/v3';
-
     private const TOKEN_URL = 'https://oauth2.googleapis.com/token';
 
     private UserPlatform $userPlatform;
-
     private ?string $accessToken = null;
-
     private YouTubeRateLimiter $rateLimiter;
-
     private ?array $cachedChannel = null;
 
     public function __construct(UserPlatform $userPlatform)
@@ -27,68 +25,63 @@ class YouTubeService
         $this->rateLimiter = new YouTubeRateLimiter;
     }
 
-    /**
-     * Create instance from UserPlatform.
-     */
     public static function for(UserPlatform $userPlatform): self
     {
         return new self($userPlatform);
     }
 
-    /**
-     * Get the rate limiter instance.
-     */
+    public function getPlatformName(): string
+    {
+        return 'youtube';
+    }
+
+    public function getContentType(): string
+    {
+        return UserContent::TYPE_VIDEO;
+    }
+
+    public function isApiConnection(): bool
+    {
+        return $this->userPlatform->connection_method === 'api';
+    }
+
+    public function isExtensionConnection(): bool
+    {
+        return $this->userPlatform->connection_method === 'extension';
+    }
+
     public function getRateLimiter(): YouTubeRateLimiter
     {
         return $this->rateLimiter;
     }
 
-    /**
-     * Check if we can make an API call (rate limit + quota check).
-     */
     private function canMakeRequest(string $operation = 'list_videos'): bool
     {
         $user = $this->userPlatform->user;
 
-        // Check user burst rate limit
         if ($this->rateLimiter->isRateLimited($user)) {
-            Log::warning('YouTubeService: User rate limited', [
-                'user_id' => $user->id,
-            ]);
-
+            Log::warning('YouTubeService: User rate limited', ['user_id' => $user->id]);
             return false;
         }
 
-        // Check global quota
         if (! $this->rateLimiter->hasQuotaFor($operation)) {
             Log::warning('YouTubeService: Daily quota exhausted', [
                 'operation' => $operation,
                 'remaining' => $this->rateLimiter->getRemainingDailyQuota(),
             ]);
-
             return false;
         }
 
         return true;
     }
 
-    /**
-     * Track API usage after a successful call.
-     */
     private function trackUsage(string $operation, int $count = 1): void
     {
         $user = $this->userPlatform->user;
-
-        // Increment burst rate counter
         $this->rateLimiter->incrementRequestCount($user);
-
-        // Track quota usage
         $this->rateLimiter->trackQuotaUsage($operation, $count);
     }
 
-    /**
-     * Get the HTTP client with authorization.
-     */
     private function client(): PendingRequest
     {
         $this->ensureValidToken();
@@ -98,16 +91,12 @@ class YouTubeService
             ->retry(2, 100);
     }
 
-    /**
-     * Ensure we have a valid access token.
-     */
     private function ensureValidToken(): void
     {
         if ($this->accessToken) {
             return;
         }
 
-        // Check if token is expired or about to expire (within 5 minutes)
         if ($this->userPlatform->token_expires_at &&
             $this->userPlatform->token_expires_at->subMinutes(5)->isPast()) {
             $this->refreshToken();
@@ -116,18 +105,18 @@ class YouTubeService
         $this->accessToken = $this->userPlatform->access_token;
     }
 
-    /**
-     * Refresh the OAuth access token.
-     */
     public function refreshToken(): bool
     {
+        if ($this->isExtensionConnection()) {
+            return true;
+        }
+
         $refreshToken = $this->userPlatform->refresh_token;
 
         if (! $refreshToken) {
             Log::error('YouTubeService: No refresh token available', [
                 'user_platform_id' => $this->userPlatform->id,
             ]);
-
             return false;
         }
 
@@ -144,7 +133,6 @@ class YouTubeService
                     'user_platform_id' => $this->userPlatform->id,
                     'error' => $response->json(),
                 ]);
-
                 return false;
             }
 
@@ -167,9 +155,35 @@ class YouTubeService
                 'user_platform_id' => $this->userPlatform->id,
                 'error' => $e->getMessage(),
             ]);
-
             return false;
         }
+    }
+
+    public function getAccount(): ?array
+    {
+        if ($this->isExtensionConnection()) {
+            return [
+                'id' => $this->userPlatform->platform_channel_id,
+                'username' => $this->userPlatform->platform_username,
+                'name' => $this->userPlatform->platform_username,
+                'connection_method' => 'extension',
+            ];
+        }
+
+        $channel = $this->getChannel();
+
+        if (! $channel) {
+            return null;
+        }
+
+        return [
+            'id' => $channel['id'],
+            'username' => $channel['snippet']['title'],
+            'name' => $channel['snippet']['title'],
+            'profile_picture_url' => $channel['snippet']['thumbnails']['default']['url'] ?? null,
+            'followers_count' => $channel['statistics']['subscriberCount'] ?? 0,
+            'content_count' => $channel['statistics']['videoCount'] ?? 0,
+        ];
     }
 
     public function getChannel(): ?array
@@ -190,10 +204,7 @@ class YouTubeService
         $this->trackUsage('list_videos');
 
         if ($response->failed()) {
-            Log::error('YouTubeService: Failed to get channel', [
-                'error' => $response->json(),
-            ]);
-
+            Log::error('YouTubeService: Failed to get channel', ['error' => $response->json()]);
             return null;
         }
 
@@ -202,16 +213,25 @@ class YouTubeService
         return $this->cachedChannel;
     }
 
-    /**
-     * Get videos from the channel.
-     */
+    public function getContents(int $limit = 25, ?string $cursor = null): array
+    {
+        return $this->getChannelVideos($limit, $cursor);
+    }
+
     public function getChannelVideos(int $maxResults = 50, ?string $pageToken = null): array
     {
+        if ($this->isExtensionConnection()) {
+            return [
+                'items' => [],
+                'nextPageToken' => null,
+                'message' => 'Content is fetched by browser extension',
+            ];
+        }
+
         if (! $this->canMakeRequest('list_videos')) {
             return ['items' => [], 'nextPageToken' => null, 'error' => 'rate_limited'];
         }
 
-        // First, get the uploads playlist ID
         $channel = $this->getChannel();
         if (! $channel) {
             return ['items' => [], 'nextPageToken' => null];
@@ -222,7 +242,6 @@ class YouTubeService
             return ['items' => [], 'nextPageToken' => null];
         }
 
-        // Get videos from uploads playlist
         $params = [
             'part' => 'snippet,contentDetails',
             'playlistId' => $uploadsPlaylistId,
@@ -238,27 +257,56 @@ class YouTubeService
         $this->trackUsage('list_videos');
 
         if ($response->failed()) {
-            Log::error('YouTubeService: Failed to get channel videos', [
-                'error' => $response->json(),
-            ]);
-
+            Log::error('YouTubeService: Failed to get channel videos', ['error' => $response->json()]);
             return ['items' => [], 'nextPageToken' => null];
         }
 
         $data = $response->json();
 
+        $items = [];
+        foreach ($data['items'] ?? [] as $video) {
+            $contentId = $video['contentDetails']['videoId']
+                ?? $video['snippet']['resourceId']['videoId']
+                ?? null;
+
+            if (! $contentId) {
+                continue;
+            }
+
+            $items[] = [
+                'contentId' => $contentId,
+                'contentType' => UserContent::TYPE_VIDEO,
+                'title' => $video['snippet']['title'] ?? 'Unknown',
+                'thumbnail' => $video['snippet']['thumbnails']['medium']['url']
+                    ?? $video['snippet']['thumbnails']['default']['url']
+                    ?? null,
+                'platformUrl' => "https://www.youtube.com/watch?v={$contentId}",
+                'publishedAt' => $video['snippet']['publishedAt'] ?? null,
+            ];
+        }
+
         return [
-            'items' => $data['items'] ?? [],
+            'items' => $items,
             'nextPageToken' => $data['nextPageToken'] ?? null,
             'totalResults' => $data['pageInfo']['totalResults'] ?? 0,
         ];
     }
 
-    /**
-     * Get comments for a specific video.
-     */
+    public function getComments(string $contentId, int $limit = 50, ?string $cursor = null): array
+    {
+        return $this->getVideoComments($contentId, $limit, $cursor);
+    }
+
     public function getVideoComments(string $videoId, int $maxResults = 100, ?string $pageToken = null): array
     {
+        if ($this->isExtensionConnection()) {
+            return [
+                'items' => [],
+                'nextPageToken' => null,
+                'message' => 'Comments are fetched by browser extension',
+            ];
+        }
+
         if (! $this->canMakeRequest('list_comments')) {
             return ['items' => [], 'nextPageToken' => null, 'error' => 'rate_limited'];
         }
@@ -267,7 +315,7 @@ class YouTubeService
             'part' => 'snippet',
             'videoId' => $videoId,
             'maxResults' => min($maxResults, 100),
-            'order' => 'time', // Get newest first
+            'order' => 'time',
             'textFormat' => 'plainText',
         ];
 
@@ -282,11 +330,9 @@ class YouTubeService
         if ($response->failed()) {
             $error = $response->json();
 
-            // Check if comments are disabled
             if (isset($error['error']['errors'][0]['reason']) &&
                 $error['error']['errors'][0]['reason'] === 'commentsDisabled') {
                 Log::info('YouTubeService: Comments disabled for video', ['video_id' => $videoId]);
-
                 return ['items' => [], 'nextPageToken' => null, 'commentsDisabled' => true];
             }
 
@@ -300,13 +346,12 @@ class YouTubeService
 
         $data = $response->json();
 
-        // Transform to simpler format
         $comments = [];
         foreach ($data['items'] ?? [] as $item) {
             $topComment = $item['snippet']['topLevelComment'];
             $comments[] = [
                 'id' => $topComment['id'],
-                'videoId' => $videoId,
+                'contentId' => $videoId,
                 'authorDisplayName' => $topComment['snippet']['authorDisplayName'],
                 'authorChannelId' => $topComment['snippet']['authorChannelId']['value'] ?? null,
                 'textDisplay' => $topComment['snippet']['textDisplay'],
@@ -325,22 +370,23 @@ class YouTubeService
         ];
     }
 
-    /**
-     * Delete a comment.
-     *
-     * Note: Can only delete comments on videos owned by the authenticated user.
-     * Uses setModerationStatus with 'rejected' which effectively removes the comment.
-     */
     public function deleteComment(string $commentId): array
     {
         Log::info('YouTubeService: Attempting to delete comment', [
             'comment_id' => $commentId,
             'user_platform_id' => $this->userPlatform->id,
             'channel_id' => $this->userPlatform->platform_channel_id,
+            'connection_method' => $this->userPlatform->connection_method,
         ]);
 
-        // YouTube API delete requires query parameter, not body
-        // Using setModerationStatus with 'rejected' is more reliable
+        if ($this->isExtensionConnection()) {
+            return [
+                'success' => true,
+                'method' => 'extension',
+                'message' => 'Deletion queued for browser extension',
+            ];
+        }
+
         $result = $this->setModerationStatus($commentId, 'rejected');
 
         Log::info('YouTubeService: Delete comment result', [
@@ -353,10 +399,19 @@ class YouTubeService
         return $result;
     }
 
-    /**
-     * Set comment moderation status (held for review or published).
-     * Alternative to delete - hides comment instead.
-     */
+    public function hideComment(string $commentId): array
+    {
+        if ($this->isExtensionConnection()) {
+            return [
+                'success' => true,
+                'method' => 'extension',
+                'message' => 'Hide action queued for browser extension',
+            ];
+        }
+
+        return $this->setModerationStatus($commentId, 'heldForReview');
+    }
+
     public function setModerationStatus(string $commentId, string $status = 'rejected'): array
     {
         Log::info('YouTubeService: setModerationStatus called', [
@@ -367,12 +422,9 @@ class YouTubeService
 
         if (! $this->canMakeRequest('set_moderation_status')) {
             Log::warning('YouTubeService: Cannot make request - rate limited or quota exhausted');
-
             return ['success' => false, 'error' => 'Rate limit exceeded or quota exhausted'];
         }
 
-        // Valid statuses: heldForReview, published, rejected
-        // Note: 'rejected' effectively hides/removes the comment
         $this->ensureValidToken();
 
         Log::debug('YouTubeService: Sending API request to setModerationStatus', [
@@ -480,11 +532,19 @@ class YouTubeService
         return ['items' => $replies];
     }
 
-    /**
-     * Test API connection.
-     */
     public function testConnection(): array
     {
+        if ($this->isExtensionConnection()) {
+            return [
+                'success' => true,
+                'connection_method' => 'extension',
+                'channel' => [
+                    'id' => $this->userPlatform->platform_channel_id,
+                    'title' => $this->userPlatform->platform_username,
+                ],
+            ];
+        }
+
         try {
             $channel = $this->getChannel();
 

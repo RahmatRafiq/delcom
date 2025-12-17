@@ -1,27 +1,20 @@
 <?php
 
-namespace App\Services;
+namespace App\Services\Platforms\Instagram;
 
+use App\Contracts\PlatformServiceInterface;
+use App\Models\UserContent;
 use App\Models\UserPlatform;
 use Illuminate\Http\Client\PendingRequest;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
-/**
- * Instagram Service
- *
- * Supports two connection methods:
- * 1. API - Instagram Graph API via Facebook OAuth
- * 2. Extension - Browser extension sends data to our API
- */
-class InstagramService
+class InstagramService implements PlatformServiceInterface
 {
     private const GRAPH_API_BASE = 'https://graph.facebook.com/v21.0';
 
     private UserPlatform $userPlatform;
-
     private ?string $accessToken = null;
-
     private ?array $cachedAccount = null;
 
     public function __construct(UserPlatform $userPlatform)
@@ -29,48 +22,42 @@ class InstagramService
         $this->userPlatform = $userPlatform;
     }
 
-    /**
-     * Create instance from UserPlatform.
-     */
     public static function for(UserPlatform $userPlatform): self
     {
         return new self($userPlatform);
     }
 
-    /**
-     * Check if this is an API connection.
-     */
+    public function getPlatformName(): string
+    {
+        return 'instagram';
+    }
+
+    public function getContentType(): string
+    {
+        return UserContent::TYPE_POST;
+    }
+
     public function isApiConnection(): bool
     {
         return $this->userPlatform->connection_method === 'api';
     }
 
-    /**
-     * Check if this is an extension connection.
-     */
     public function isExtensionConnection(): bool
     {
         return $this->userPlatform->connection_method === 'extension';
     }
 
-    /**
-     * Get the HTTP client.
-     */
     private function client(): PendingRequest
     {
         return Http::timeout(30)->retry(2, 100);
     }
 
-    /**
-     * Ensure we have a valid access token.
-     */
     private function ensureValidToken(): void
     {
         if ($this->accessToken) {
             return;
         }
 
-        // Check if token is expired or about to expire (within 5 minutes)
         if ($this->userPlatform->token_expires_at &&
             $this->userPlatform->token_expires_at->subMinutes(5)->isPast()) {
             $this->refreshToken();
@@ -79,13 +66,10 @@ class InstagramService
         $this->accessToken = $this->userPlatform->access_token;
     }
 
-    /**
-     * Refresh the OAuth access token (exchange for long-lived token).
-     */
     public function refreshToken(): bool
     {
         if ($this->isExtensionConnection()) {
-            return true; // Extension doesn't use OAuth tokens
+            return true;
         }
 
         $currentToken = $this->userPlatform->access_token;
@@ -94,12 +78,10 @@ class InstagramService
             Log::error('InstagramService: No access token available', [
                 'user_platform_id' => $this->userPlatform->id,
             ]);
-
             return false;
         }
 
         try {
-            // Exchange for long-lived token
             $response = Http::get(self::GRAPH_API_BASE.'/oauth/access_token', [
                 'grant_type' => 'fb_exchange_token',
                 'client_id' => config('services.facebook.client_id'),
@@ -112,7 +94,6 @@ class InstagramService
                     'user_platform_id' => $this->userPlatform->id,
                     'error' => $response->json(),
                 ]);
-
                 return false;
             }
 
@@ -120,7 +101,6 @@ class InstagramService
 
             $this->userPlatform->update([
                 'access_token' => $data['access_token'],
-                // Long-lived tokens last ~60 days
                 'token_expires_at' => now()->addSeconds($data['expires_in'] ?? 5184000),
             ]);
 
@@ -136,14 +116,10 @@ class InstagramService
                 'user_platform_id' => $this->userPlatform->id,
                 'error' => $e->getMessage(),
             ]);
-
             return false;
         }
     }
 
-    /**
-     * Get account info.
-     */
     public function getAccount(): ?array
     {
         if ($this->isExtensionConnection()) {
@@ -157,9 +133,6 @@ class InstagramService
         return $this->getAccountViaApi();
     }
 
-    /**
-     * Get account via Instagram Graph API.
-     */
     private function getAccountViaApi(): ?array
     {
         if ($this->cachedAccount !== null) {
@@ -172,7 +145,6 @@ class InstagramService
             Log::error('InstagramService: No Instagram user ID', [
                 'user_platform_id' => $this->userPlatform->id,
             ]);
-
             return null;
         }
 
@@ -184,10 +156,7 @@ class InstagramService
         ]);
 
         if ($response->failed()) {
-            Log::error('InstagramService: Failed to get account', [
-                'error' => $response->json(),
-            ]);
-
+            Log::error('InstagramService: Failed to get account', ['error' => $response->json()]);
             return null;
         }
 
@@ -196,9 +165,11 @@ class InstagramService
         return $this->cachedAccount;
     }
 
-    /**
-     * Get user's media (posts, reels).
-     */
+    public function getContents(int $limit = 25, ?string $cursor = null): array
+    {
+        return $this->getMedia($limit, $cursor);
+    }
+
     public function getMedia(int $limit = 25, ?string $after = null): array
     {
         if ($this->isExtensionConnection()) {
@@ -230,25 +201,37 @@ class InstagramService
         $response = $this->client()->get(self::GRAPH_API_BASE."/{$igUserId}/media", $params);
 
         if ($response->failed()) {
-            Log::error('InstagramService: Failed to get media', [
-                'error' => $response->json(),
-            ]);
-
+            Log::error('InstagramService: Failed to get media', ['error' => $response->json()]);
             return ['items' => [], 'paging' => null];
         }
 
         $data = $response->json();
 
+        $items = [];
+        foreach ($data['data'] ?? [] as $media) {
+            $contentType = match ($media['media_type'] ?? 'IMAGE') {
+                'VIDEO' => UserContent::TYPE_REEL,
+                'CAROUSEL_ALBUM' => UserContent::TYPE_POST,
+                default => UserContent::TYPE_POST,
+            };
+
+            $items[] = [
+                'contentId' => $media['id'],
+                'contentType' => $contentType,
+                'title' => mb_substr($media['caption'] ?? '', 0, 100),
+                'thumbnail' => $media['thumbnail_url'] ?? $media['media_url'] ?? null,
+                'platformUrl' => $media['permalink'] ?? null,
+                'publishedAt' => $media['timestamp'] ?? null,
+            ];
+        }
+
         return [
-            'items' => $data['data'] ?? [],
-            'paging' => $data['paging'] ?? null,
+            'items' => $items,
+            'nextPageToken' => $data['paging']['cursors']['after'] ?? null,
         ];
     }
 
-    /**
-     * Get comments for a specific media.
-     */
-    public function getComments(string $mediaId, int $limit = 50, ?string $after = null): array
+    public function getComments(string $contentId, int $limit = 50, ?string $cursor = null): array
     {
         if ($this->isExtensionConnection()) {
             return [
@@ -266,24 +249,22 @@ class InstagramService
             'access_token' => $this->accessToken,
         ];
 
-        if ($after) {
-            $params['after'] = $after;
+        if ($cursor) {
+            $params['after'] = $cursor;
         }
 
-        $response = $this->client()->get(self::GRAPH_API_BASE."/{$mediaId}/comments", $params);
+        $response = $this->client()->get(self::GRAPH_API_BASE."/{$contentId}/comments", $params);
 
         if ($response->failed()) {
             $error = $response->json();
 
-            // Check if comments are disabled or restricted
             if (isset($error['error']['code']) && $error['error']['code'] === 100) {
-                Log::info('InstagramService: Comments may be disabled', ['media_id' => $mediaId]);
-
+                Log::info('InstagramService: Comments may be disabled', ['media_id' => $contentId]);
                 return ['items' => [], 'paging' => null, 'commentsDisabled' => true];
             }
 
             Log::error('InstagramService: Failed to get comments', [
-                'media_id' => $mediaId,
+                'media_id' => $contentId,
                 'error' => $error,
             ]);
 
@@ -292,14 +273,16 @@ class InstagramService
 
         $data = $response->json();
 
-        // Transform to consistent format
         $comments = [];
         foreach ($data['data'] ?? [] as $comment) {
             $comments[] = [
                 'id' => $comment['id'],
-                'text' => $comment['text'],
-                'username' => $comment['username'],
-                'timestamp' => $comment['timestamp'],
+                'contentId' => $contentId,
+                'authorDisplayName' => $comment['username'],
+                'authorChannelId' => null,
+                'textDisplay' => $comment['text'],
+                'textOriginal' => $comment['text'],
+                'publishedAt' => $comment['timestamp'],
                 'likeCount' => $comment['like_count'] ?? 0,
                 'replies' => $comment['replies']['data'] ?? [],
             ];
@@ -307,13 +290,10 @@ class InstagramService
 
         return [
             'items' => $comments,
-            'paging' => $data['paging'] ?? null,
+            'nextPageToken' => $data['paging']['cursors']['after'] ?? null,
         ];
     }
 
-    /**
-     * Delete a comment.
-     */
     public function deleteComment(string $commentId): array
     {
         Log::info('InstagramService: Attempting to delete comment', [
@@ -337,10 +317,7 @@ class InstagramService
         ]);
 
         if ($response->successful()) {
-            Log::info('InstagramService: Comment deleted successfully', [
-                'comment_id' => $commentId,
-            ]);
-
+            Log::info('InstagramService: Comment deleted successfully', ['comment_id' => $commentId]);
             return ['success' => true];
         }
 
@@ -357,10 +334,12 @@ class InstagramService
         ];
     }
 
-    /**
-     * Hide a comment.
-     */
-    public function hideComment(string $commentId, bool $hide = true): array
+    public function hideComment(string $commentId): array
+    {
+        return $this->setCommentVisibility($commentId, true);
+    }
+
+    public function setCommentVisibility(string $commentId, bool $hide = true): array
     {
         Log::info('InstagramService: Attempting to hide comment', [
             'comment_id' => $commentId,
@@ -385,7 +364,6 @@ class InstagramService
 
         if ($response->successful()) {
             Log::info('InstagramService: Comment hidden', ['comment_id' => $commentId, 'hidden' => $hide]);
-
             return ['success' => true];
         }
 
@@ -401,9 +379,6 @@ class InstagramService
         ];
     }
 
-    /**
-     * Reply to a comment.
-     */
     public function replyToComment(string $commentId, string $message): array
     {
         if ($this->isExtensionConnection()) {
@@ -439,9 +414,6 @@ class InstagramService
         ];
     }
 
-    /**
-     * Get Facebook Pages that user manages (needed to find Instagram accounts).
-     */
     public static function getFacebookPages(string $accessToken): array
     {
         $response = Http::get(self::GRAPH_API_BASE.'/me/accounts', [
@@ -450,19 +422,13 @@ class InstagramService
         ]);
 
         if ($response->failed()) {
-            Log::error('InstagramService: Failed to get Facebook pages', [
-                'error' => $response->json(),
-            ]);
-
+            Log::error('InstagramService: Failed to get Facebook pages', ['error' => $response->json()]);
             return [];
         }
 
         return $response->json()['data'] ?? [];
     }
 
-    /**
-     * Test API connection.
-     */
     public function testConnection(): array
     {
         if ($this->isExtensionConnection()) {
