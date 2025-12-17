@@ -144,6 +144,13 @@ class ModerationLogSeeder extends Seeder
     private function createLog(int $userId, UserPlatform $userPlatform, $filters, string $comment, string $action, string $source): void
     {
         $filter = $filters->isNotEmpty() ? $filters->random() : null;
+        $platformName = $userPlatform->platform->name ?? 'youtube';
+        $contentType = match ($platformName) {
+            'youtube' => fake()->randomElement(['video', 'short']),
+            'instagram' => fake()->randomElement(['post', 'reel', 'story']),
+            'tiktok' => 'video',
+            default => 'video',
+        };
 
         ModerationLog::create([
             'user_id' => $userId,
@@ -152,7 +159,8 @@ class ModerationLogSeeder extends Seeder
             'comment_text' => $comment,
             'commenter_id' => 'user_'.fake()->numerify('##########'),
             'commenter_username' => fake()->randomElement($this->usernames),
-            'video_id' => fake()->regexify('[A-Za-z0-9]{11}'),
+            'content_id' => fake()->regexify('[A-Za-z0-9]{11}'),
+            'content_type' => $contentType,
             'matched_filter_id' => $filter?->id,
             'matched_pattern' => $filter?->pattern,
             'action_taken' => $action,

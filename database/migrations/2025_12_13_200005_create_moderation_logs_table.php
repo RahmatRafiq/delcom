@@ -12,14 +12,14 @@ return new class extends Migration
             $table->id();
             $table->foreignId('user_id')->constrained()->onDelete('cascade');
             $table->foreignId('user_platform_id')->constrained()->onDelete('cascade');
-            $table->string('platform_comment_id', 255)->comment('Comment ID on the platform');
-            $table->string('video_id', 255)->nullable()->comment('Video/Post ID where comment was found');
-            $table->string('post_id', 255)->nullable()->comment('Alternative post identifier');
+            $table->string('platform_comment_id', 255);
+            $table->string('content_id', 255)->nullable();
+            $table->enum('content_type', ['video', 'post', 'reel', 'story', 'short', 'other'])->default('video');
             $table->string('commenter_username', 255)->nullable();
             $table->string('commenter_id', 255)->nullable();
-            $table->text('comment_text')->nullable()->comment('Original comment text for reference');
+            $table->text('comment_text')->nullable();
             $table->foreignId('matched_filter_id')->nullable()->constrained('filters')->onDelete('set null');
-            $table->string('matched_pattern', 500)->nullable()->comment('The pattern that matched');
+            $table->string('matched_pattern', 500)->nullable();
             $table->enum('action_taken', [
                 'deleted',
                 'hidden',
@@ -28,11 +28,11 @@ return new class extends Migration
                 'failed',
             ]);
             $table->enum('action_source', [
-                'background_job',   // Tier 1: API-based deletion
-                'extension',        // Tier 2: Extension-based deletion
-                'manual',            // User manually deleted via dashboard
+                'background_job',
+                'extension',
+                'manual',
             ]);
-            $table->text('failure_reason')->nullable()->comment('Error message if action failed');
+            $table->text('failure_reason')->nullable();
             $table->timestamp('processed_at');
             $table->timestamps();
 
@@ -40,6 +40,7 @@ return new class extends Migration
             $table->index(['user_platform_id', 'processed_at'], 'idx_platform_date');
             $table->index('action_taken', 'idx_action');
             $table->index('platform_comment_id', 'idx_platform_comment');
+            $table->index('content_type', 'idx_content_type');
         });
     }
 

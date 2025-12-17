@@ -3,23 +3,21 @@
 namespace Database\Seeders;
 
 use App\Models\PendingModeration;
-use App\Models\UserVideo;
+use App\Models\UserContent;
 use Illuminate\Database\Seeder;
 
 class ReviewQueueSeeder extends Seeder
 {
     public function run(): void
     {
-        // Sample YouTube video IDs (fake but realistic format)
-        $sampleVideos = [
-            ['id' => 'dQw4w9WgXcQ', 'title' => 'Tutorial Laravel 12 - Building REST API'],
-            ['id' => 'kJQP7kiw5Fk', 'title' => 'React 19 New Features Explained'],
-            ['id' => '9bZkp7q19f0', 'title' => 'Unboxing iPhone 16 Pro Max'],
-            ['id' => 'hT_nvWreIhg', 'title' => 'Cara Dapat 1 Juta Subscriber'],
-            ['id' => 'JGwWNGJdvx8', 'title' => 'Review Laptop Gaming 2024'],
+        $sampleContents = [
+            ['id' => 'dQw4w9WgXcQ', 'title' => 'Tutorial Laravel 12 - Building REST API', 'type' => 'video'],
+            ['id' => 'kJQP7kiw5Fk', 'title' => 'React 19 New Features Explained', 'type' => 'video'],
+            ['id' => '9bZkp7q19f0', 'title' => 'Unboxing iPhone 16 Pro Max', 'type' => 'video'],
+            ['id' => 'hT_nvWreIhg', 'title' => 'Cara Dapat 1 Juta Subscriber', 'type' => 'video'],
+            ['id' => 'JGwWNGJdvx8', 'title' => 'Review Laptop Gaming 2024', 'type' => 'video'],
         ];
 
-        // Sample spam comments
         $spamComments = [
             ['text' => 'Slot gacor hari ini! Klik link bio saya untuk maxwin!', 'pattern' => 'slot gacor', 'filter_id' => 1],
             ['text' => 'Togel online terpercaya, WD pasti dibayar 100%', 'pattern' => 'togel online', 'filter_id' => 2],
@@ -39,33 +37,27 @@ class ReviewQueueSeeder extends Seeder
             'link_alternatif_slot', 'deposit_pulsa_tanpa_potongan',
         ];
 
-        // ============================================
-        // USER 3 - YouTube (UserPlatform ID: 4)
-        // ============================================
-        $this->seedForUser(3, 4, $sampleVideos, $spamComments, $spammerUsernames);
-
-        // ============================================
-        // USER 4 - YouTube (UserPlatform ID: 5)
-        // ============================================
-        $this->seedForUser(4, 5, array_slice($sampleVideos, 0, 3), array_slice($spamComments, 0, 5), $spammerUsernames);
+        $this->seedForUser(3, 4, $sampleContents, $spamComments, $spammerUsernames);
+        $this->seedForUser(4, 5, array_slice($sampleContents, 0, 3), array_slice($spamComments, 0, 5), $spammerUsernames);
 
         $this->command->info('Review Queue seeded successfully!');
-        $this->command->info('User 3: 5 videos, 15 pending moderations');
-        $this->command->info('User 4: 3 videos, 8 pending moderations');
+        $this->command->info('User 3: 5 contents, 15 pending moderations');
+        $this->command->info('User 4: 3 contents, 8 pending moderations');
     }
 
-    private function seedForUser(int $userId, int $userPlatformId, array $videos, array $spamComments, array $usernames): void
+    private function seedForUser(int $userId, int $userPlatformId, array $contents, array $spamComments, array $usernames): void
     {
-        $userVideoIds = [];
+        $userContentIds = [];
 
-        // Create UserVideos
-        foreach ($videos as $index => $video) {
-            $userVideo = UserVideo::create([
+        foreach ($contents as $index => $content) {
+            $userContent = UserContent::create([
                 'user_id' => $userId,
                 'user_platform_id' => $userPlatformId,
-                'video_id' => $video['id'],
-                'title' => $video['title'],
-                'thumbnail_url' => "https://i.ytimg.com/vi/{$video['id']}/mqdefault.jpg",
+                'content_id' => $content['id'],
+                'content_type' => $content['type'],
+                'title' => $content['title'],
+                'thumbnail_url' => "https://i.ytimg.com/vi/{$content['id']}/mqdefault.jpg",
+                'platform_url' => "https://www.youtube.com/watch?v={$content['id']}",
                 'published_at' => now()->subDays(rand(1, 30)),
                 'scan_enabled' => true,
                 'last_scanned_comment_id' => 'Ugw'.fake()->regexify('[A-Za-z0-9]{20}'),
@@ -74,10 +66,9 @@ class ReviewQueueSeeder extends Seeder
                 'total_spam_found' => rand(5, 30),
             ]);
 
-            $userVideoIds[] = $userVideo->id;
+            $userContentIds[] = $userContent->id;
         }
 
-        // Create PendingModerations with various statuses
         $statuses = [
             PendingModeration::STATUS_PENDING,
             PendingModeration::STATUS_PENDING,
@@ -92,7 +83,7 @@ class ReviewQueueSeeder extends Seeder
 
         for ($i = 0; $i < $commentCount; $i++) {
             $spam = $spamComments[$i % count($spamComments)];
-            $video = $videos[$i % count($videos)];
+            $content = $contents[$i % count($contents)];
             $status = $statuses[$i % count($statuses)];
             $username = $usernames[$i % count($usernames)];
 
@@ -101,10 +92,11 @@ class ReviewQueueSeeder extends Seeder
             PendingModeration::create([
                 'user_id' => $userId,
                 'user_platform_id' => $userPlatformId,
-                'user_video_id' => $userVideoIds[$i % count($userVideoIds)],
+                'user_content_id' => $userContentIds[$i % count($userContentIds)],
                 'platform_comment_id' => 'Ugw'.fake()->regexify('[A-Za-z0-9]{20}').'4AaABAg',
-                'video_id' => $video['id'],
-                'video_title' => $video['title'],
+                'content_id' => $content['id'],
+                'content_type' => $content['type'],
+                'content_title' => $content['title'],
                 'commenter_username' => $username,
                 'commenter_id' => 'UC'.fake()->regexify('[A-Za-z0-9]{22}'),
                 'commenter_profile_url' => 'https://www.youtube.com/channel/UC'.fake()->regexify('[A-Za-z0-9]{22}'),
