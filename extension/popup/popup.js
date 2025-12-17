@@ -97,58 +97,14 @@ function setupEventListeners() {
 
 async function handleGoogleLogin() {
   // Open Google OAuth in a new tab
+  // Service worker will handle the callback and store the token
   const authUrl = `${API_BASE.replace('/api', '')}/auth/google?extension=true`;
 
-  chrome.tabs.create({ url: authUrl }, (tab) => {
-    const tabId = tab.id;
+  chrome.tabs.create({ url: authUrl });
 
-    // Poll for auth completion
-    const checkInterval = setInterval(async () => {
-      try {
-        chrome.tabs.get(tabId, async (t) => {
-          if (chrome.runtime.lastError) {
-            // Tab was closed
-            clearInterval(checkInterval);
-            return;
-          }
-
-          // Check if redirected to callback page with token in hash
-          if (t.url && t.url.includes('/api/auth/extension-callback')) {
-            clearInterval(checkInterval);
-
-            // Extract token from URL hash (#token=xxx)
-            const hashMatch = t.url.match(/#token=([^&]+)/);
-            const token = hashMatch ? hashMatch[1] : null;
-
-            if (token) {
-              authToken = token;
-
-              // Get user info
-              const userInfo = await apiRequest('GET', '/auth/me');
-              if (userInfo.success) {
-                currentUser = userInfo.user;
-                await chrome.storage.local.set({
-                  authToken: authToken,
-                  user: currentUser,
-                });
-
-                // Close the OAuth tab
-                chrome.tabs.remove(tabId);
-                showDashboard();
-              } else {
-                showError('Failed to get user info');
-              }
-            }
-          }
-        });
-      } catch (error) {
-        console.error('OAuth check error:', error);
-      }
-    }, 500);
-
-    // Stop polling after 5 minutes
-    setTimeout(() => clearInterval(checkInterval), 300000);
-  });
+  // Close popup - service worker will handle the callback
+  // When user reopens popup, checkAuth() will find the token
+  window.close();
 }
 
 async function handleLogin(e) {
@@ -232,19 +188,48 @@ async function handleScan() {
   document.getElementById('scan-progress').textContent = 'Analyzing page...';
 
   try {
-    // Send message to content script to scan
-    const response = await chrome.tabs.sendMessage(tab.id, { action: 'scan' });
+    // First get page info to determine scan type
+    const pageInfo = await chrome.tabs.sendMessage(tab.id, { action: 'getPageInfo' });
 
-    if (response.success) {
-      document.getElementById('scan-progress').textContent = `Found ${response.commentsCount} comments...`;
+    let response;
 
-      // If comments found, send to API for filtering
-      if (response.comments && response.comments.length > 0) {
-        await processComments(response.comments, response.contentInfo);
-      } else {
-        showStatus('No comments found on this page', 'info');
+    if (pageInfo.isProfilePage) {
+      // Profile page - scan all posts
+      document.getElementById('scan-progress').textContent = 'Scanning profile posts...';
+      response = await chrome.tabs.sendMessage(tab.id, {
+        action: 'scanProfile',
+        options: { maxPosts: 20 } // Limit to 20 posts for now
+      });
+
+      if (response.success) {
+        document.getElementById('scan-progress').textContent =
+          `Found ${response.commentsCount} comments from ${response.postsScanned} posts...`;
+
+        if (response.comments && response.comments.length > 0) {
+          await processProfileComments(response.comments, response.contentInfo, response.posts);
+        } else {
+          showStatus(`Scanned ${response.postsScanned} posts. No comments found.`, 'info');
+        }
+      }
+    } else if (pageInfo.isPostPage || pageInfo.isReelPage) {
+      // Single post - scan this post only
+      response = await chrome.tabs.sendMessage(tab.id, { action: 'scan' });
+
+      if (response.success) {
+        document.getElementById('scan-progress').textContent = `Found ${response.commentsCount} comments...`;
+
+        if (response.comments && response.comments.length > 0) {
+          await processComments(response.comments, response.contentInfo);
+        } else {
+          showStatus('No comments found on this post', 'info');
+        }
       }
     } else {
+      showStatus('Please open a profile or post to scan', 'info');
+      return;
+    }
+
+    if (response && !response.success) {
       showStatus(response.error || 'Scan failed', 'error');
     }
   } catch (error) {
@@ -254,6 +239,16 @@ async function handleScan() {
     scanningOverlay.classList.add('hidden');
   }
 }
+
+// Listen for scan status updates from content script
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  if (message.action === 'scanStatus' && message.message) {
+    const progressEl = document.getElementById('scan-progress');
+    if (progressEl) {
+      progressEl.textContent = message.message;
+    }
+  }
+});
 
 async function processComments(comments, contentInfo) {
   try {
@@ -265,9 +260,10 @@ async function processComments(comments, contentInfo) {
       return;
     }
 
-    document.getElementById('scan-progress').textContent = 'Checking for spam...';
+    document.getElementById('scan-progress').textContent = 'Saving to review queue...';
 
-    const response = await apiRequest('POST', '/extension/comments', {
+    // Use save-all endpoint to save ALL comments for manual review
+    const response = await apiRequest('POST', '/extension/save-all', {
       connection_id: stored.instagramConnectionId,
       content_id: contentInfo.postId,
       content_title: contentInfo.caption || 'Instagram Post',
@@ -283,26 +279,93 @@ async function processComments(comments, contentInfo) {
     });
 
     if (response.success) {
-      const { scanned, matched, queued, to_delete } = response;
+      const { total, saved, skipped } = response;
 
-      if (matched > 0) {
-        if (response.use_review_queue) {
-          showStatus(`Found ${matched} spam comment(s). Added to review queue.`, 'success');
-        } else if (to_delete && to_delete.length > 0) {
-          // Execute deletions
-          document.getElementById('scan-progress').textContent = `Deleting ${to_delete.length} spam comments...`;
-          await executeDeletes(to_delete);
-        }
+      if (saved > 0) {
+        showStatus(`Saved ${saved} comments to review queue!` + (skipped > 0 ? ` (${skipped} duplicates)` : ''), 'success');
+      } else if (skipped > 0) {
+        showStatus(`All ${skipped} comments already in queue`, 'info');
       } else {
-        showStatus(`Scanned ${scanned} comments. No spam detected!`, 'success');
+        showStatus('No comments to save', 'info');
       }
 
       // Update stats
+      const stats = await chrome.storage.local.get(['stats']);
+      const currentStats = stats.stats || { scanned: 0, deleted: 0 };
+      currentStats.scanned += total;
+      await chrome.storage.local.set({ stats: currentStats });
       updateStats();
+    } else {
+      showStatus(response.error || 'Failed to save comments', 'error');
     }
   } catch (error) {
     console.error('Process comments error:', error);
-    showStatus('Failed to process comments', 'error');
+    showStatus('Failed to save comments: ' + error.message, 'error');
+  }
+}
+
+async function processProfileComments(comments, contentInfo, posts) {
+  try {
+    // Get connection ID from storage
+    const stored = await chrome.storage.local.get(['instagramConnectionId']);
+
+    if (!stored.instagramConnectionId) {
+      showStatus('Please connect your Instagram account first', 'error');
+      return;
+    }
+
+    document.getElementById('scan-progress').textContent = `Saving ${comments.length} comments from ${posts.length} posts...`;
+
+    // Group comments by post and send to API
+    let totalSaved = 0;
+    let totalSkipped = 0;
+
+    // Send all comments in one batch with profile info
+    const response = await apiRequest('POST', '/extension/save-all', {
+      connection_id: stored.instagramConnectionId,
+      content_id: `profile_${contentInfo.username}`,
+      content_title: `@${contentInfo.username} Profile`,
+      content_url: contentInfo.profileUrl,
+      comments: comments.map(c => ({
+        id: c.id,
+        text: c.text,
+        author_username: c.username,
+        author_id: c.userId || null,
+        author_profile_url: c.profileUrl || null,
+        created_at: c.timestamp || null,
+        post_id: c.postId || null,
+        post_url: c.postUrl || null,
+      })),
+    });
+
+    if (response.success) {
+      totalSaved = response.saved;
+      totalSkipped = response.skipped;
+
+      if (totalSaved > 0) {
+        showStatus(
+          `Saved ${totalSaved} comments from ${posts.length} posts!` +
+          (totalSkipped > 0 ? ` (${totalSkipped} duplicates)` : ''),
+          'success'
+        );
+      } else if (totalSkipped > 0) {
+        showStatus(`All ${totalSkipped} comments already in queue`, 'info');
+      } else {
+        showStatus('No new comments to save', 'info');
+      }
+
+      // Update stats
+      const stats = await chrome.storage.local.get(['stats']);
+      const currentStats = stats.stats || { scanned: 0, deleted: 0 };
+      currentStats.scanned += comments.length;
+      await chrome.storage.local.set({ stats: currentStats });
+      updateStats();
+    } else {
+      showStatus(response.error || 'Failed to save comments', 'error');
+    }
+  } catch (error) {
+    console.error('Process profile comments error:', error);
+    showStatus('Failed to save comments: ' + error.message, 'error');
   }
 }
 

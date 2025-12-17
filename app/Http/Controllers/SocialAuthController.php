@@ -7,8 +7,11 @@ use App\Models\User;
 use App\Models\UserPlatform;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 use Laravel\Socialite\Facades\Socialite;
 use Tymon\JWTAuth\Facades\JWTAuth;
 
@@ -16,29 +19,58 @@ class SocialAuthController extends Controller
 {
     public function redirectToProvider(Request $request, $provider)
     {
-        // Store extension flag in session for callback
-        if ($request->has('extension')) {
-            session(['oauth_from_extension' => true]);
-        }
+        $hasExtensionParam = $request->has('extension');
+        Log::info('OAuth redirect started', [
+            'provider' => $provider,
+            'has_extension_param' => $hasExtensionParam,
+            'all_params' => $request->all(),
+        ]);
+
+        // Build the OAuth redirect
+        $driver = Socialite::driver($provider);
 
         if ($provider === 'google') {
-            // Include YouTube scopes for comment moderation
-            return Socialite::driver($provider)
+            $driver = $driver
                 ->scopes(config('services.youtube.scopes'))
                 ->with([
-                    'access_type' => 'offline',      // Get refresh_token
-                    'prompt' => 'consent',           // Force consent screen to get refresh_token
-                ])
-                ->redirect();
+                    'access_type' => 'offline',
+                    'prompt' => 'consent',
+                ]);
         }
 
-        return Socialite::driver($provider)->redirect();
+        // If from extension, store in cache with unique state
+        if ($hasExtensionParam) {
+            $state = Str::random(40);
+            Cache::put("oauth_extension_state:{$state}", true, now()->addMinutes(10));
+            Log::info('Extension OAuth: storing state in cache', ['state' => $state]);
+
+            // Add state to OAuth request
+            $driver = $driver->with(['state' => $state]);
+        }
+
+        return $driver->redirect();
     }
 
-    public function handleProviderCallback($provider)
+    public function handleProviderCallback(Request $request, $provider)
     {
         try {
-            $socialUser = Socialite::driver($provider)->user();
+            // Get state from request to check if from extension
+            $state = $request->get('state');
+            $isFromExtension = $state && Cache::pull("oauth_extension_state:{$state}");
+
+            Log::info('OAuth callback received', [
+                'provider' => $provider,
+                'state' => $state,
+                'is_from_extension' => $isFromExtension,
+            ]);
+
+            // Use stateless() since we're managing state ourselves for extension
+            $driver = Socialite::driver($provider);
+            if ($isFromExtension) {
+                $driver = $driver->stateless();
+            }
+
+            $socialUser = $driver->user();
             $user = User::where('email', $socialUser->getEmail())->first();
 
             if (! $user) {
@@ -59,14 +91,20 @@ class SocialAuthController extends Controller
                 $this->saveYouTubeConnection($user, $socialUser);
             }
 
-            // Check if request came from extension
-            if (session('oauth_from_extension')) {
-                session()->forget('oauth_from_extension');
+            Log::info('OAuth user authenticated', [
+                'user_email' => $user->email,
+                'is_from_extension' => $isFromExtension,
+            ]);
 
+            if ($isFromExtension) {
                 // Generate JWT token for extension
                 $token = JWTAuth::fromUser($user);
 
-                // Redirect to API endpoint with token in URL fragment (more secure)
+                Log::info('Redirecting to extension callback', [
+                    'token_length' => \strlen($token),
+                ]);
+
+                // Redirect to API endpoint with token in URL fragment
                 return redirect("/api/auth/extension-callback#token={$token}");
             }
 

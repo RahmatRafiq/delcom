@@ -61,8 +61,11 @@ Route::prefix('extension')->middleware('auth:api')->group(function () {
     // Platform connection
     Route::post('connect', [ExtensionController::class, 'connect']);
 
-    // Comment submission and scanning
+    // Comment submission and scanning (with filter matching)
     Route::post('comments', [ExtensionController::class, 'submitComments']);
+
+    // Save ALL comments to review queue (no filtering - manual review)
+    Route::post('save-all', [ExtensionController::class, 'saveAllComments']);
 
     // Get pending deletions for extension to execute
     Route::get('pending-deletions', [ExtensionController::class, 'getPendingDeletions']);

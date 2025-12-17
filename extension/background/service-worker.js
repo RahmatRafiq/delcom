@@ -169,10 +169,43 @@ chrome.contextMenus.onClicked.addListener((info, tab) => {
 });
 
 // ========================================
-// Tab Updates (Detect Instagram navigation)
+// Tab Updates (Detect Instagram navigation & OAuth callback)
 // ========================================
 
-chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
+chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
+  // Handle OAuth callback - check tab.url (not changeInfo.url) for fragments
+  if (changeInfo.status === 'complete' && tab.url && tab.url.includes('/api/auth/extension-callback')) {
+    console.log('OAuth callback detected:', tab.url);
+
+    // Extract token from URL fragment
+    const tokenMatch = tab.url.match(/#token=([^&]+)/);
+    if (tokenMatch && tokenMatch[1]) {
+      const token = tokenMatch[1];
+      console.log('Token extracted, length:', token.length);
+
+      // Store token
+      await chrome.storage.local.set({ authToken: token });
+
+      // Get user info
+      try {
+        const userInfo = await handleApiRequest('GET', '/auth/me', null);
+        if (userInfo.success) {
+          await chrome.storage.local.set({ user: userInfo.user });
+          console.log('User info stored:', userInfo.user.email);
+
+          // Show notification
+          showNotification('Login Successful', `Welcome, ${userInfo.user.name}!`);
+        }
+      } catch (error) {
+        console.error('Failed to get user info:', error);
+      }
+
+      // Close the OAuth tab
+      chrome.tabs.remove(tabId);
+    }
+  }
+
+  // Detect Instagram navigation
   if (changeInfo.status === 'complete' && tab.url?.includes('instagram.com')) {
     // Update badge to show extension is active
     chrome.action.setBadgeText({ tabId, text: '' });

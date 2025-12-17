@@ -36,6 +36,75 @@
     maxRetries: 3,
     retryDelay: 1000,
     scrollDelay: 500,
+
+    // Anti-detection settings
+    safety: {
+      maxPostsPerScan: 15,           // Max posts per scan session
+      maxScansPerHour: 6,            // Max scan sessions per hour
+      maxPostsPerDay: 150,           // Max posts per day
+      delayBetweenPosts: [2000, 4000], // Random delay range (ms)
+      delayAfterModal: [1000, 2500],   // Delay after closing modal
+      delayBetweenScrolls: [500, 1500], // Scroll delay
+      cooldownAfterScan: 300000,      // 5 min cooldown between scans
+    }
+  };
+
+  // Rate limiting storage
+  const rateLimiter = {
+    lastScanTime: 0,
+    scansThisHour: 0,
+    postsToday: 0,
+    hourStartTime: Date.now(),
+    dayStartTime: Date.now(),
+
+    canScan() {
+      const now = Date.now();
+
+      // Reset hourly counter
+      if (now - this.hourStartTime > 3600000) {
+        this.scansThisHour = 0;
+        this.hourStartTime = now;
+      }
+
+      // Reset daily counter
+      if (now - this.dayStartTime > 86400000) {
+        this.postsToday = 0;
+        this.dayStartTime = now;
+      }
+
+      // Check cooldown
+      if (now - this.lastScanTime < CONFIG.safety.cooldownAfterScan) {
+        const remaining = Math.ceil((CONFIG.safety.cooldownAfterScan - (now - this.lastScanTime)) / 1000);
+        return { allowed: false, reason: `Cooldown: tunggu ${remaining} detik lagi` };
+      }
+
+      // Check hourly limit
+      if (this.scansThisHour >= CONFIG.safety.maxScansPerHour) {
+        return { allowed: false, reason: `Limit: max ${CONFIG.safety.maxScansPerHour} scan per jam` };
+      }
+
+      // Check daily limit
+      if (this.postsToday >= CONFIG.safety.maxPostsPerDay) {
+        return { allowed: false, reason: `Limit harian tercapai (${CONFIG.safety.maxPostsPerDay} posts)` };
+      }
+
+      return { allowed: true };
+    },
+
+    recordScan(postCount) {
+      this.lastScanTime = Date.now();
+      this.scansThisHour++;
+      this.postsToday += postCount;
+    },
+
+    getStatus() {
+      return {
+        scansThisHour: this.scansThisHour,
+        postsToday: this.postsToday,
+        maxScansPerHour: CONFIG.safety.maxScansPerHour,
+        maxPostsPerDay: CONFIG.safety.maxPostsPerDay,
+      };
+    }
   };
 
   // ========================================
@@ -55,6 +124,10 @@
         handleScan().then(sendResponse);
         return true;
 
+      case 'scanProfile':
+        handleScanProfile(message.options || {}).then(sendResponse);
+        return true;
+
       case 'deleteComments':
         handleDeleteComments(message.comments).then(sendResponse);
         return true;
@@ -65,6 +138,13 @@
 
       case 'getPageInfo':
         sendResponse(getPageInfo());
+        break;
+
+      case 'getRateLimitStatus':
+        sendResponse({
+          canScan: rateLimiter.canScan(),
+          status: rateLimiter.getStatus()
+        });
         break;
     }
   });
@@ -77,13 +157,20 @@
     const url = window.location.href;
     const isPostPage = /instagram\.com\/p\/[\w-]+/.test(url);
     const isReelPage = /instagram\.com\/reel\/[\w-]+/.test(url);
-    const isProfilePage = /instagram\.com\/[\w.]+\/?$/.test(url);
+    // Profile page: instagram.com/username (not /p/, /reel/, /stories/, etc.)
+    const isProfilePage = /instagram\.com\/[\w.]+\/?$/.test(url) &&
+                          !url.includes('/p/') &&
+                          !url.includes('/reel/') &&
+                          !url.includes('/stories/') &&
+                          !url.includes('/explore/');
 
     let postId = null;
     const postMatch = url.match(/\/(?:p|reel)\/([\w-]+)/);
     if (postMatch) {
       postId = postMatch[1];
     }
+
+    console.log('Delcom: Page info', { url, isPostPage, isReelPage, isProfilePage, postId });
 
     return {
       url,
@@ -236,6 +323,436 @@
   }
 
   // ========================================
+  // Profile Scanning (All Posts)
+  // ========================================
+
+  async function handleScanProfile(options = {}) {
+    if (isScanning) {
+      return { success: false, error: 'Already scanning' };
+    }
+
+    // Check rate limits
+    const canScan = rateLimiter.canScan();
+    if (!canScan.allowed) {
+      console.log(`Delcom: Rate limit - ${canScan.reason}`);
+      return { success: false, error: canScan.reason, rateLimited: true };
+    }
+
+    const pageInfo = getPageInfo();
+    if (!pageInfo.isProfilePage) {
+      return { success: false, error: 'Please navigate to a profile page first' };
+    }
+
+    isScanning = true;
+    // Use safety limit
+    const maxPosts = Math.min(options.maxPosts || CONFIG.safety.maxPostsPerScan, CONFIG.safety.maxPostsPerScan);
+    const allComments = [];
+    const postsScanned = [];
+
+    try {
+      // Notify start
+      updateScanStatus('Finding posts...');
+      console.log(`Delcom: Starting safe scan (max ${maxPosts} posts, with random delays)`);
+
+      // Scroll to load more posts (with human-like behavior)
+      await loadMorePostsSafely(maxPosts);
+
+      // Find all post links
+      const postLinks = findPostLinks();
+      console.log(`Delcom: Found ${postLinks.length} posts`);
+
+      if (postLinks.length === 0) {
+        return { success: false, error: 'No posts found on this profile' };
+      }
+
+      // Shuffle posts array untuk random order (lebih natural)
+      const shuffledPosts = shuffleArray([...postLinks]).slice(0, maxPosts);
+
+      // Process each post with random delays
+      for (let i = 0; i < shuffledPosts.length; i++) {
+        const postLink = shuffledPosts[i];
+        updateScanStatus(`Scanning post ${i + 1}/${shuffledPosts.length}...`);
+
+        try {
+          // Random delay before clicking (human-like)
+          await randomDelay(CONFIG.safety.delayBetweenPosts);
+
+          // Click to open post modal
+          postLink.click();
+
+          // Random wait for modal
+          await randomDelay([1000, 2000]);
+
+          // Wait for modal to open
+          const modal = await waitForElement('div[role="dialog"] article', 3000);
+          if (!modal) {
+            console.warn(`Delcom: Modal not found for post ${i + 1}`);
+            closeModal();
+            await randomDelay([500, 1000]);
+            continue;
+          }
+
+          // Get post ID from URL
+          const postUrl = window.location.href;
+          const postMatch = postUrl.match(/\/(?:p|reel)\/([\w-]+)/);
+          const postId = postMatch ? postMatch[1] : `post_${i}`;
+
+          // Load all comments in this post (with delays)
+          await loadAllCommentsSafely();
+
+          // Extract comments
+          const comments = extractCommentsFromModal();
+
+          if (comments.length > 0) {
+            // Add post info to each comment
+            comments.forEach(c => {
+              c.postId = postId;
+              c.postUrl = postUrl;
+            });
+
+            allComments.push(...comments);
+            postsScanned.push({
+              postId,
+              postUrl,
+              commentsCount: comments.length
+            });
+          }
+
+          console.log(`Delcom: Post ${i + 1} - ${comments.length} comments`);
+
+          // Close modal
+          closeModal();
+
+          // Random delay after closing (human-like)
+          await randomDelay(CONFIG.safety.delayAfterModal);
+
+        } catch (err) {
+          console.error(`Delcom: Error scanning post ${i + 1}:`, err);
+          closeModal();
+          await randomDelay([500, 1500]);
+        }
+      }
+
+      // Record this scan for rate limiting
+      rateLimiter.recordScan(postsScanned.length);
+
+      updateScanStatus('');
+
+      return {
+        success: true,
+        postsScanned: postsScanned.length,
+        commentsCount: allComments.length,
+        comments: allComments,
+        posts: postsScanned,
+        contentInfo: {
+          profileUrl: pageInfo.url,
+          username: getProfileUsername(),
+        },
+        rateLimit: rateLimiter.getStatus(),
+      };
+
+    } catch (error) {
+      console.error('Profile scan error:', error);
+      return { success: false, error: error.message };
+    } finally {
+      isScanning = false;
+      updateScanStatus('');
+    }
+  }
+
+  // Shuffle array untuk random order
+  function shuffleArray(array) {
+    for (let i = array.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [array[i], array[j]] = [array[j], array[i]];
+    }
+    return array;
+  }
+
+  // Safe version of loadMorePosts with random delays
+  async function loadMorePostsSafely(targetCount) {
+    let lastCount = 0;
+    let attempts = 0;
+    const maxAttempts = 10;
+
+    while (attempts < maxAttempts) {
+      const currentCount = document.querySelectorAll('article a[href*="/p/"], article a[href*="/reel/"]').length;
+
+      if (currentCount >= targetCount || currentCount === lastCount) {
+        break;
+      }
+
+      lastCount = currentCount;
+
+      // Human-like scroll
+      const scrollAmount = randomBetween(300, 700);
+      window.scrollBy({ top: scrollAmount, behavior: 'smooth' });
+
+      await randomDelay(CONFIG.safety.delayBetweenScrolls);
+      attempts++;
+    }
+
+    // Scroll back to top smoothly
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    await sleep(500);
+  }
+
+  // Safe version of loadAllComments with delays
+  async function loadAllCommentsSafely() {
+    let loadMoreBtn;
+    let attempts = 0;
+    const maxAttempts = 5; // Limit comment loading
+
+    while (attempts < maxAttempts) {
+      loadMoreBtn = document.querySelector(CONFIG.selectors.moreComments) ||
+                    document.querySelector('button[type="button"]');
+
+      // Check if it's a "load more comments" button
+      if (!loadMoreBtn || !loadMoreBtn.textContent?.toLowerCase().includes('view') &&
+          !loadMoreBtn.textContent?.toLowerCase().includes('load')) {
+        break;
+      }
+
+      loadMoreBtn.click();
+      await randomDelay([400, 800]);
+      attempts++;
+    }
+  }
+
+  async function loadMorePosts(targetCount) {
+    let lastCount = 0;
+    let attempts = 0;
+    const maxAttempts = 20;
+
+    while (attempts < maxAttempts) {
+      const currentCount = document.querySelectorAll('article a[href*="/p/"], article a[href*="/reel/"]').length;
+
+      if (currentCount >= targetCount || currentCount === lastCount) {
+        break;
+      }
+
+      lastCount = currentCount;
+      window.scrollTo(0, document.body.scrollHeight);
+      await sleep(1000);
+      attempts++;
+    }
+
+    // Scroll back to top
+    window.scrollTo(0, 0);
+    await sleep(500);
+  }
+
+  function findPostLinks() {
+    // Find all post thumbnail links on profile grid
+    // Try multiple selector patterns since Instagram changes often
+    const selectors = [
+      'article a[href*="/p/"]',
+      'article a[href*="/reel/"]',
+      'main a[href*="/p/"]',
+      'main a[href*="/reel/"]',
+      'div[style*="flex"] a[href*="/p/"]',
+      'a[href*="/p/"][role="link"]',
+      'a[href*="/reel/"][role="link"]',
+    ];
+
+    const allLinks = [];
+    selectors.forEach(sel => {
+      const found = document.querySelectorAll(sel);
+      console.log(`Delcom: Selector "${sel}" found ${found.length} elements`);
+      allLinks.push(...found);
+    });
+
+    // Filter to unique posts and get the clickable element
+    const uniquePosts = new Map();
+    allLinks.forEach(link => {
+      const href = link.getAttribute('href');
+      if (href && !uniquePosts.has(href)) {
+        uniquePosts.set(href, link);
+      }
+    });
+
+    console.log(`Delcom: Total unique posts found: ${uniquePosts.size}`);
+    return Array.from(uniquePosts.values());
+  }
+
+  function extractCommentsFromModal() {
+    const comments = [];
+    const modal = document.querySelector('div[role="dialog"]');
+    if (!modal) {
+      console.log('Delcom: No modal found for comment extraction');
+      return comments;
+    }
+
+    console.log('Delcom: Modal found, searching for comments...');
+
+    // Strategy 1: Find comments by looking for comment containers with username links + text
+    // Instagram comments typically have: [avatar] [username link] [comment text] [time] [actions]
+    const allLinks = modal.querySelectorAll('a[href^="/"]');
+    console.log(`Delcom: Found ${allLinks.length} links in modal`);
+
+    // Find comment sections - look for ul elements that contain comments
+    const ulElements = modal.querySelectorAll('ul');
+    console.log(`Delcom: Found ${ulElements.length} ul elements in modal`);
+
+    // Strategy 2: Find spans that look like usernames (links to profiles) followed by text
+    const commentContainers = [];
+
+    // Look for the main comment list structure
+    ulElements.forEach((ul, ulIndex) => {
+      // Skip very small lists (likely navigation)
+      const items = ul.querySelectorAll(':scope > li, :scope > div');
+      if (items.length > 0) {
+        console.log(`Delcom: UL[${ulIndex}] has ${items.length} items`);
+
+        items.forEach((item, itemIndex) => {
+          // Check if this item looks like a comment (has a profile link and text)
+          const profileLink = item.querySelector('a[href^="/"]:not([href*="/p/"]):not([href*="/reel/"])');
+          const spans = item.querySelectorAll('span');
+
+          if (profileLink && spans.length > 0) {
+            // Find the text content - usually in a span after the username
+            let commentText = '';
+            let username = '';
+
+            // Get username from link
+            const href = profileLink.getAttribute('href');
+            if (href && href.startsWith('/') && href.length > 1) {
+              username = href.replace(/\//g, '');
+            }
+
+            // Find comment text - look for span with actual content
+            spans.forEach(span => {
+              const text = span.textContent?.trim();
+              // Skip if it's the username, a time, or action buttons
+              if (text &&
+                  text !== username &&
+                  text.length > 1 &&
+                  !text.match(/^\d+[smhdw]$/) && // Skip time like "2h", "3d"
+                  !text.match(/^(Reply|Like|Likes|replies|Reply to|View replies)/) &&
+                  !span.querySelector('a')) { // Skip spans containing links
+                // Take the longest text as likely comment
+                if (text.length > commentText.length) {
+                  commentText = text;
+                }
+              }
+            });
+
+            if (username && commentText && commentText.length > 2) {
+              commentContainers.push({
+                element: item,
+                username,
+                text: commentText
+              });
+            }
+          }
+        });
+      }
+    });
+
+    console.log(`Delcom: Found ${commentContainers.length} potential comments`);
+
+    // Strategy 3: If no comments found, try finding by h3/span structure
+    if (commentContainers.length === 0) {
+      // Look for comments in article or section elements
+      const articles = modal.querySelectorAll('article, section, div[role="article"]');
+      articles.forEach(article => {
+        const items = article.querySelectorAll('div');
+        items.forEach(item => {
+          // Look for username + text pattern
+          const links = item.querySelectorAll('a[href^="/"]');
+          links.forEach(link => {
+            const href = link.getAttribute('href');
+            if (href && href.match(/^\/[\w.]+\/?$/)) {
+              const username = href.replace(/\//g, '');
+              // Find sibling or child span with text
+              const parent = link.closest('div');
+              if (parent) {
+                const textSpans = parent.querySelectorAll('span:not(:has(a))');
+                textSpans.forEach(span => {
+                  const text = span.textContent?.trim();
+                  if (text && text.length > 5 && text !== username) {
+                    commentContainers.push({
+                      element: parent,
+                      username,
+                      text
+                    });
+                  }
+                });
+              }
+            }
+          });
+        });
+      });
+      console.log(`Delcom: Strategy 3 found ${commentContainers.length} comments`);
+    }
+
+    // Process found comments
+    const seenTexts = new Set();
+    commentContainers.forEach((container, index) => {
+      // Avoid duplicates
+      const key = `${container.username}:${container.text.substring(0, 50)}`;
+      if (seenTexts.has(key)) return;
+      seenTexts.add(key);
+
+      const id = `ig_${container.username}_${index}_${Date.now()}`;
+      container.element.dataset.delcomId = id;
+
+      // Try to find timestamp
+      const timeEl = container.element.querySelector('time');
+      const timestamp = timeEl?.getAttribute('datetime') || null;
+
+      // Get profile URL
+      const profileUrl = `https://www.instagram.com/${container.username}/`;
+
+      comments.push({
+        id,
+        text: container.text,
+        username: container.username,
+        timestamp,
+        profileUrl,
+        element: null,
+      });
+    });
+
+    console.log(`Delcom: Extracted ${comments.length} unique comments from modal`);
+    return comments;
+  }
+
+  function closeModal() {
+    // Try clicking close button
+    const closeBtn = document.querySelector('div[role="dialog"] button svg[aria-label="Close"], div[role="dialog"] [aria-label="Close"]');
+    if (closeBtn) {
+      const btn = closeBtn.closest('button') || closeBtn;
+      btn.click();
+      return;
+    }
+
+    // Try pressing Escape
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', keyCode: 27 }));
+
+    // Try clicking outside modal
+    const backdrop = document.querySelector('div[role="dialog"]')?.parentElement;
+    if (backdrop) {
+      backdrop.click();
+    }
+  }
+
+  function getProfileUsername() {
+    // Try to get username from URL
+    const match = window.location.pathname.match(/^\/([^\/]+)\/?$/);
+    if (match) return match[1];
+
+    // Try to get from page
+    const usernameEl = document.querySelector('header h2, header span[dir="auto"]');
+    return usernameEl?.textContent?.trim() || 'unknown';
+  }
+
+  function updateScanStatus(message) {
+    // Send status update to popup
+    chrome.runtime.sendMessage({ action: 'scanStatus', message });
+  }
+
+  // ========================================
   // Comment Highlighting
   // ========================================
 
@@ -366,6 +883,18 @@
 
   function sleep(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
+  }
+
+  // Random delay untuk human-like behavior
+  function randomDelay(range) {
+    const [min, max] = range;
+    const delay = Math.floor(Math.random() * (max - min + 1)) + min;
+    return sleep(delay);
+  }
+
+  // Random integer between min and max
+  function randomBetween(min, max) {
+    return Math.floor(Math.random() * (max - min + 1)) + min;
   }
 
   async function waitForElement(selector, timeout = 5000) {
