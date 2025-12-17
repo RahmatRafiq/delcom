@@ -36,39 +36,46 @@ class MenuSeeder extends Seeder
             'order' => 1,
         ]);
         Menu::create([
+            'title' => 'Review Queue',
+            'route' => 'review-queue.index',
+            'icon' => 'ListChecks',
+            'parent_id' => $moderation->id,
+            'order' => 2,
+        ]);
+        Menu::create([
             'title' => 'Connected Accounts',
             'route' => 'connected-accounts.index',
             'icon' => 'Link2',
             'parent_id' => $moderation->id,
-            'order' => 2,
+            'order' => 3,
         ]);
         Menu::create([
             'title' => 'Filter Groups',
             'route' => 'filter-groups.index',
             'icon' => 'FolderKanban',
             'parent_id' => $moderation->id,
-            'order' => 3,
+            'order' => 4,
         ]);
         Menu::create([
             'title' => 'Filters',
             'route' => 'filters.index',
             'icon' => 'Filter',
             'parent_id' => $moderation->id,
-            'order' => 4,
+            'order' => 5,
         ]);
         Menu::create([
             'title' => 'Preset Filters',
             'route' => 'preset-filters.index',
             'icon' => 'Sparkles',
             'parent_id' => $moderation->id,
-            'order' => 5,
+            'order' => 6,
         ]);
         Menu::create([
             'title' => 'Moderation Logs',
             'route' => 'moderation-logs.index',
             'icon' => 'ScrollText',
             'parent_id' => $moderation->id,
-            'order' => 6,
+            'order' => 7,
         ]);
 
         $users = Menu::create([

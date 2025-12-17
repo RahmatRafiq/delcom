@@ -22,9 +22,20 @@ class UserPlatform extends Model
         'scopes',
         'is_active',
         'auto_moderation_enabled',
+        'scan_mode',
+        'auto_delete_enabled',
         'scan_frequency_minutes',
         'last_scanned_at',
     ];
+
+    /**
+     * Scan mode constants.
+     */
+    public const SCAN_MODE_FULL = 'full';
+
+    public const SCAN_MODE_INCREMENTAL = 'incremental';
+
+    public const SCAN_MODE_MANUAL = 'manual';
 
     protected $casts = [
         'token_expires_at' => 'datetime',
@@ -32,6 +43,7 @@ class UserPlatform extends Model
         'scopes' => 'array',
         'is_active' => 'boolean',
         'auto_moderation_enabled' => 'boolean',
+        'auto_delete_enabled' => 'boolean',
     ];
 
     protected $hidden = [
@@ -61,6 +73,38 @@ class UserPlatform extends Model
     public function moderationLogs(): HasMany
     {
         return $this->hasMany(ModerationLog::class);
+    }
+
+    /**
+     * Get the tracked videos for this platform connection.
+     */
+    public function videos(): HasMany
+    {
+        return $this->hasMany(UserVideo::class);
+    }
+
+    /**
+     * Get pending moderations for this platform connection.
+     */
+    public function pendingModerations(): HasMany
+    {
+        return $this->hasMany(PendingModeration::class);
+    }
+
+    /**
+     * Check if auto-delete is disabled (use review queue instead).
+     */
+    public function usesReviewQueue(): bool
+    {
+        return ! $this->auto_delete_enabled;
+    }
+
+    /**
+     * Check if using incremental scan mode.
+     */
+    public function isIncrementalScan(): bool
+    {
+        return $this->scan_mode === self::SCAN_MODE_INCREMENTAL;
     }
 
     /**
@@ -116,7 +160,8 @@ class UserPlatform extends Model
      */
     public function needsScanning(): bool
     {
-        if (! $this->is_active || ! $this->auto_moderation_enabled) {
+        // Don't auto-scan if inactive, auto moderation disabled, or manual mode
+        if (! $this->is_active || ! $this->auto_moderation_enabled || $this->scan_mode === self::SCAN_MODE_MANUAL) {
             return false;
         }
 
@@ -152,6 +197,7 @@ class UserPlatform extends Model
     {
         return $query->active()
             ->autoModeration()
+            ->where('scan_mode', '!=', self::SCAN_MODE_MANUAL)
             ->where(function ($q) {
                 $q->whereNull('last_scanned_at')
                     ->orWhereRaw('last_scanned_at < NOW() - INTERVAL scan_frequency_minutes MINUTE');

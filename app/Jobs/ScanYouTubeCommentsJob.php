@@ -4,8 +4,10 @@ namespace App\Jobs;
 
 use App\Models\Filter;
 use App\Models\ModerationLog;
+use App\Models\PendingModeration;
 use App\Models\UsageRecord;
 use App\Models\UserPlatform;
+use App\Models\UserVideo;
 use App\Services\FilterMatcher;
 use App\Services\YouTubeService;
 use Illuminate\Bus\Queueable;
@@ -32,17 +34,21 @@ class ScanYouTubeCommentsJob implements ShouldQueue
 
     private int $maxCommentsPerVideo;
 
+    private ?string $specificVideoId;
+
     /**
      * Create a new job instance.
      */
     public function __construct(
         UserPlatform $userPlatform,
         int $maxVideos = 10,
-        int $maxCommentsPerVideo = 100
+        int $maxCommentsPerVideo = 100,
+        ?string $specificVideoId = null
     ) {
         $this->userPlatform = $userPlatform;
         $this->maxVideos = $maxVideos;
         $this->maxCommentsPerVideo = $maxCommentsPerVideo;
+        $this->specificVideoId = $specificVideoId;
     }
 
     /**
@@ -52,15 +58,20 @@ class ScanYouTubeCommentsJob implements ShouldQueue
     {
         $user = $this->userPlatform->user;
         $platform = $this->userPlatform->platform;
+        $useReviewQueue = $this->userPlatform->usesReviewQueue();
+        $isIncremental = $this->userPlatform->isIncrementalScan();
 
         Log::info('ScanYouTubeCommentsJob: Starting scan', [
             'user_id' => $user->id,
             'user_platform_id' => $this->userPlatform->id,
             'channel_id' => $this->userPlatform->platform_channel_id,
+            'mode' => $isIncremental ? 'incremental' : 'full',
+            'use_review_queue' => $useReviewQueue,
+            'specific_video' => $this->specificVideoId,
         ]);
 
-        // Check if user can perform actions (quota check)
-        if (! $user->canPerformAction()) {
+        // Only check quota if auto-delete is enabled
+        if (! $useReviewQueue && ! $user->canPerformAction()) {
             Log::warning('ScanYouTubeCommentsJob: User quota exceeded', [
                 'user_id' => $user->id,
             ]);
@@ -76,7 +87,6 @@ class ScanYouTubeCommentsJob implements ShouldQueue
                 'user_id' => $user->id,
             ]);
 
-            // Still update last_scanned_at
             $this->userPlatform->update(['last_scanned_at' => now()]);
 
             return;
@@ -96,12 +106,11 @@ class ScanYouTubeCommentsJob implements ShouldQueue
             return;
         }
 
-        // Get channel videos
-        $videosData = $youtube->getChannelVideos($this->maxVideos);
-        $videos = $videosData['items'];
+        // Get videos to scan
+        $videos = $this->getVideosToScan($youtube);
 
         if (empty($videos)) {
-            Log::info('ScanYouTubeCommentsJob: No videos found', [
+            Log::info('ScanYouTubeCommentsJob: No videos to scan', [
                 'channel_id' => $this->userPlatform->platform_channel_id,
             ]);
 
@@ -113,20 +122,38 @@ class ScanYouTubeCommentsJob implements ShouldQueue
         $totalScanned = 0;
         $totalMatched = 0;
         $totalActioned = 0;
+        $totalQueued = 0;
         $totalFailed = 0;
 
         foreach ($videos as $video) {
-            $videoId = $video['contentDetails']['videoId'] ?? $video['snippet']['resourceId']['videoId'] ?? null;
+            $videoId = $video['videoId'];
+            $videoTitle = $video['title'];
+            $videoThumbnail = $video['thumbnail'] ?? null;
+            $publishedAt = $video['publishedAt'] ?? null;
 
-            if (! $videoId) {
+            // Get or create UserVideo record for checkpoint
+            $userVideo = UserVideo::findOrCreateFromYouTube(
+                $user->id,
+                $this->userPlatform->id,
+                $videoId,
+                $videoTitle,
+                $videoThumbnail,
+                $publishedAt
+            );
+
+            // Skip if video is disabled for scanning
+            if (! $userVideo->scan_enabled) {
+                Log::debug('ScanYouTubeCommentsJob: Video scan disabled', [
+                    'video_id' => $videoId,
+                ]);
+
                 continue;
             }
-
-            $videoTitle = $video['snippet']['title'] ?? 'Unknown';
 
             Log::debug('ScanYouTubeCommentsJob: Scanning video', [
                 'video_id' => $videoId,
                 'title' => $videoTitle,
+                'checkpoint' => $userVideo->last_scanned_comment_id,
             ]);
 
             // Get comments for this video
@@ -136,18 +163,39 @@ class ScanYouTubeCommentsJob implements ShouldQueue
                 continue;
             }
 
-            foreach ($commentsData['items'] as $comment) {
-                $totalScanned++;
+            $videoScanned = 0;
+            $videoMatched = 0;
+            $lastCommentId = null;
 
-                // Check quota before each action
-                if (! $user->refresh()->canPerformAction()) {
+            foreach ($commentsData['items'] as $comment) {
+                // For incremental scan, stop at checkpoint
+                if ($isIncremental && $userVideo->last_scanned_comment_id) {
+                    if ($comment['id'] === $userVideo->last_scanned_comment_id) {
+                        Log::debug('ScanYouTubeCommentsJob: Reached checkpoint', [
+                            'video_id' => $videoId,
+                            'checkpoint' => $comment['id'],
+                        ]);
+                        break;
+                    }
+                }
+
+                // Track first comment as new checkpoint
+                if ($lastCommentId === null) {
+                    $lastCommentId = $comment['id'];
+                }
+
+                $totalScanned++;
+                $videoScanned++;
+
+                // Check quota before each action (only if auto-delete enabled)
+                if (! $useReviewQueue && ! $user->refresh()->canPerformAction()) {
                     Log::warning('ScanYouTubeCommentsJob: Quota exhausted mid-scan', [
                         'user_id' => $user->id,
                         'scanned' => $totalScanned,
                         'actioned' => $totalActioned,
                     ]);
 
-                    break 2; // Break out of both loops
+                    break 2;
                 }
 
                 // Check if comment matches any filter
@@ -158,48 +206,81 @@ class ScanYouTubeCommentsJob implements ShouldQueue
                 }
 
                 $totalMatched++;
+                $videoMatched++;
 
                 Log::info('ScanYouTubeCommentsJob: Filter matched', [
                     'comment_id' => $comment['id'],
                     'filter_id' => $matchedFilter->id,
                     'pattern' => $matchedFilter->pattern,
                     'action' => $matchedFilter->action,
+                    'use_queue' => $useReviewQueue,
                 ]);
 
-                $result = $this->executeAction(
-                    $youtube,
-                    $comment,
-                    $matchedFilter,
-                    $videoId
-                );
+                // Check if already in pending queue or moderation log
+                $existsInQueue = PendingModeration::where('user_platform_id', $this->userPlatform->id)
+                    ->where('platform_comment_id', $comment['id'])
+                    ->exists();
 
-                DB::transaction(function () use ($user, $comment, $videoId, $matchedFilter, $result, &$totalActioned, &$totalFailed) {
-                    if ($result['success']) {
-                        $totalActioned++;
-                        $matchedFilter->incrementHitCount();
-                        UsageRecord::recordAction($user->id, 'comment_moderated');
-                    } else {
-                        $totalFailed++;
-                    }
+                $existsInLog = ModerationLog::where('user_platform_id', $this->userPlatform->id)
+                    ->where('platform_comment_id', $comment['id'])
+                    ->exists();
 
-                    ModerationLog::create([
-                        'user_id' => $user->id,
-                        'user_platform_id' => $this->userPlatform->id,
-                        'platform_comment_id' => $comment['id'],
-                        'video_id' => $videoId,
-                        'commenter_username' => $comment['authorDisplayName'],
-                        'commenter_id' => $comment['authorChannelId'],
-                        'comment_text' => mb_substr($comment['textOriginal'], 0, 1000),
-                        'matched_filter_id' => $matchedFilter->id,
-                        'matched_pattern' => $matchedFilter->pattern,
-                        'action_taken' => $result['success']
-                            ? $this->mapActionToLogAction($matchedFilter->action)
-                            : ModerationLog::ACTION_FAILED,
-                        'action_source' => ModerationLog::SOURCE_BACKGROUND_JOB,
-                        'failure_reason' => $result['error'] ?? null,
-                        'processed_at' => now(),
+                if ($existsInQueue || $existsInLog) {
+                    Log::debug('ScanYouTubeCommentsJob: Comment already processed', [
+                        'comment_id' => $comment['id'],
                     ]);
-                });
+
+                    continue;
+                }
+
+                if ($useReviewQueue) {
+                    // Add to review queue instead of auto-delete
+                    $this->addToReviewQueue(
+                        $comment,
+                        $matchedFilter,
+                        $videoId,
+                        $videoTitle,
+                        $userVideo
+                    );
+                    $totalQueued++;
+                    $matchedFilter->incrementHitCount();
+                } else {
+                    // Execute action immediately (old behavior)
+                    $result = $this->executeAction($youtube, $comment, $matchedFilter, $videoId);
+
+                    DB::transaction(function () use ($user, $comment, $videoId, $matchedFilter, $result, &$totalActioned, &$totalFailed) {
+                        if ($result['success']) {
+                            $totalActioned++;
+                            $matchedFilter->incrementHitCount();
+                            UsageRecord::recordAction($user->id, 'comment_moderated');
+                        } else {
+                            $totalFailed++;
+                        }
+
+                        ModerationLog::create([
+                            'user_id' => $user->id,
+                            'user_platform_id' => $this->userPlatform->id,
+                            'platform_comment_id' => $comment['id'],
+                            'video_id' => $videoId,
+                            'commenter_username' => $comment['authorDisplayName'],
+                            'commenter_id' => $comment['authorChannelId'],
+                            'comment_text' => mb_substr($comment['textOriginal'], 0, 1000),
+                            'matched_filter_id' => $matchedFilter->id,
+                            'matched_pattern' => $matchedFilter->pattern,
+                            'action_taken' => $result['success']
+                                ? $this->mapActionToLogAction($matchedFilter->action)
+                                : ModerationLog::ACTION_FAILED,
+                            'action_source' => ModerationLog::SOURCE_BACKGROUND_JOB,
+                            'failure_reason' => $result['error'] ?? null,
+                            'processed_at' => now(),
+                        ]);
+                    });
+                }
+            }
+
+            // Update checkpoint for this video
+            if ($lastCommentId) {
+                $userVideo->updateCheckpoint($lastCommentId, $videoScanned, $videoMatched);
             }
         }
 
@@ -211,8 +292,85 @@ class ScanYouTubeCommentsJob implements ShouldQueue
             'user_platform_id' => $this->userPlatform->id,
             'total_scanned' => $totalScanned,
             'total_matched' => $totalMatched,
+            'total_queued' => $totalQueued,
             'total_actioned' => $totalActioned,
             'total_failed' => $totalFailed,
+        ]);
+    }
+
+    /**
+     * Get videos to scan based on mode.
+     */
+    private function getVideosToScan(YouTubeService $youtube): array
+    {
+        // If specific video requested
+        if ($this->specificVideoId) {
+            return [
+                [
+                    'videoId' => $this->specificVideoId,
+                    'title' => 'Specific Video',
+                    'thumbnail' => null,
+                    'publishedAt' => null,
+                ],
+            ];
+        }
+
+        // Get channel videos
+        $videosData = $youtube->getChannelVideos($this->maxVideos);
+        $videos = [];
+
+        foreach ($videosData['items'] ?? [] as $video) {
+            $videoId = $video['contentDetails']['videoId']
+                ?? $video['snippet']['resourceId']['videoId']
+                ?? null;
+
+            if (! $videoId) {
+                continue;
+            }
+
+            $videos[] = [
+                'videoId' => $videoId,
+                'title' => $video['snippet']['title'] ?? 'Unknown',
+                'thumbnail' => $video['snippet']['thumbnails']['medium']['url']
+                    ?? $video['snippet']['thumbnails']['default']['url']
+                    ?? null,
+                'publishedAt' => $video['snippet']['publishedAt'] ?? null,
+            ];
+        }
+
+        return $videos;
+    }
+
+    /**
+     * Add matched comment to review queue.
+     */
+    private function addToReviewQueue(
+        array $comment,
+        Filter $filter,
+        string $videoId,
+        string $videoTitle,
+        UserVideo $userVideo
+    ): void {
+        $user = $this->userPlatform->user;
+
+        PendingModeration::create([
+            'user_id' => $user->id,
+            'user_platform_id' => $this->userPlatform->id,
+            'user_video_id' => $userVideo->id,
+            'platform_comment_id' => $comment['id'],
+            'video_id' => $videoId,
+            'video_title' => $videoTitle,
+            'commenter_username' => $comment['authorDisplayName'],
+            'commenter_id' => $comment['authorChannelId'],
+            'commenter_profile_url' => $comment['authorChannelId']
+                ? "https://www.youtube.com/channel/{$comment['authorChannelId']}"
+                : null,
+            'comment_text' => mb_substr($comment['textOriginal'], 0, 1000),
+            'matched_filter_id' => $filter->id,
+            'matched_pattern' => $filter->pattern,
+            'confidence_score' => 100, // Could be enhanced with ML scoring later
+            'status' => PendingModeration::STATUS_PENDING,
+            'detected_at' => now(),
         ]);
     }
 
@@ -253,8 +411,6 @@ class ScanYouTubeCommentsJob implements ShouldQueue
      */
     private function reportComment(array $comment, Filter $filter, string $videoId): array
     {
-        // YouTube API doesn't have a direct "report" endpoint for comments
-        // We'll just log it and mark as successful
         Log::info('ScanYouTubeCommentsJob: Comment flagged for report', [
             'comment_id' => $comment['id'],
             'video_id' => $videoId,

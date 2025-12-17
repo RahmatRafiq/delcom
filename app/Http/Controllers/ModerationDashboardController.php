@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Jobs\ScanYouTubeCommentsJob;
 use App\Models\ModerationLog;
+use App\Models\PendingModeration;
 use App\Models\UserPlatform;
 use App\Services\YouTubeRateLimiter;
 use Illuminate\Http\Request;
@@ -57,6 +58,11 @@ class ModerationDashboardController extends Controller
                 ->count(),
         ];
 
+        // Get pending review queue count
+        $pendingCount = PendingModeration::where('user_id', $user->id)
+            ->where('status', PendingModeration::STATUS_PENDING)
+            ->count();
+
         // Get recent moderation logs
         $recentLogs = ModerationLog::with(['userPlatform.platform', 'matchedFilter'])
             ->where('user_id', $user->id)
@@ -81,6 +87,7 @@ class ModerationDashboardController extends Controller
             'platforms' => $platforms,
             'todayStats' => $todayStats,
             'recentLogs' => $recentLogs,
+            'pendingCount' => $pendingCount,
         ]);
     }
 

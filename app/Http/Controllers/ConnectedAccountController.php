@@ -64,6 +64,8 @@ class ConnectedAccountController extends Controller
                         'platform_username' => $userPlatform->platform_username,
                         'is_active' => $userPlatform->is_active,
                         'auto_moderation_enabled' => $userPlatform->auto_moderation_enabled,
+                        'auto_delete_enabled' => $userPlatform->auto_delete_enabled,
+                        'scan_mode' => $userPlatform->scan_mode,
                         'scan_frequency_minutes' => $userPlatform->scan_frequency_minutes,
                         'last_scanned_at' => $userPlatform->last_scanned_at?->toDateTimeString(),
                         'last_scanned_ago' => $userPlatform->last_scanned_at?->diffForHumans(),
@@ -164,12 +166,16 @@ class ConnectedAccountController extends Controller
         $request->validate([
             'is_active' => 'boolean',
             'auto_moderation_enabled' => 'boolean',
+            'auto_delete_enabled' => 'boolean',
+            'scan_mode' => 'in:full,incremental,manual',
             'scan_frequency_minutes' => 'integer|min:5|max:1440',
         ]);
 
         $userPlatform->update($request->only([
             'is_active',
             'auto_moderation_enabled',
+            'auto_delete_enabled',
+            'scan_mode',
             'scan_frequency_minutes',
         ]));
 
