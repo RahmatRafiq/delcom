@@ -16,8 +16,9 @@ use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
 use Spatie\Permission\Traits\HasRoles;
+use Tymon\JWTAuth\Contracts\JWTSubject;
 
-class User extends Authenticatable implements HasMedia
+class User extends Authenticatable implements HasMedia, JWTSubject
 {
     use HasFactory, HasRoles, InteractsWithMedia, LogsActivity, Notifiable, SoftDeletes;
 
@@ -368,5 +369,24 @@ class User extends Authenticatable implements HasMedia
             ->fit(Fit::Contain, 800, 800)
             ->nonQueued()
             ->performOnCollections('profile_image');
+    }
+
+    /**
+     * Get the identifier that will be stored in the subject claim of the JWT.
+     */
+    public function getJWTIdentifier(): mixed
+    {
+        return $this->getKey();
+    }
+
+    /**
+     * Return a key value array, containing any custom claims to be added to the JWT.
+     */
+    public function getJWTCustomClaims(): array
+    {
+        return [
+            'name' => $this->name,
+            'email' => $this->email,
+        ];
     }
 }
