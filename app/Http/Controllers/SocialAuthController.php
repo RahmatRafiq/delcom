@@ -5,9 +5,11 @@ namespace App\Http\Controllers;
 use App\Models\Platform;
 use App\Models\User;
 use App\Models\UserPlatform;
+use App\Services\InstagramService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use Laravel\Socialite\Facades\Socialite;
 
 class SocialAuthController extends Controller
@@ -19,8 +21,18 @@ class SocialAuthController extends Controller
             return Socialite::driver($provider)
                 ->scopes(config('services.youtube.scopes'))
                 ->with([
-                    'access_type' => 'offline',      // Get refresh_token
-                    'prompt' => 'consent',           // Force consent screen to get refresh_token
+                    'access_type' => 'offline',
+                    'prompt' => 'consent',
+                ])
+                ->redirect();
+        }
+
+        if ($provider === 'facebook') {
+            // Include Instagram permissions
+            return Socialite::driver($provider)
+                ->scopes(config('services.facebook.scopes'))
+                ->with([
+                    'auth_type' => 'rerequest',
                 ])
                 ->redirect();
         }
@@ -47,20 +59,30 @@ class SocialAuthController extends Controller
                 $user->assignRole('user');
             }
 
-            // If Google login, also save YouTube connection
+            $message = 'Login successful!';
+
+            // Save platform connections based on provider
             if ($provider === 'google') {
                 $this->saveYouTubeConnection($user, $socialUser);
+                $message = 'Login successful! YouTube connected.';
+            }
+
+            if ($provider === 'facebook') {
+                $igConnected = $this->saveInstagramConnection($user, $socialUser);
+                $message = $igConnected
+                    ? 'Login successful! Instagram connected.'
+                    : 'Login successful! No Instagram Business account found.';
             }
 
             Auth::login($user);
 
-            return redirect()->route('dashboard')->with('success', 'Login successful! YouTube connected.');
+            return redirect()->route('dashboard')->with('success', $message);
         } catch (\Exception $e) {
-            \Log::error('OAuth error', [
+            Log::error('OAuth error', [
+                'provider' => $provider,
                 'message' => $e->getMessage(),
                 'file' => $e->getFile(),
                 'line' => $e->getLine(),
-                'trace' => $e->getTraceAsString(),
             ]);
 
             return redirect('/')->with('error', 'An error occurred during login: '.$e->getMessage());
@@ -141,6 +163,77 @@ class SocialAuthController extends Controller
         } catch (\Exception) {
             return null;
         }
+    }
+
+    /**
+     * Save Instagram connection from Facebook OAuth
+     */
+    private function saveInstagramConnection(User $user, $socialUser): bool
+    {
+        $platform = Platform::where('name', 'instagram')->first();
+
+        if (! $platform) {
+            Log::warning('Instagram platform not found in database');
+
+            return false;
+        }
+
+        $accessToken = $socialUser->token;
+
+        // Get Facebook Pages with linked Instagram accounts
+        $pages = InstagramService::getFacebookPages($accessToken);
+
+        if (empty($pages)) {
+            Log::info('No Facebook Pages found for user', ['user_id' => $user->id]);
+
+            return false;
+        }
+
+        $connected = false;
+
+        foreach ($pages as $page) {
+            // Check if page has Instagram Business account
+            if (! isset($page['instagram_business_account'])) {
+                continue;
+            }
+
+            $igAccount = $page['instagram_business_account'];
+            $pageAccessToken = $page['access_token']; // Page-specific token
+
+            // Save Instagram connection
+            UserPlatform::updateOrCreate(
+                [
+                    'user_id' => $user->id,
+                    'platform_id' => $platform->id,
+                    'platform_user_id' => $igAccount['id'],
+                ],
+                [
+                    'platform_username' => $igAccount['username'] ?? $igAccount['name'] ?? 'Unknown',
+                    'connection_method' => 'api',
+                    'access_token' => $pageAccessToken, // Use page token for IG API
+                    'token_expires_at' => now()->addDays(60), // FB long-lived tokens ~60 days
+                    'scopes' => config('services.facebook.scopes'),
+                    'is_active' => true,
+                    'auto_moderation_enabled' => false,
+                    'scan_frequency_minutes' => 60,
+                    'metadata' => [
+                        'facebook_page_id' => $page['id'],
+                        'facebook_page_name' => $page['name'],
+                        'ig_followers' => $igAccount['followers_count'] ?? 0,
+                    ],
+                ]
+            );
+
+            Log::info('Instagram account connected', [
+                'user_id' => $user->id,
+                'ig_username' => $igAccount['username'] ?? 'unknown',
+                'ig_id' => $igAccount['id'],
+            ]);
+
+            $connected = true;
+        }
+
+        return $connected;
     }
 
     public function logout()

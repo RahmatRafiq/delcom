@@ -3,21 +3,26 @@
 namespace App\Services;
 
 use App\Models\UserPlatform;
+use Illuminate\Http\Client\PendingRequest;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
 /**
  * Instagram Service
  *
  * Supports two connection methods:
- * 1. Extension - Browser extension sends data to our API
- * 2. API (Future) - Instagram Graph API via Meta OAuth
- *
- * For now, this service primarily handles extension-based connections.
- * API support will be added when Meta Developer App is approved.
+ * 1. API - Instagram Graph API via Facebook OAuth
+ * 2. Extension - Browser extension sends data to our API
  */
 class InstagramService
 {
+    private const GRAPH_API_BASE = 'https://graph.facebook.com/v21.0';
+
     private UserPlatform $userPlatform;
+
+    private ?string $accessToken = null;
+
+    private ?array $cachedAccount = null;
 
     public function __construct(UserPlatform $userPlatform)
     {
@@ -49,9 +54,95 @@ class InstagramService
     }
 
     /**
+     * Get the HTTP client.
+     */
+    private function client(): PendingRequest
+    {
+        return Http::timeout(30)->retry(2, 100);
+    }
+
+    /**
+     * Ensure we have a valid access token.
+     */
+    private function ensureValidToken(): void
+    {
+        if ($this->accessToken) {
+            return;
+        }
+
+        // Check if token is expired or about to expire (within 5 minutes)
+        if ($this->userPlatform->token_expires_at &&
+            $this->userPlatform->token_expires_at->subMinutes(5)->isPast()) {
+            $this->refreshToken();
+        }
+
+        $this->accessToken = $this->userPlatform->access_token;
+    }
+
+    /**
+     * Refresh the OAuth access token (exchange for long-lived token).
+     */
+    public function refreshToken(): bool
+    {
+        if ($this->isExtensionConnection()) {
+            return true; // Extension doesn't use OAuth tokens
+        }
+
+        $currentToken = $this->userPlatform->access_token;
+
+        if (! $currentToken) {
+            Log::error('InstagramService: No access token available', [
+                'user_platform_id' => $this->userPlatform->id,
+            ]);
+
+            return false;
+        }
+
+        try {
+            // Exchange for long-lived token
+            $response = Http::get(self::GRAPH_API_BASE.'/oauth/access_token', [
+                'grant_type' => 'fb_exchange_token',
+                'client_id' => config('services.facebook.client_id'),
+                'client_secret' => config('services.facebook.client_secret'),
+                'fb_exchange_token' => $currentToken,
+            ]);
+
+            if ($response->failed()) {
+                Log::error('InstagramService: Token refresh failed', [
+                    'user_platform_id' => $this->userPlatform->id,
+                    'error' => $response->json(),
+                ]);
+
+                return false;
+            }
+
+            $data = $response->json();
+
+            $this->userPlatform->update([
+                'access_token' => $data['access_token'],
+                // Long-lived tokens last ~60 days
+                'token_expires_at' => now()->addSeconds($data['expires_in'] ?? 5184000),
+            ]);
+
+            $this->accessToken = $data['access_token'];
+
+            Log::info('InstagramService: Token refreshed successfully', [
+                'user_platform_id' => $this->userPlatform->id,
+            ]);
+
+            return true;
+        } catch (\Exception $e) {
+            Log::error('InstagramService: Token refresh exception', [
+                'user_platform_id' => $this->userPlatform->id,
+                'error' => $e->getMessage(),
+            ]);
+
+            return false;
+        }
+    }
+
+    /**
      * Get account info.
-     * For extension: returns stored username
-     * For API: would call Instagram Graph API
      */
     public function getAccount(): ?array
     {
@@ -63,100 +154,165 @@ class InstagramService
             ];
         }
 
-        // API connection - will be implemented when Meta App is ready
         return $this->getAccountViaApi();
     }
 
     /**
      * Get account via Instagram Graph API.
-     * Placeholder for future implementation.
      */
     private function getAccountViaApi(): ?array
     {
-        // TODO: Implement when Meta Developer App is approved
-        // Will use Instagram Graph API:
-        // GET /me?fields=id,username,account_type,media_count
-        Log::info('InstagramService: API connection not yet implemented');
+        if ($this->cachedAccount !== null) {
+            return $this->cachedAccount;
+        }
 
-        return null;
+        $igUserId = $this->userPlatform->platform_user_id;
+
+        if (! $igUserId) {
+            Log::error('InstagramService: No Instagram user ID', [
+                'user_platform_id' => $this->userPlatform->id,
+            ]);
+
+            return null;
+        }
+
+        $this->ensureValidToken();
+
+        $response = $this->client()->get(self::GRAPH_API_BASE."/{$igUserId}", [
+            'fields' => 'id,username,name,profile_picture_url,followers_count,media_count,biography',
+            'access_token' => $this->accessToken,
+        ]);
+
+        if ($response->failed()) {
+            Log::error('InstagramService: Failed to get account', [
+                'error' => $response->json(),
+            ]);
+
+            return null;
+        }
+
+        $this->cachedAccount = $response->json();
+
+        return $this->cachedAccount;
     }
 
     /**
-     * Get posts/media from the account.
-     * For extension: data is sent from extension, not fetched
-     * For API: would call Instagram Graph API
+     * Get user's media (posts, reels).
      */
-    public function getContents(int $maxResults = 50, ?string $pageToken = null): array
+    public function getMedia(int $limit = 25, ?string $after = null): array
     {
         if ($this->isExtensionConnection()) {
-            // Extension sends content data to us, we don't fetch it
-            Log::info('InstagramService: Extension mode - content fetched by extension');
-
             return [
                 'items' => [],
-                'nextPageToken' => null,
+                'paging' => null,
                 'message' => 'Content is fetched by browser extension',
             ];
         }
 
-        // API connection - will be implemented when Meta App is ready
-        return $this->getContentsViaApi($maxResults, $pageToken);
+        $igUserId = $this->userPlatform->platform_user_id;
+
+        if (! $igUserId) {
+            return ['items' => [], 'paging' => null];
+        }
+
+        $this->ensureValidToken();
+
+        $params = [
+            'fields' => 'id,caption,media_type,media_url,thumbnail_url,permalink,timestamp,like_count,comments_count',
+            'limit' => min($limit, 100),
+            'access_token' => $this->accessToken,
+        ];
+
+        if ($after) {
+            $params['after'] = $after;
+        }
+
+        $response = $this->client()->get(self::GRAPH_API_BASE."/{$igUserId}/media", $params);
+
+        if ($response->failed()) {
+            Log::error('InstagramService: Failed to get media', [
+                'error' => $response->json(),
+            ]);
+
+            return ['items' => [], 'paging' => null];
+        }
+
+        $data = $response->json();
+
+        return [
+            'items' => $data['data'] ?? [],
+            'paging' => $data['paging'] ?? null,
+        ];
     }
 
     /**
-     * Get contents via Instagram Graph API.
-     * Placeholder for future implementation.
+     * Get comments for a specific media.
      */
-    private function getContentsViaApi(int $maxResults, ?string $pageToken): array
-    {
-        // TODO: Implement when Meta Developer App is approved
-        // Will use Instagram Graph API:
-        // GET /me/media?fields=id,caption,media_type,media_url,thumbnail_url,permalink,timestamp,comments_count
-        Log::info('InstagramService: API getContents not yet implemented');
-
-        return ['items' => [], 'nextPageToken' => null];
-    }
-
-    /**
-     * Get comments for a specific post.
-     * For extension: data is sent from extension
-     * For API: would call Instagram Graph API
-     */
-    public function getComments(string $mediaId, int $maxResults = 100, ?string $pageToken = null): array
+    public function getComments(string $mediaId, int $limit = 50, ?string $after = null): array
     {
         if ($this->isExtensionConnection()) {
-            // Extension sends comment data to us, we don't fetch it
-            Log::info('InstagramService: Extension mode - comments fetched by extension');
-
             return [
                 'items' => [],
-                'nextPageToken' => null,
+                'paging' => null,
                 'message' => 'Comments are fetched by browser extension',
             ];
         }
 
-        // API connection - will be implemented when Meta App is ready
-        return $this->getCommentsViaApi($mediaId, $maxResults, $pageToken);
-    }
+        $this->ensureValidToken();
 
-    /**
-     * Get comments via Instagram Graph API.
-     * Placeholder for future implementation.
-     */
-    private function getCommentsViaApi(string $mediaId, int $maxResults, ?string $pageToken): array
-    {
-        // TODO: Implement when Meta Developer App is approved
-        // Will use Instagram Graph API:
-        // GET /{media-id}/comments?fields=id,text,timestamp,username,like_count,replies{id,text,username,timestamp}
-        Log::info('InstagramService: API getComments not yet implemented');
+        $params = [
+            'fields' => 'id,text,username,timestamp,like_count,replies{id,text,username,timestamp}',
+            'limit' => min($limit, 50),
+            'access_token' => $this->accessToken,
+        ];
 
-        return ['items' => [], 'nextPageToken' => null];
+        if ($after) {
+            $params['after'] = $after;
+        }
+
+        $response = $this->client()->get(self::GRAPH_API_BASE."/{$mediaId}/comments", $params);
+
+        if ($response->failed()) {
+            $error = $response->json();
+
+            // Check if comments are disabled or restricted
+            if (isset($error['error']['code']) && $error['error']['code'] === 100) {
+                Log::info('InstagramService: Comments may be disabled', ['media_id' => $mediaId]);
+
+                return ['items' => [], 'paging' => null, 'commentsDisabled' => true];
+            }
+
+            Log::error('InstagramService: Failed to get comments', [
+                'media_id' => $mediaId,
+                'error' => $error,
+            ]);
+
+            return ['items' => [], 'paging' => null];
+        }
+
+        $data = $response->json();
+
+        // Transform to consistent format
+        $comments = [];
+        foreach ($data['data'] ?? [] as $comment) {
+            $comments[] = [
+                'id' => $comment['id'],
+                'text' => $comment['text'],
+                'username' => $comment['username'],
+                'timestamp' => $comment['timestamp'],
+                'likeCount' => $comment['like_count'] ?? 0,
+                'replies' => $comment['replies']['data'] ?? [],
+            ];
+        }
+
+        return [
+            'items' => $comments,
+            'paging' => $data['paging'] ?? null,
+        ];
     }
 
     /**
      * Delete a comment.
-     * For extension: returns instruction for extension to delete
-     * For API: would call Instagram Graph API
      */
     public function deleteComment(string $commentId): array
     {
@@ -167,8 +323,6 @@ class InstagramService
         ]);
 
         if ($this->isExtensionConnection()) {
-            // Extension handles deletion - we just mark it as pending
-            // The extension will poll for pending deletions and execute them
             return [
                 'success' => true,
                 'method' => 'extension',
@@ -176,31 +330,35 @@ class InstagramService
             ];
         }
 
-        // API connection - will be implemented when Meta App is ready
-        return $this->deleteCommentViaApi($commentId);
-    }
+        $this->ensureValidToken();
 
-    /**
-     * Delete comment via Instagram Graph API.
-     * Placeholder for future implementation.
-     */
-    private function deleteCommentViaApi(string $commentId): array
-    {
-        // TODO: Implement when Meta Developer App is approved
-        // Will use Instagram Graph API:
-        // DELETE /{comment-id}
-        Log::info('InstagramService: API deleteComment not yet implemented');
+        $response = $this->client()->delete(self::GRAPH_API_BASE."/{$commentId}", [
+            'access_token' => $this->accessToken,
+        ]);
+
+        if ($response->successful()) {
+            Log::info('InstagramService: Comment deleted successfully', [
+                'comment_id' => $commentId,
+            ]);
+
+            return ['success' => true];
+        }
+
+        $error = $response->json();
+        Log::error('InstagramService: Failed to delete comment', [
+            'comment_id' => $commentId,
+            'error' => $error,
+        ]);
 
         return [
             'success' => false,
-            'error' => 'Instagram API not yet configured. Please use browser extension.',
+            'error' => $error['error']['message'] ?? 'Unknown error',
+            'code' => $error['error']['code'] ?? null,
         ];
     }
 
     /**
-     * Hide a comment (alternative to delete).
-     * For extension: returns instruction for extension
-     * For API: would call Instagram Graph API
+     * Hide a comment.
      */
     public function hideComment(string $commentId, bool $hide = true): array
     {
@@ -218,29 +376,92 @@ class InstagramService
             ];
         }
 
-        // API connection
-        return $this->hideCommentViaApi($commentId, $hide);
-    }
+        $this->ensureValidToken();
 
-    /**
-     * Hide comment via Instagram Graph API.
-     * Placeholder for future implementation.
-     */
-    private function hideCommentViaApi(string $commentId, bool $hide): array
-    {
-        // TODO: Implement when Meta Developer App is approved
-        // Will use Instagram Graph API:
-        // POST /{comment-id}?hide=true (or false to unhide)
-        Log::info('InstagramService: API hideComment not yet implemented');
+        $response = $this->client()->post(self::GRAPH_API_BASE."/{$commentId}", [
+            'hide' => $hide,
+            'access_token' => $this->accessToken,
+        ]);
+
+        if ($response->successful()) {
+            Log::info('InstagramService: Comment hidden', ['comment_id' => $commentId, 'hidden' => $hide]);
+
+            return ['success' => true];
+        }
+
+        $error = $response->json();
+        Log::error('InstagramService: Failed to hide comment', [
+            'comment_id' => $commentId,
+            'error' => $error,
+        ]);
 
         return [
             'success' => false,
-            'error' => 'Instagram API not yet configured.',
+            'error' => $error['error']['message'] ?? 'Unknown error',
         ];
     }
 
     /**
-     * Test connection.
+     * Reply to a comment.
+     */
+    public function replyToComment(string $commentId, string $message): array
+    {
+        if ($this->isExtensionConnection()) {
+            return [
+                'success' => false,
+                'error' => 'Reply not supported via extension',
+            ];
+        }
+
+        $this->ensureValidToken();
+
+        $response = $this->client()->post(self::GRAPH_API_BASE."/{$commentId}/replies", [
+            'message' => $message,
+            'access_token' => $this->accessToken,
+        ]);
+
+        if ($response->successful()) {
+            return [
+                'success' => true,
+                'reply_id' => $response->json()['id'] ?? null,
+            ];
+        }
+
+        $error = $response->json();
+        Log::error('InstagramService: Failed to reply', [
+            'comment_id' => $commentId,
+            'error' => $error,
+        ]);
+
+        return [
+            'success' => false,
+            'error' => $error['error']['message'] ?? 'Unknown error',
+        ];
+    }
+
+    /**
+     * Get Facebook Pages that user manages (needed to find Instagram accounts).
+     */
+    public static function getFacebookPages(string $accessToken): array
+    {
+        $response = Http::get(self::GRAPH_API_BASE.'/me/accounts', [
+            'fields' => 'id,name,access_token,instagram_business_account{id,username,name,profile_picture_url,followers_count}',
+            'access_token' => $accessToken,
+        ]);
+
+        if ($response->failed()) {
+            Log::error('InstagramService: Failed to get Facebook pages', [
+                'error' => $response->json(),
+            ]);
+
+            return [];
+        }
+
+        return $response->json()['data'] ?? [];
+    }
+
+    /**
+     * Test API connection.
      */
     public function testConnection(): array
     {
@@ -249,33 +470,28 @@ class InstagramService
                 'success' => true,
                 'connection_method' => 'extension',
                 'username' => $this->userPlatform->platform_username,
-                'message' => 'Extension connection active',
             ];
         }
 
-        // For API, would test by calling /me endpoint
-        return [
-            'success' => false,
-            'error' => 'Instagram API not yet configured',
-        ];
-    }
+        try {
+            $account = $this->getAccount();
 
-    /**
-     * Refresh OAuth token.
-     * Only applicable for API connections.
-     */
-    public function refreshToken(): bool
-    {
-        if ($this->isExtensionConnection()) {
-            // Extension doesn't use OAuth tokens
-            return true;
+            if ($account) {
+                return [
+                    'success' => true,
+                    'account' => [
+                        'id' => $account['id'],
+                        'username' => $account['username'] ?? null,
+                        'name' => $account['name'] ?? null,
+                        'followers_count' => $account['followers_count'] ?? 0,
+                        'media_count' => $account['media_count'] ?? 0,
+                    ],
+                ];
+            }
+
+            return ['success' => false, 'error' => 'Could not retrieve account'];
+        } catch (\Exception $e) {
+            return ['success' => false, 'error' => $e->getMessage()];
         }
-
-        // TODO: Implement token refresh for API connection
-        // Instagram long-lived tokens last 60 days and need refresh
-        // POST /refresh_access_token?grant_type=ig_refresh_token&access_token={token}
-        Log::info('InstagramService: Token refresh not yet implemented');
-
-        return false;
     }
 }
