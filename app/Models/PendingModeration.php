@@ -7,13 +7,27 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class PendingModeration extends Model
 {
+    public const STATUS_PENDING = 'pending';
+    public const STATUS_APPROVED = 'approved';
+    public const STATUS_DISMISSED = 'dismissed';
+    public const STATUS_DELETED = 'deleted';
+    public const STATUS_FAILED = 'failed';
+
+    public const TYPE_VIDEO = 'video';
+    public const TYPE_POST = 'post';
+    public const TYPE_REEL = 'reel';
+    public const TYPE_STORY = 'story';
+    public const TYPE_SHORT = 'short';
+    public const TYPE_OTHER = 'other';
+
     protected $fillable = [
         'user_id',
         'user_platform_id',
-        'user_video_id',
+        'user_content_id',
         'platform_comment_id',
-        'video_id',
-        'video_title',
+        'content_id',
+        'content_type',
+        'content_title',
         'commenter_username',
         'commenter_id',
         'commenter_profile_url',
@@ -35,78 +49,46 @@ class PendingModeration extends Model
         'actioned_at' => 'datetime',
     ];
 
-    /**
-     * Status constants.
-     */
-    public const STATUS_PENDING = 'pending';
-
-    public const STATUS_APPROVED = 'approved';
-
-    public const STATUS_DISMISSED = 'dismissed';
-
-    public const STATUS_DELETED = 'deleted';
-
-    public const STATUS_FAILED = 'failed';
-
-    /**
-     * Get the user that owns this pending moderation.
-     */
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
     }
 
-    /**
-     * Get the user platform connection.
-     */
     public function userPlatform(): BelongsTo
     {
         return $this->belongsTo(UserPlatform::class);
     }
 
-    /**
-     * Get the user video (if tracked).
-     */
-    public function userVideo(): BelongsTo
+    public function userContent(): BelongsTo
     {
-        return $this->belongsTo(UserVideo::class);
+        return $this->belongsTo(UserContent::class);
     }
 
-    /**
-     * Get the filter that matched.
-     */
     public function matchedFilter(): BelongsTo
     {
         return $this->belongsTo(Filter::class, 'matched_filter_id');
     }
 
-    /**
-     * Scope to get pending items.
-     */
     public function scopePending($query)
     {
         return $query->where('status', self::STATUS_PENDING);
     }
 
-    /**
-     * Scope to get approved items (ready for deletion).
-     */
     public function scopeApproved($query)
     {
         return $query->where('status', self::STATUS_APPROVED);
     }
 
-    /**
-     * Scope to get items for a specific user.
-     */
     public function scopeForUser($query, int $userId)
     {
         return $query->where('user_id', $userId);
     }
 
-    /**
-     * Mark as approved for deletion.
-     */
+    public function scopeOfContentType($query, string $type)
+    {
+        return $query->where('content_type', $type);
+    }
+
     public function approve(): bool
     {
         return $this->update([
@@ -115,9 +97,6 @@ class PendingModeration extends Model
         ]);
     }
 
-    /**
-     * Mark as dismissed (not spam).
-     */
     public function dismiss(): bool
     {
         return $this->update([
@@ -126,9 +105,6 @@ class PendingModeration extends Model
         ]);
     }
 
-    /**
-     * Mark as successfully deleted.
-     */
     public function markDeleted(): bool
     {
         return $this->update([
@@ -137,9 +113,6 @@ class PendingModeration extends Model
         ]);
     }
 
-    /**
-     * Mark as failed.
-     */
     public function markFailed(string $reason): bool
     {
         return $this->update([
@@ -149,17 +122,11 @@ class PendingModeration extends Model
         ]);
     }
 
-    /**
-     * Check if this item is actionable (pending or approved).
-     */
     public function isActionable(): bool
     {
         return in_array($this->status, [self::STATUS_PENDING, self::STATUS_APPROVED]);
     }
 
-    /**
-     * Get all available status options.
-     */
     public static function getStatusOptions(): array
     {
         return [
@@ -168,6 +135,18 @@ class PendingModeration extends Model
             self::STATUS_DISMISSED => 'Dismissed',
             self::STATUS_DELETED => 'Deleted',
             self::STATUS_FAILED => 'Failed',
+        ];
+    }
+
+    public static function getContentTypeOptions(): array
+    {
+        return [
+            self::TYPE_VIDEO => 'Video',
+            self::TYPE_POST => 'Post',
+            self::TYPE_REEL => 'Reel',
+            self::TYPE_STORY => 'Story',
+            self::TYPE_SHORT => 'Short',
+            self::TYPE_OTHER => 'Other',
         ];
     }
 }

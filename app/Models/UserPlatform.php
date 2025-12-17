@@ -3,12 +3,14 @@
 namespace App\Models;
 
 use App\Services\TokenEncryptionService;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class UserPlatform extends Model
 {
+    use HasFactory;
     protected $fillable = [
         'user_id',
         'platform_id',
@@ -75,12 +77,9 @@ class UserPlatform extends Model
         return $this->hasMany(ModerationLog::class);
     }
 
-    /**
-     * Get the tracked videos for this platform connection.
-     */
-    public function videos(): HasMany
+    public function contents(): HasMany
     {
-        return $this->hasMany(UserVideo::class);
+        return $this->hasMany(UserContent::class);
     }
 
     /**
