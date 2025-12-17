@@ -2,20 +2,18 @@
 
 namespace App\Http\Controllers;
 
-use App\Jobs\ScanYouTubeCommentsJob;
+use App\Jobs\ScanCommentsJob;
 use App\Models\ModerationLog;
 use App\Models\Platform;
 use App\Models\UserPlatform;
-use App\Services\YouTubeRateLimiter;
+use App\Services\PlatformServiceFactory;
+use App\Services\Platforms\Youtube\YouTubeRateLimiter;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 
 class ConnectedAccountController extends Controller
 {
-    /**
-     * Display connected accounts page.
-     */
     public function index()
     {
         $user = Auth::user();
@@ -26,11 +24,8 @@ class ConnectedAccountController extends Controller
             ->get()
             ->keyBy(fn ($up) => $up->platform_id.'_'.$up->connection_method);
 
-        // Merge platform data with user connection status and available methods
         $platformsWithStatus = $platforms->map(function ($platform) use ($userPlatforms, $user) {
-            // Get available connection methods for this platform
             $connectionMethods = $platform->connectionMethods->map(function ($cm) use ($platform, $user) {
-                // Check if user's plan allows this connection method
                 $canAccess = $user->canAccessPlatform($platform->id, $cm->connection_method);
 
                 return [
@@ -43,13 +38,11 @@ class ConnectedAccountController extends Controller
                 ];
             });
 
-            // Check connections per method
             $connections = [];
             foreach (['api', 'extension'] as $method) {
                 $key = $platform->id.'_'.$method;
                 $userPlatform = $userPlatforms->get($key);
                 if ($userPlatform) {
-                    // Get today's stats for this connection
                     $todayDeleted = ModerationLog::where('user_platform_id', $userPlatform->id)
                         ->whereDate('processed_at', today())
                         ->where('action_taken', 'deleted')
@@ -88,7 +81,6 @@ class ConnectedAccountController extends Controller
             ];
         });
 
-        // Get user's subscription info
         $currentPlan = $user->getCurrentPlan();
         $usageStats = $user->getUsageStats();
 
@@ -110,9 +102,6 @@ class ConnectedAccountController extends Controller
         ]);
     }
 
-    /**
-     * Trigger a scan for a specific platform connection.
-     */
     public function scan(Request $request, int $id)
     {
         $user = Auth::user();
@@ -120,23 +109,28 @@ class ConnectedAccountController extends Controller
         $userPlatform = UserPlatform::where('id', $id)
             ->where('user_id', $user->id)
             ->where('is_active', true)
+            ->with('platform')
             ->first();
 
         if (! $userPlatform) {
             return back()->with('error', 'Platform not found or not connected.');
         }
 
-        // Check rate limits
-        $rateLimiter = new YouTubeRateLimiter;
-        if ($rateLimiter->isRateLimited($user)) {
-            return back()->with('error', 'Too many requests. Please wait a moment.');
+        if (! PlatformServiceFactory::supports($userPlatform->platform->name)) {
+            return back()->with('error', 'Platform scanning not yet supported.');
         }
 
-        if (! $rateLimiter->hasQuotaFor('delete_comment', 10)) {
-            return back()->with('error', 'Daily API quota exhausted. Try again tomorrow.');
+        if ($userPlatform->platform->name === 'youtube') {
+            $rateLimiter = new YouTubeRateLimiter;
+            if ($rateLimiter->isRateLimited($user)) {
+                return back()->with('error', 'Too many requests. Please wait a moment.');
+            }
+
+            if (! $rateLimiter->hasQuotaFor('delete_comment', 10)) {
+                return back()->with('error', 'Daily API quota exhausted. Try again tomorrow.');
+            }
         }
 
-        // Check user's plan limits (daily and monthly)
         if (! $user->canPerformAction()) {
             $reason = $user->getActionBlockedReason();
             if ($reason === 'daily_limit_reached') {
@@ -146,18 +140,14 @@ class ConnectedAccountController extends Controller
             return back()->with('error', 'Monthly action limit reached. Upgrade your plan.');
         }
 
-        // Dispatch the scan job
-        $maxVideos = $request->input('max_videos', 10);
+        $maxContents = $request->input('max_contents', 10);
         $maxComments = $request->input('max_comments', 100);
 
-        ScanYouTubeCommentsJob::dispatch($userPlatform, $maxVideos, $maxComments);
+        ScanCommentsJob::dispatch($userPlatform, $maxContents, $maxComments);
 
         return back()->with('success', 'Scan started! Results will appear shortly.');
     }
 
-    /**
-     * Update connection settings (auto moderation, scan frequency).
-     */
     public function update(Request $request, $id)
     {
         $userPlatform = UserPlatform::where('user_id', Auth::id())
@@ -183,9 +173,6 @@ class ConnectedAccountController extends Controller
             ->with('success', 'Connection settings updated.');
     }
 
-    /**
-     * Disconnect a platform.
-     */
     public function destroy($id)
     {
         $userPlatform = UserPlatform::where('user_id', Auth::id())
@@ -198,50 +185,38 @@ class ConnectedAccountController extends Controller
             ->with('success', "{$platformName} disconnected successfully.");
     }
 
-    /**
-     * Initiate OAuth connection for API-tier platforms.
-     * Used for re-authentication or connecting additional platforms.
-     * Note: YouTube is automatically connected during Google login.
-     */
     public function connect(Request $request, $platformId)
     {
         $platform = Platform::active()->findOrFail($platformId);
         $connectionMethod = $request->input('connection_method', 'api');
         $user = Auth::user();
 
-        // Check if user's plan allows this platform and connection method
         if (! $user->canAccessPlatform($platform->id, $connectionMethod)) {
             return redirect()->back()
                 ->with('error', "Your current plan doesn't include {$platform->display_name} via {$connectionMethod}. Please upgrade your plan.");
         }
 
         if ($connectionMethod === 'extension') {
-            // Extension connection - redirect to extension installation/setup page
             return redirect()->back()
                 ->with('info', "Please use the browser extension to connect {$platform->display_name}.");
         }
 
-        // API connection via OAuth
         if ($platform->name === 'youtube') {
             return redirect()->route('auth.redirect', ['provider' => 'google']);
         }
 
-        // Instagram uses Meta/Facebook OAuth
         if ($platform->name === 'instagram') {
             return redirect()->route('auth.redirect', ['provider' => 'instagram']);
         }
 
-        // Twitter/X OAuth
         if ($platform->name === 'twitter') {
             return redirect()->route('auth.redirect', ['provider' => 'twitter']);
         }
 
-        // Threads uses Meta OAuth (same as Instagram)
         if ($platform->name === 'threads') {
             return redirect()->route('auth.redirect', ['provider' => 'threads']);
         }
 
-        // Other platforms - coming soon
         return redirect()->back()
             ->with('info', "{$platform->display_name} integration coming soon.");
     }

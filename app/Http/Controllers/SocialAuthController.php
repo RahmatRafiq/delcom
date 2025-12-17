@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Platform;
 use App\Models\User;
 use App\Models\UserPlatform;
-use App\Services\InstagramService;
+use App\Services\Platforms\Instagram\InstagramService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;

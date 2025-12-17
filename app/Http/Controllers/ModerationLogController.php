@@ -101,8 +101,8 @@ class ModerationLogController extends Controller
                 'action_taken' => $log->action_taken,
                 'action_source' => $log->action_source,
                 'failure_reason' => $log->failure_reason,
-                'video_id' => $log->video_id,
-                'post_id' => $log->post_id,
+                'content_id' => $log->content_id,
+                'content_type' => $log->content_type,
                 'processed_at' => $log->processed_at?->toDateTimeString(),
             ];
         });

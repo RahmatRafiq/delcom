@@ -7,7 +7,7 @@ use App\Models\ModerationLog;
 use App\Models\PendingModeration;
 use App\Models\UsageRecord;
 use App\Models\UserPlatform;
-use App\Services\YouTubeService;
+use App\Services\PlatformServiceFactory;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -70,13 +70,12 @@ class PendingModerationController extends Controller
             $query->where('user_platform_id', $platformId);
         }
 
-        // Search
         if ($search) {
             $query->where(function ($q) use ($search) {
                 $q->where('comment_text', 'like', "%{$search}%")
                     ->orWhere('commenter_username', 'like', "%{$search}%")
                     ->orWhere('matched_pattern', 'like', "%{$search}%")
-                    ->orWhere('video_title', 'like', "%{$search}%");
+                    ->orWhere('content_title', 'like', "%{$search}%");
             });
         }
 
@@ -101,8 +100,9 @@ class PendingModerationController extends Controller
                 'id' => $item->id,
                 'platform_name' => $item->userPlatform?->platform?->display_name ?? 'Unknown',
                 'platform_icon' => $item->userPlatform?->platform?->name ?? 'unknown',
-                'video_id' => $item->video_id,
-                'video_title' => $item->video_title,
+                'content_id' => $item->content_id,
+                'content_type' => $item->content_type,
+                'content_title' => $item->content_title,
                 'commenter_username' => $item->commenter_username,
                 'commenter_profile_url' => $item->commenter_profile_url,
                 'comment_text' => $item->comment_text,
@@ -198,20 +198,24 @@ class PendingModerationController extends Controller
         $deleted = 0;
         $failed = 0;
 
-        // Group by user_platform_id for efficient API calls
         $grouped = $items->groupBy('user_platform_id');
 
         foreach ($grouped as $userPlatformId => $platformItems) {
             $userPlatform = $platformItems->first()->userPlatform;
 
-            if (! $userPlatform || $userPlatform->platform->name !== 'youtube') {
+            if (! $userPlatform) {
                 continue;
             }
 
-            $youtube = YouTubeService::for($userPlatform);
+            $platformName = $userPlatform->platform->name;
+            if (! PlatformServiceFactory::supports($platformName)) {
+                Log::warning('PendingModeration: Platform not supported', ['platform' => $platformName]);
+                continue;
+            }
+
+            $service = PlatformServiceFactory::make($userPlatform);
 
             foreach ($platformItems as $item) {
-                // Check quota before each deletion
                 if (! $user->refresh()->canPerformAction()) {
                     Log::warning('PendingModeration: Quota exhausted mid-deletion', [
                         'user_id' => $user->id,
@@ -221,22 +225,21 @@ class PendingModerationController extends Controller
                     break 2;
                 }
 
-                $result = $youtube->deleteComment($item->platform_comment_id);
+                $result = $service->deleteComment($item->platform_comment_id);
 
                 DB::transaction(function () use ($item, $result, $user, &$deleted, &$failed) {
                     if ($result['success']) {
                         $item->markDeleted();
                         $deleted++;
 
-                        // Record usage
                         UsageRecord::recordAction($user->id, 'comment_moderated');
 
-                        // Also log to moderation_logs for history
                         ModerationLog::create([
                             'user_id' => $user->id,
                             'user_platform_id' => $item->user_platform_id,
                             'platform_comment_id' => $item->platform_comment_id,
-                            'video_id' => $item->video_id,
+                            'content_id' => $item->content_id,
+                            'content_type' => $item->content_type,
                             'commenter_username' => $item->commenter_username,
                             'commenter_id' => $item->commenter_id,
                             'comment_text' => $item->comment_text,

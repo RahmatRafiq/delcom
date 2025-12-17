@@ -6,7 +6,7 @@ use App\Models\ModerationLog;
 use App\Models\User;
 use App\Models\UserPlatform;
 use App\Services\GoogleCloudQuotaService;
-use App\Services\YouTubeRateLimiter;
+use App\Services\Platforms\Youtube\YouTubeRateLimiter;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 

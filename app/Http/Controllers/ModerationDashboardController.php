@@ -2,11 +2,12 @@
 
 namespace App\Http\Controllers;
 
-use App\Jobs\ScanYouTubeCommentsJob;
+use App\Jobs\ScanCommentsJob;
 use App\Models\ModerationLog;
 use App\Models\PendingModeration;
 use App\Models\UserPlatform;
-use App\Services\YouTubeRateLimiter;
+use App\Services\PlatformServiceFactory;
+use App\Services\Platforms\Youtube\YouTubeRateLimiter;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
@@ -127,11 +128,10 @@ class ModerationDashboardController extends Controller
             return back()->with('error', 'Monthly action limit reached. Upgrade your plan for more.');
         }
 
-        // Dispatch the scan job
-        $maxVideos = $request->input('max_videos', 10);
+        $maxContents = $request->input('max_contents', 10);
         $maxComments = $request->input('max_comments', 100);
 
-        ScanYouTubeCommentsJob::dispatch($userPlatform, $maxVideos, $maxComments);
+        ScanCommentsJob::dispatch($userPlatform, $maxContents, $maxComments);
 
         return back()->with('success', 'Scan started! Results will appear in moderation logs shortly.');
     }
@@ -158,14 +158,13 @@ class ModerationDashboardController extends Controller
             return back()->with('error', 'No connected platforms found.');
         }
 
-        $maxVideos = $request->input('max_videos', 10);
+        $maxContents = $request->input('max_contents', 10);
         $maxComments = $request->input('max_comments', 100);
         $dispatched = 0;
 
         foreach ($platforms as $userPlatform) {
-            // Only dispatch for YouTube for now
-            if ($userPlatform->platform->name === 'youtube') {
-                ScanYouTubeCommentsJob::dispatch($userPlatform, $maxVideos, $maxComments);
+            if (PlatformServiceFactory::supports($userPlatform->platform->name)) {
+                ScanCommentsJob::dispatch($userPlatform, $maxContents, $maxComments);
                 $dispatched++;
             }
         }

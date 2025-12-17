@@ -469,18 +469,18 @@ class ExtensionController extends Controller
                 continue;
             }
 
-            // Save to review queue
             PendingModeration::create([
                 'user_id' => $user->id,
                 'user_platform_id' => $userPlatform->id,
                 'platform_comment_id' => $comment['id'],
-                'video_id' => $contentId,
-                'video_title' => $contentTitle,
+                'content_id' => $contentId,
+                'content_type' => $contentType ?? 'video',
+                'content_title' => $contentTitle,
                 'commenter_username' => $comment['author_username'],
                 'commenter_id' => $comment['author_id'] ?? null,
                 'commenter_profile_url' => $comment['author_profile_url'] ?? null,
                 'comment_text' => mb_substr($comment['text'], 0, 1000),
-                'matched_filter_id' => null, // No filter matching - manual review
+                'matched_filter_id' => null,
                 'matched_pattern' => null,
                 'confidence_score' => 0,
                 'status' => PendingModeration::STATUS_PENDING,

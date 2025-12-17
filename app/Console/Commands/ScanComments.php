@@ -2,51 +2,40 @@
 
 namespace App\Console\Commands;
 
-use App\Jobs\ScanYouTubeCommentsJob;
+use App\Jobs\ScanCommentsJob;
 use App\Models\User;
 use App\Models\UserPlatform;
 use App\Services\FilterMatcher;
-use App\Services\YouTubeRateLimiter;
-use App\Services\YouTubeService;
+use App\Services\PlatformServiceFactory;
+use App\Services\Platforms\Youtube\YouTubeRateLimiter;
 use Illuminate\Console\Command;
 
 class ScanComments extends Command
 {
-    /**
-     * The name and signature of the console command.
-     */
     protected $signature = 'comments:scan
         {--user= : User ID or email to scan for}
         {--platform= : Platform name (youtube, instagram, etc)}
-        {--videos=10 : Maximum number of videos to scan}
-        {--comments=100 : Maximum comments per video}
+        {--contents=10 : Maximum number of contents to scan}
+        {--comments=100 : Maximum comments per content}
         {--dry-run : Show what would be done without executing actions}
         {--sync : Run synchronously instead of queuing}
         {--stats : Show API quota statistics}';
 
-    /**
-     * The console command description.
-     */
     protected $description = 'Scan comments on connected platforms and apply moderation filters';
 
-    /**
-     * Execute the console command.
-     */
     public function handle(FilterMatcher $filterMatcher): int
     {
-        // Show stats if requested
         if ($this->option('stats')) {
             return $this->showQuotaStats();
         }
 
         $userOption = $this->option('user');
-        $platformName = $this->option('platform') ?? 'youtube';
-        $maxVideos = (int) $this->option('videos');
+        $platformName = $this->option('platform');
+        $maxContents = (int) $this->option('contents');
         $maxComments = (int) $this->option('comments');
         $dryRun = $this->option('dry-run');
         $sync = $this->option('sync');
 
-        // Find user
         $user = null;
         if ($userOption) {
             $user = is_numeric($userOption)
@@ -55,20 +44,20 @@ class ScanComments extends Command
 
             if (! $user) {
                 $this->error("User not found: {$userOption}");
-
                 return Command::FAILURE;
             }
         }
 
-        // Get user platforms to scan
         $query = UserPlatform::with(['user', 'platform'])
-            ->whereHas('platform', fn ($q) => $q->where('name', $platformName))
             ->where('is_active', true);
+
+        if ($platformName) {
+            $query->whereHas('platform', fn ($q) => $q->where('name', $platformName));
+        }
 
         if ($user) {
             $query->where('user_id', $user->id);
         } else {
-            // Only get platforms that need scanning (auto moderation enabled)
             $query->where('auto_moderation_enabled', true);
         }
 
@@ -76,7 +65,6 @@ class ScanComments extends Command
 
         if ($userPlatforms->isEmpty()) {
             $this->warn('No active platform connections found to scan.');
-
             return Command::SUCCESS;
         }
 
@@ -85,16 +73,22 @@ class ScanComments extends Command
 
         foreach ($userPlatforms as $userPlatform) {
             $userName = $userPlatform->user->name;
-            $channelName = $userPlatform->platform_username ?? $userPlatform->platform_channel_id;
+            $platformDisplay = $userPlatform->platform->name;
+            $accountName = $userPlatform->platform_username ?? $userPlatform->platform_channel_id;
 
-            $this->info("Scanning: {$userName} - {$channelName}");
+            $this->info("Scanning: {$userName} - {$platformDisplay} ({$accountName})");
+
+            if (! PlatformServiceFactory::supports($userPlatform->platform->name)) {
+                $this->warn("  → Platform not supported: {$platformDisplay}");
+                continue;
+            }
 
             if ($dryRun) {
-                $this->dryRunScan($userPlatform, $filterMatcher, $maxVideos, $maxComments);
+                $this->dryRunScan($userPlatform, $filterMatcher, $maxContents, $maxComments);
             } elseif ($sync) {
-                $this->syncScan($userPlatform, $filterMatcher, $maxVideos, $maxComments);
+                $this->syncScan($userPlatform, $filterMatcher, $maxContents, $maxComments);
             } else {
-                ScanYouTubeCommentsJob::dispatch($userPlatform, $maxVideos, $maxComments);
+                ScanCommentsJob::dispatch($userPlatform, $maxContents, $maxComments);
                 $this->info('  → Job dispatched to queue');
             }
 
@@ -106,67 +100,55 @@ class ScanComments extends Command
         return Command::SUCCESS;
     }
 
-    /**
-     * Run a dry-run scan (no actual actions).
-     */
     private function dryRunScan(
         UserPlatform $userPlatform,
         FilterMatcher $filterMatcher,
-        int $maxVideos,
+        int $maxContents,
         int $maxComments
     ): void {
         $user = $userPlatform->user;
-        $filters = $user->getActiveFilters('youtube');
+        $platformName = $userPlatform->platform->name;
+        $filters = $user->getActiveFilters($platformName);
 
         if ($filters->isEmpty()) {
             $this->warn('  No active filters found for this user.');
-
             return;
         }
 
         $this->info("  Active filters: {$filters->count()}");
 
-        $youtube = YouTubeService::for($userPlatform);
+        $service = PlatformServiceFactory::make($userPlatform);
 
-        // Test connection
-        $connectionTest = $youtube->testConnection();
+        $connectionTest = $service->testConnection();
         if (! $connectionTest['success']) {
-            $this->error("  Connection failed: {$connectionTest['error']}");
-
+            $this->error("  Connection failed: ".($connectionTest['error'] ?? 'Unknown'));
             return;
         }
 
-        $this->info("  Channel: {$connectionTest['channel']['title']}");
+        $this->info("  Account: ".($connectionTest['channel']['title'] ?? $connectionTest['account']['username'] ?? 'Connected'));
 
-        // Get videos
-        $videosData = $youtube->getChannelVideos($maxVideos);
+        $contentsData = $service->getContents($maxContents);
 
-        if (empty($videosData['items'])) {
-            $this->warn('  No videos found.');
-
+        if (empty($contentsData['items'])) {
+            $this->warn('  No contents found.');
             return;
         }
 
-        $this->info('  Videos found: '.count($videosData['items']));
+        $this->info('  Contents found: '.count($contentsData['items']));
 
         $totalComments = 0;
         $totalMatches = 0;
 
-        foreach ($videosData['items'] as $video) {
-            $videoId = $video['contentDetails']['videoId'] ?? $video['snippet']['resourceId']['videoId'] ?? null;
-            $videoTitle = $video['snippet']['title'] ?? 'Unknown';
+        foreach ($contentsData['items'] as $content) {
+            $contentId = $content['contentId'];
+            $contentTitle = $content['title'] ?? 'Unknown';
 
-            if (! $videoId) {
-                continue;
-            }
+            $this->line("  → Scanning: {$contentTitle}");
 
-            $this->line("  → Scanning: {$videoTitle}");
-
-            $commentsData = $youtube->getVideoComments($videoId, $maxComments);
+            $commentsData = $service->getComments($contentId, $maxComments);
 
             if (! empty($commentsData['commentsDisabled'])) {
                 $this->line('    (comments disabled)');
-
                 continue;
             }
 
@@ -174,14 +156,15 @@ class ScanComments extends Command
             $totalComments += count($comments);
 
             foreach ($comments as $comment) {
-                $matchedFilter = $filterMatcher->findMatch($comment['textOriginal'], $filters);
+                $commentText = $comment['textOriginal'] ?? $comment['textDisplay'] ?? '';
+                $matchedFilter = $filterMatcher->findMatch($commentText, $filters);
 
                 if ($matchedFilter) {
                     $totalMatches++;
                     $this->warn("    [MATCH] Filter: {$matchedFilter->pattern}");
                     $this->line("            Action: {$matchedFilter->action}");
-                    $this->line('            Comment: '.mb_substr($comment['textOriginal'], 0, 80).'...');
-                    $this->line("            Author: {$comment['authorDisplayName']}");
+                    $this->line('            Comment: '.mb_substr($commentText, 0, 80).'...');
+                    $this->line("            Author: ".($comment['authorDisplayName'] ?? 'Unknown'));
                 }
             }
         }
@@ -192,26 +175,20 @@ class ScanComments extends Command
         $this->line("    Total matches found: {$totalMatches}");
     }
 
-    /**
-     * Run a synchronous scan (immediate execution).
-     */
     private function syncScan(
         UserPlatform $userPlatform,
         FilterMatcher $filterMatcher,
-        int $maxVideos,
+        int $maxContents,
         int $maxComments
     ): void {
         $this->info('  Running synchronous scan...');
 
-        $job = new ScanYouTubeCommentsJob($userPlatform, $maxVideos, $maxComments);
+        $job = new ScanCommentsJob($userPlatform, $maxContents, $maxComments);
         $job->handle($filterMatcher);
 
         $this->info('  Scan completed.');
     }
 
-    /**
-     * Show API quota statistics.
-     */
     private function showQuotaStats(): int
     {
         $limiter = new YouTubeRateLimiter;
@@ -244,10 +221,9 @@ class ScanComments extends Command
             ]
         );
 
-        // Show warning if quota is low
         if ($stats['percentage'] >= 80) {
             $this->newLine();
-            $this->error('⚠️  Warning: Quota usage is above 80%!');
+            $this->error('Warning: Quota usage is above 80%!');
         }
 
         return Command::SUCCESS;
