@@ -60,6 +60,8 @@ interface PlatformConnection {
     platform_username: string;
     is_active: boolean;
     auto_moderation_enabled: boolean;
+    auto_delete_enabled: boolean;
+    scan_mode: 'full' | 'incremental' | 'manual';
     scan_frequency_minutes: number;
     last_scanned_at: string | null;
     token_expires_at: string | null;
@@ -123,6 +125,12 @@ const scanFrequencyOptions = [
     { value: 1440, label: 'Once a day' },
 ];
 
+const scanModeOptions = [
+    { value: 'incremental', label: 'Incremental (Recommended)', description: 'Only scan new comments since last scan' },
+    { value: 'full', label: 'Full Scan', description: 'Scan all comments from the beginning' },
+    { value: 'manual', label: 'Manual Only', description: 'Only scan when you click "Scan Now"' },
+];
+
 export default function ConnectedAccountsIndex({ platforms, subscription }: Props) {
     const [settingsDialogOpen, setSettingsDialogOpen] = useState(false);
     const [selectedPlatform, setSelectedPlatform] = useState<Platform | null>(null);
@@ -130,6 +138,8 @@ export default function ConnectedAccountsIndex({ platforms, subscription }: Prop
     const [settings, setSettings] = useState({
         is_active: true,
         auto_moderation_enabled: false,
+        auto_delete_enabled: false,
+        scan_mode: 'incremental' as 'full' | 'incremental' | 'manual',
         scan_frequency_minutes: 60,
     });
     const [saving, setSaving] = useState(false);
@@ -158,6 +168,8 @@ export default function ConnectedAccountsIndex({ platforms, subscription }: Prop
         setSettings({
             is_active: connection.is_active,
             auto_moderation_enabled: connection.auto_moderation_enabled,
+            auto_delete_enabled: connection.auto_delete_enabled,
+            scan_mode: connection.scan_mode,
             scan_frequency_minutes: connection.scan_frequency_minutes,
         });
         setSettingsDialogOpen(true);
@@ -329,7 +341,7 @@ export default function ConnectedAccountsIndex({ platforms, subscription }: Prop
                             <div className="flex items-center justify-between">
                                 <div className="space-y-0.5">
                                     <Label>Auto Moderation</Label>
-                                    <p className="text-muted-foreground text-sm">Automatically scan and delete matching comments</p>
+                                    <p className="text-muted-foreground text-sm">Automatically scan for spam comments on schedule</p>
                                 </div>
                                 <Switch
                                     checked={settings.auto_moderation_enabled}
@@ -337,7 +349,45 @@ export default function ConnectedAccountsIndex({ platforms, subscription }: Prop
                                 />
                             </div>
 
-                            {settings.auto_moderation_enabled && selectedMethod === 'api' && (
+                            <div className="flex items-center justify-between">
+                                <div className="space-y-0.5">
+                                    <Label>Auto Delete</Label>
+                                    <p className="text-muted-foreground text-sm">
+                                        {settings.auto_delete_enabled
+                                            ? 'Spam will be deleted immediately (50 quota/delete)'
+                                            : 'Spam goes to Review Queue first (saves quota)'}
+                                    </p>
+                                </div>
+                                <Switch
+                                    checked={settings.auto_delete_enabled}
+                                    onCheckedChange={(checked) => setSettings((prev) => ({ ...prev, auto_delete_enabled: checked }))}
+                                />
+                            </div>
+
+                            {selectedMethod === 'api' && (
+                                <div className="space-y-2">
+                                    <Label>Scan Mode</Label>
+                                    <CustomSelect
+                                        options={scanModeOptions}
+                                        value={scanModeOptions.find((o) => o.value === settings.scan_mode)}
+                                        onChange={(selected) =>
+                                            setSettings((prev) => ({
+                                                ...prev,
+                                                scan_mode: (selected as { value: string })?.value as 'full' | 'incremental' | 'manual' ?? 'incremental',
+                                            }))
+                                        }
+                                        placeholder="Select scan mode"
+                                        formatOptionLabel={(option: { value: string; label: string; description?: string }) => (
+                                            <div>
+                                                <div className="font-medium">{option.label}</div>
+                                                {option.description && <div className="text-muted-foreground text-xs">{option.description}</div>}
+                                            </div>
+                                        )}
+                                    />
+                                </div>
+                            )}
+
+                            {settings.auto_moderation_enabled && settings.scan_mode !== 'manual' && selectedMethod === 'api' && (
                                 <div className="space-y-2">
                                     <Label>Scan Frequency</Label>
                                     <CustomSelect
