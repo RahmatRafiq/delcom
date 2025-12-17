@@ -6,44 +6,80 @@ use App\Models\Platform;
 use App\Models\User;
 use App\Models\UserPlatform;
 use App\Services\InstagramService;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 use Laravel\Socialite\Facades\Socialite;
+use Tymon\JWTAuth\Facades\JWTAuth;
 
 class SocialAuthController extends Controller
 {
-    public function redirectToProvider($provider)
+    public function redirectToProvider(Request $request, $provider)
     {
+        $hasExtensionParam = $request->has('extension');
+        Log::info('OAuth redirect started', [
+            'provider' => $provider,
+            'has_extension_param' => $hasExtensionParam,
+            'all_params' => $request->all(),
+        ]);
+
+        // Build the OAuth redirect
+        $driver = Socialite::driver($provider);
+
         if ($provider === 'google') {
-            // Include YouTube scopes for comment moderation
-            return Socialite::driver($provider)
+            $driver = $driver
                 ->scopes(config('services.youtube.scopes'))
                 ->with([
                     'access_type' => 'offline',
                     'prompt' => 'consent',
-                ])
-                ->redirect();
+                ]);
         }
 
         if ($provider === 'facebook') {
-            // Include Instagram permissions
-            return Socialite::driver($provider)
+            $driver = $driver
                 ->scopes(config('services.facebook.scopes'))
                 ->with([
                     'auth_type' => 'rerequest',
-                ])
-                ->redirect();
+                ]);
         }
 
-        return Socialite::driver($provider)->redirect();
+        // If from extension, store in cache with unique state
+        if ($hasExtensionParam) {
+            $state = Str::random(40);
+            Cache::put("oauth_extension_state:{$state}", true, now()->addMinutes(10));
+            Log::info('Extension OAuth: storing state in cache', ['state' => $state]);
+
+            // Add state to OAuth request
+            $driver = $driver->with(['state' => $state]);
+        }
+
+        return $driver->redirect();
     }
 
-    public function handleProviderCallback($provider)
+    public function handleProviderCallback(Request $request, $provider)
     {
         try {
-            $socialUser = Socialite::driver($provider)->user();
+            // Get state from request to check if from extension
+            $state = $request->get('state');
+            $isFromExtension = $state && Cache::pull("oauth_extension_state:{$state}");
+
+            Log::info('OAuth callback received', [
+                'provider' => $provider,
+                'state' => $state,
+                'is_from_extension' => $isFromExtension,
+            ]);
+
+            // Use stateless() since we're managing state ourselves for extension
+            $driver = Socialite::driver($provider);
+            if ($isFromExtension) {
+                $driver = $driver->stateless();
+            }
+
+            $socialUser = $driver->user();
             $user = User::where('email', $socialUser->getEmail())->first();
 
             if (! $user) {
@@ -72,6 +108,23 @@ class SocialAuthController extends Controller
                 $message = $igConnected
                     ? 'Login successful! Instagram connected.'
                     : 'Login successful! No Instagram Business account found.';
+            }
+
+            Log::info('OAuth user authenticated', [
+                'user_email' => $user->email,
+                'is_from_extension' => $isFromExtension,
+            ]);
+
+            if ($isFromExtension) {
+                // Generate JWT token for extension
+                $token = JWTAuth::fromUser($user);
+
+                Log::info('Redirecting to extension callback', [
+                    'token_length' => \strlen($token),
+                ]);
+
+                // Redirect to API endpoint with token in URL fragment
+                return redirect("/api/auth/extension-callback#token={$token}");
             }
 
             Auth::login($user);
@@ -210,17 +263,12 @@ class SocialAuthController extends Controller
                 [
                     'platform_username' => $igAccount['username'] ?? $igAccount['name'] ?? 'Unknown',
                     'connection_method' => 'api',
-                    'access_token' => $pageAccessToken, // Use page token for IG API
-                    'token_expires_at' => now()->addDays(60), // FB long-lived tokens ~60 days
+                    'access_token' => $pageAccessToken,
+                    'token_expires_at' => now()->addDays(60),
                     'scopes' => config('services.facebook.scopes'),
                     'is_active' => true,
                     'auto_moderation_enabled' => false,
                     'scan_frequency_minutes' => 60,
-                    'metadata' => [
-                        'facebook_page_id' => $page['id'],
-                        'facebook_page_name' => $page['name'],
-                        'ig_followers' => $igAccount['followers_count'] ?? 0,
-                    ],
                 ]
             );
 

@@ -405,6 +405,113 @@ class ExtensionController extends Controller
     }
 
     /**
+     * Save ALL scraped comments to review queue (without filtering).
+     * For manual review by user.
+     */
+    public function saveAllComments(Request $request): JsonResponse
+    {
+        $request->validate([
+            'connection_id' => 'required|integer|exists:user_platforms,id',
+            'content_id' => 'required|string|max:255',
+            'content_title' => 'nullable|string|max:500',
+            'content_url' => 'nullable|string|max:1000', // Relaxed - might not be full URL
+            'comments' => 'required|array|min:1',
+            'comments.*.id' => 'required|string|max:255',
+            'comments.*.text' => 'required|string',
+            'comments.*.author_username' => 'required|string|max:255',
+            'comments.*.author_id' => 'nullable|string|max:255',
+            'comments.*.author_profile_url' => 'nullable|string|max:1000', // Relaxed - might be path only
+            'comments.*.created_at' => 'nullable|string',
+        ]);
+
+        $user = Auth::user();
+        $connectionId = $request->input('connection_id');
+
+        // Verify ownership
+        $userPlatform = UserPlatform::where('id', $connectionId)
+            ->where('user_id', $user->id)
+            ->where('is_active', true)
+            ->with('platform')
+            ->first();
+
+        if (! $userPlatform) {
+            return response()->json([
+                'success' => false,
+                'error' => 'Connection not found or not authorized',
+            ], 403);
+        }
+
+        $contentId = $request->input('content_id');
+        $contentTitle = $request->input('content_title', 'Instagram Post');
+        $comments = $request->input('comments');
+
+        $saved = 0;
+        $skipped = 0;
+
+        foreach ($comments as $comment) {
+            // Check if already exists (avoid duplicates)
+            $exists = PendingModeration::where('user_platform_id', $userPlatform->id)
+                ->where('platform_comment_id', $comment['id'])
+                ->exists();
+
+            if ($exists) {
+                $skipped++;
+                continue;
+            }
+
+            // Also check in moderation logs
+            $existsInLog = ModerationLog::where('user_platform_id', $userPlatform->id)
+                ->where('platform_comment_id', $comment['id'])
+                ->exists();
+
+            if ($existsInLog) {
+                $skipped++;
+                continue;
+            }
+
+            // Save to review queue
+            PendingModeration::create([
+                'user_id' => $user->id,
+                'user_platform_id' => $userPlatform->id,
+                'platform_comment_id' => $comment['id'],
+                'video_id' => $contentId,
+                'video_title' => $contentTitle,
+                'commenter_username' => $comment['author_username'],
+                'commenter_id' => $comment['author_id'] ?? null,
+                'commenter_profile_url' => $comment['author_profile_url'] ?? null,
+                'comment_text' => mb_substr($comment['text'], 0, 1000),
+                'matched_filter_id' => null, // No filter matching - manual review
+                'matched_pattern' => null,
+                'confidence_score' => 0,
+                'status' => PendingModeration::STATUS_PENDING,
+                'detected_at' => now(),
+            ]);
+
+            $saved++;
+        }
+
+        // Update last scanned timestamp
+        $userPlatform->update(['last_scanned_at' => now()]);
+
+        Log::info('ExtensionController: All comments saved to review queue', [
+            'user_id' => $user->id,
+            'platform' => $userPlatform->platform->name,
+            'content_id' => $contentId,
+            'total' => count($comments),
+            'saved' => $saved,
+            'skipped' => $skipped,
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'total' => count($comments),
+            'saved' => $saved,
+            'skipped' => $skipped,
+            'message' => "Saved {$saved} comments to review queue" . ($skipped > 0 ? " ({$skipped} duplicates skipped)" : ''),
+        ]);
+    }
+
+    /**
      * Get user's filters for extension to use locally.
      */
     public function getFilters(Request $request): JsonResponse

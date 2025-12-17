@@ -19,6 +19,31 @@ use Illuminate\Support\Facades\Route;
 Route::prefix('auth')->group(function () {
     Route::post('login', [AuthController::class, 'login']);
     Route::post('register', [AuthController::class, 'register']);
+
+    // Extension OAuth callback - returns simple HTML page
+    // Token is passed in URL fragment (#token=xxx) for security
+    Route::get('extension-callback', function () {
+        return response('
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <title>Login Successful</title>
+                <style>
+                    body { font-family: system-ui; background: #1e1b4b; color: white; display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0; }
+                    .card { text-align: center; padding: 2rem; background: rgba(255,255,255,0.1); border-radius: 1rem; }
+                    .success { color: #22c55e; font-size: 3rem; }
+                </style>
+            </head>
+            <body>
+                <div class="card">
+                    <div class="success">✓</div>
+                    <h2>Login Successful!</h2>
+                    <p>This tab will close automatically...</p>
+                </div>
+            </body>
+            </html>
+        ', 200, ['Content-Type' => 'text/html']);
+    });
 });
 
 // Auth routes (protected)
@@ -36,8 +61,11 @@ Route::prefix('extension')->middleware('auth:api')->group(function () {
     // Platform connection
     Route::post('connect', [ExtensionController::class, 'connect']);
 
-    // Comment submission and scanning
+    // Comment submission and scanning (with filter matching)
     Route::post('comments', [ExtensionController::class, 'submitComments']);
+
+    // Save ALL comments to review queue (no filtering - manual review)
+    Route::post('save-all', [ExtensionController::class, 'saveAllComments']);
 
     // Get pending deletions for extension to execute
     Route::get('pending-deletions', [ExtensionController::class, 'getPendingDeletions']);
