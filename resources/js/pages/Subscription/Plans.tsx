@@ -10,6 +10,7 @@ import { Building2, Check, Crown, Sparkles, Zap } from 'lucide-react';
 
 interface Props {
     plans: Plan[];
+    currentPlanSlug: string;
 }
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -31,7 +32,7 @@ const planColors: Record<string, string> = {
     enterprise: 'text-amber-600 bg-amber-100 dark:bg-amber-900/30',
 };
 
-export default function SubscriptionPlans({ plans }: Props) {
+export default function SubscriptionPlans({ plans, currentPlanSlug }: Props) {
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Subscription Plans" />
@@ -45,7 +46,7 @@ export default function SubscriptionPlans({ plans }: Props) {
 
                 <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
                     {plans.map((plan) => (
-                        <PlanCard key={plan.id} plan={plan} />
+                        <PlanCard key={plan.id} plan={plan} currentPlanSlug={currentPlanSlug} />
                     ))}
                 </div>
 
@@ -63,14 +64,16 @@ export default function SubscriptionPlans({ plans }: Props) {
     );
 }
 
-function PlanCard({ plan }: { plan: Plan }) {
+function PlanCard({ plan, currentPlanSlug }: { plan: Plan; currentPlanSlug: string }) {
     const isPopular = plan.slug === 'pro';
+    const isCurrentPlan = plan.slug === currentPlanSlug;
     const isUnlimited = plan.monthly_action_limit === -1;
     const features = plan.features || [];
 
     return (
-        <Card className={`relative flex flex-col ${isPopular ? 'border-primary shadow-lg' : ''}`}>
-            {isPopular && <Badge className="bg-primary absolute -top-3 left-1/2 -translate-x-1/2">Most Popular</Badge>}
+        <Card className={`relative flex flex-col ${isCurrentPlan ? 'border-green-500 bg-green-50/50 dark:bg-green-900/10' : isPopular ? 'border-primary shadow-lg' : ''}`}>
+            {isCurrentPlan && <Badge className="absolute -top-3 left-1/2 -translate-x-1/2 bg-green-600">Your Plan</Badge>}
+            {isPopular && !isCurrentPlan && <Badge className="bg-primary absolute -top-3 left-1/2 -translate-x-1/2">Most Popular</Badge>}
 
             <CardHeader className="pb-2 text-center">
                 <div className={`mx-auto w-fit rounded-lg p-3 ${planColors[plan.slug]}`}>{planIcons[plan.slug]}</div>
@@ -108,8 +111,12 @@ function PlanCard({ plan }: { plan: Plan }) {
             </CardContent>
 
             <CardFooter>
-                <Button className="w-full" variant={isPopular ? 'default' : 'outline'}>
-                    {plan.slug === 'free' ? 'Current Plan' : 'Upgrade Now'}
+                <Button
+                    className="w-full"
+                    variant={isCurrentPlan ? 'secondary' : isPopular ? 'default' : 'outline'}
+                    disabled={isCurrentPlan}
+                >
+                    {isCurrentPlan ? 'Current Plan' : 'Upgrade Now'}
                 </Button>
             </CardFooter>
         </Card>

@@ -440,13 +440,33 @@ function PlatformCard({
                     <div className="flex items-center gap-3">
                         <span className={`rounded-lg p-2.5 ${platformColors[platform.name]}`}>{platformIcons[platform.name]}</span>
                         <div>
-                            <CardTitle className="text-base">{platform.display_name}</CardTitle>
+                            <div className="flex items-center gap-2">
+                                <CardTitle className="text-base">{platform.display_name}</CardTitle>
+                                <Badge
+                                    variant="outline"
+                                    className={
+                                        platform.tier === 'api'
+                                            ? 'border-blue-300 bg-blue-50 text-blue-700 dark:border-blue-700 dark:bg-blue-900/30 dark:text-blue-300'
+                                            : 'border-purple-300 bg-purple-50 text-purple-700 dark:border-purple-700 dark:bg-purple-900/30 dark:text-purple-300'
+                                    }
+                                >
+                                    {platform.tier === 'api' ? (
+                                        <>
+                                            <Zap className="mr-1 h-3 w-3" />
+                                            API
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Puzzle className="mr-1 h-3 w-3" />
+                                            Extension
+                                        </>
+                                    )}
+                                </Badge>
+                            </div>
                             <CardDescription>
-                                {platform.connection_methods.length > 1
-                                    ? 'API & Extension available'
-                                    : platform.connection_methods[0]?.method === 'api'
-                                      ? 'API Integration'
-                                      : 'Browser Extension'}
+                                {platform.tier === 'api'
+                                    ? 'Background processing via official API'
+                                    : 'Browser-based automation via extension'}
                             </CardDescription>
                         </div>
                     </div>

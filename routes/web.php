@@ -130,9 +130,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
         // Subscription Plans (placeholder - implement with Stripe later)
         Route::get('subscription/plans', function () {
             $plans = \App\Models\Plan::active()->orderBy('sort_order')->get();
+            $user = auth()->user();
+            $currentPlanSlug = $user->subscription?->plan?->slug ?? 'free';
 
             return \Inertia\Inertia::render('Subscription/Plans', [
                 'plans' => $plans,
+                'currentPlanSlug' => $currentPlanSlug,
             ]);
         })->name('subscription.plans');
 
