@@ -1,0 +1,136 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Custom glassmorphism utilities */
+@layer components {
+  .glass-card {
+    @apply bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl shadow-2xl;
+  }
+
+  .glass-card-solid {
+    @apply bg-slate-900/95 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl;
+  }
+
+  .btn-primary {
+    @apply w-full py-3 px-4 rounded-xl font-semibold text-white
+           bg-gradient-to-r from-primary-500 to-primary-600
+           hover:from-primary-600 hover:to-primary-700
+           transition-all duration-300 transform hover:scale-[1.02]
+           shadow-lg shadow-primary-500/25 hover:shadow-primary-500/40
+           disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100
+           flex items-center justify-center gap-2;
+  }
+
+  .btn-secondary {
+    @apply py-2.5 px-4 rounded-xl font-medium text-white/90
+           bg-white/10 border border-white/20
+           hover:bg-white/20 hover:border-white/30
+           transition-all duration-300
+           flex items-center justify-center gap-2;
+  }
+
+  .input-field {
+    @apply w-full px-4 py-3 rounded-xl
+           bg-white/5 border border-white/10
+           text-white placeholder-white/40
+           focus:outline-none focus:border-primary-500/50 focus:bg-white/10
+           transition-all duration-300;
+  }
+
+  .stat-card {
+    @apply flex items-center gap-3 p-3 rounded-xl bg-white/5 border border-white/10;
+  }
+
+  .platform-item {
+    @apply flex items-center justify-between p-3 rounded-xl bg-white/5
+           border border-white/10 hover:bg-white/10 transition-colors duration-200;
+  }
+
+  .status-badge {
+    @apply px-2 py-0.5 rounded-full text-xs font-medium;
+  }
+
+  .status-badge-success {
+    @apply bg-emerald-500/20 text-emerald-400;
+  }
+
+  .status-badge-error {
+    @apply bg-red-500/20 text-red-400;
+  }
+
+  .status-badge-warning {
+    @apply bg-amber-500/20 text-amber-400;
+  }
+}
+
+/* Background orbs animation */
+@layer utilities {
+  .bg-orb {
+    @apply absolute rounded-full blur-3xl opacity-30;
+  }
+
+  .bg-orb-1 {
+    @apply w-72 h-72 bg-primary-500 -top-20 -left-20 animate-float;
+  }
+
+  .bg-orb-2 {
+    @apply w-64 h-64 bg-purple-500 -bottom-16 -right-16 animate-float-delayed;
+  }
+
+  .bg-orb-3 {
+    @apply w-48 h-48 bg-pink-500 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 animate-float;
+  }
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 4px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+/* Loading spinner */
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.btn-loader {
+  @apply hidden w-5 h-5 border-2 border-white/30 border-t-white rounded-full;
+  animation: spin 0.8s linear infinite;
+}
+
+.loading .btn-text {
+  @apply hidden;
+}
+
+.loading .btn-loader {
+  @apply inline-block;
+}
+
+/* Scanning animation rings */
+.scan-ring {
+  @apply absolute w-16 h-16 border-2 border-primary-500/50 rounded-full;
+  animation: pulse-ring 1.5s ease-out infinite;
+}
+
+.scan-ring:nth-child(2) {
+  animation-delay: 0.5s;
+}
+
+.scan-ring:nth-child(3) {
+  animation-delay: 1s;
+}

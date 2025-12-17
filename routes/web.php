@@ -23,8 +23,10 @@ Route::get('/terms-of-service', function () {
     return Inertia::render('Legal/TermsOfService');
 })->name('terms-of-service');
 
-Route::get('auth/{provider}', [SocialAuthController::class, 'redirectToProvider'])->name('auth.redirect');
+// OAuth routes - order matters! Specific routes before wildcard
 Route::get('auth/{provider}/callback', [SocialAuthController::class, 'handleProviderCallback'])->name('auth.callback');
+Route::get('auth/{provider}', [SocialAuthController::class, 'redirectToProvider'])->name('auth.redirect')
+    ->where('provider', 'google|facebook|github'); // Only allow specific providers
 
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::prefix('dashboard')->group(function () {

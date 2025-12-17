@@ -1,0 +1,13 @@
+{
+  "name": "delcom-extension",
+  "version": "1.0.0",
+  "description": "Delcom - Comment Moderator Chrome Extension",
+  "scripts": {
+    "build:css": "tailwindcss -i ./src/input.css -o ./popup/popup.css --minify",
+    "watch:css": "tailwindcss -i ./src/input.css -o ./popup/popup.css --watch",
+    "build": "npm run build:css"
+  },
+  "devDependencies": {
+    "tailwindcss": "^3.4.0"
+  }
+}

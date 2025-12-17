@@ -1,0 +1,152 @@
+/**
+ * Delcom Extension - Content Script Styles
+ * Styles injected into Instagram pages
+ */
+
+/* Spam highlight effect */
+.delcom-spam-highlight {
+  background: rgba(239, 68, 68, 0.12) !important;
+  border-left: 3px solid #ef4444 !important;
+  border-radius: 4px;
+  margin-left: -3px;
+  padding-left: 8px !important;
+  position: relative;
+  transition: all 0.3s ease;
+}
+
+.delcom-spam-highlight:hover {
+  background: rgba(239, 68, 68, 0.2) !important;
+}
+
+.delcom-spam-highlight::after {
+  content: 'SPAM';
+  position: absolute;
+  top: 50%;
+  right: 8px;
+  transform: translateY(-50%);
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+  color: white;
+  font-size: 9px;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 4px;
+  letter-spacing: 0.5px;
+  box-shadow: 0 2px 4px rgba(239, 68, 68, 0.3);
+  animation: delcom-pulse 2s ease-in-out infinite;
+}
+
+/* Deleted comment styling */
+.delcom-deleted {
+  opacity: 0.4 !important;
+  position: relative;
+  text-decoration: line-through;
+  pointer-events: none;
+}
+
+.delcom-deleted::after {
+  content: 'DELETED';
+  background: linear-gradient(135deg, #22c55e, #16a34a);
+  animation: none;
+}
+
+/* Scanning indicator */
+.delcom-scanning {
+  position: relative;
+}
+
+.delcom-scanning::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(99, 102, 241, 0.1) 50%,
+    transparent 100%
+  );
+  animation: delcom-scan 1.5s ease-in-out infinite;
+  pointer-events: none;
+}
+
+/* Animations */
+@keyframes delcom-pulse {
+  0%, 100% {
+    opacity: 1;
+    transform: translateY(-50%) scale(1);
+  }
+  50% {
+    opacity: 0.8;
+    transform: translateY(-50%) scale(1.05);
+  }
+}
+
+@keyframes delcom-scan {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+/* Delcom badge on scanned posts */
+.delcom-scanned-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: linear-gradient(135deg, #6366f1, #4f46e5);
+  color: white;
+  font-size: 10px;
+  font-weight: 600;
+  padding: 4px 8px;
+  border-radius: 6px;
+  margin-left: 8px;
+  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.3);
+}
+
+.delcom-scanned-badge svg {
+  width: 12px;
+  height: 12px;
+}
+
+/* Tooltip for spam reasons */
+.delcom-tooltip {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  right: 0;
+  background: #1e1b4b;
+  color: white;
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-size: 11px;
+  max-width: 200px;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.2s ease;
+  z-index: 1000;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.delcom-tooltip::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  right: 16px;
+  border: 6px solid transparent;
+  border-top-color: #1e1b4b;
+}
+
+.delcom-spam-highlight:hover .delcom-tooltip {
+  opacity: 1;
+  visibility: visible;
+}
+
+/* Dark mode adjustments (Instagram uses dark mode) */
+@media (prefers-color-scheme: dark) {
+  .delcom-spam-highlight {
+    background: rgba(239, 68, 68, 0.15) !important;
+  }
+}

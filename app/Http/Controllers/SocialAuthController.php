@@ -5,15 +5,22 @@ namespace App\Http\Controllers;
 use App\Models\Platform;
 use App\Models\User;
 use App\Models\UserPlatform;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Http;
 use Laravel\Socialite\Facades\Socialite;
+use Tymon\JWTAuth\Facades\JWTAuth;
 
 class SocialAuthController extends Controller
 {
-    public function redirectToProvider($provider)
+    public function redirectToProvider(Request $request, $provider)
     {
+        // Store extension flag in session for callback
+        if ($request->has('extension')) {
+            session(['oauth_from_extension' => true]);
+        }
+
         if ($provider === 'google') {
             // Include YouTube scopes for comment moderation
             return Socialite::driver($provider)
@@ -50,6 +57,17 @@ class SocialAuthController extends Controller
             // If Google login, also save YouTube connection
             if ($provider === 'google') {
                 $this->saveYouTubeConnection($user, $socialUser);
+            }
+
+            // Check if request came from extension
+            if (session('oauth_from_extension')) {
+                session()->forget('oauth_from_extension');
+
+                // Generate JWT token for extension
+                $token = JWTAuth::fromUser($user);
+
+                // Redirect to API endpoint with token in URL fragment (more secure)
+                return redirect("/api/auth/extension-callback#token={$token}");
             }
 
             Auth::login($user);
