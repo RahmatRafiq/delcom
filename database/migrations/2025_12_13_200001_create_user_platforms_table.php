@@ -22,6 +22,8 @@ return new class extends Migration
             $table->json('scopes')->nullable()->comment('OAuth scopes granted');
             $table->boolean('is_active')->default(true);
             $table->boolean('auto_moderation_enabled')->default(false);
+            $table->enum('scan_mode', ['full', 'incremental', 'manual'])->default('incremental');
+            $table->boolean('auto_delete_enabled')->default(false)->comment('If false, detected spam goes to review queue');
             $table->integer('scan_frequency_minutes')->default(60);
             $table->timestamp('last_scanned_at')->nullable();
             $table->timestamps();
