@@ -2,128 +2,478 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Custom glassmorphism utilities */
+/* ===============================================
+   LIQUID GLASS DESIGN SYSTEM
+   A crystalline, water-like aesthetic with
+   animated gradients and shimmer effects
+   =============================================== */
+
 @layer components {
-  .glass-card {
-    @apply bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl shadow-2xl;
+  /* -----------------------------------------------
+     LIQUID GLASS CARDS
+     Core container with crystalline transparency
+     ----------------------------------------------- */
+  .liquid-glass {
+    @apply relative overflow-hidden;
+    background: linear-gradient(
+      135deg,
+      rgba(255, 255, 255, 0.08) 0%,
+      rgba(255, 255, 255, 0.02) 50%,
+      rgba(255, 255, 255, 0.05) 100%
+    );
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 1.25rem;
+    box-shadow:
+      0 8px 32px rgba(0, 0, 0, 0.3),
+      inset 0 1px 0 rgba(255, 255, 255, 0.1),
+      inset 0 -1px 0 rgba(0, 0, 0, 0.1);
   }
 
-  .glass-card-solid {
-    @apply bg-slate-900/95 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl;
+  .liquid-glass::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      rgba(255, 255, 255, 0.04),
+      transparent
+    );
+    animation: shimmer 3s ease-in-out infinite;
+    pointer-events: none;
   }
 
-  .btn-primary {
-    @apply w-full py-3 px-4 rounded-xl font-semibold text-white
-           bg-gradient-to-r from-primary-500 to-primary-600
-           hover:from-primary-600 hover:to-primary-700
-           transition-all duration-300 transform hover:scale-[1.02]
-           shadow-lg shadow-primary-500/25 hover:shadow-primary-500/40
-           disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100
-           flex items-center justify-center gap-2;
+  /* Solid variant - glass effect with visible transparency */
+  .liquid-glass-solid {
+    @apply relative overflow-hidden rounded-2xl;
+    background: linear-gradient(
+      145deg,
+      rgba(255, 255, 255, 0.1) 0%,
+      rgba(255, 255, 255, 0.05) 50%,
+      rgba(255, 255, 255, 0.08) 100%
+    );
+    backdrop-filter: blur(16px) saturate(180%);
+    -webkit-backdrop-filter: blur(16px) saturate(180%);
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    box-shadow:
+      0 8px 32px rgba(0, 0, 0, 0.3),
+      0 0 0 1px rgba(255, 255, 255, 0.1) inset,
+      0 1px 0 rgba(255, 255, 255, 0.2) inset;
   }
 
-  .btn-secondary {
-    @apply py-2.5 px-4 rounded-xl font-medium text-white/90
-           bg-white/10 border border-white/20
-           hover:bg-white/20 hover:border-white/30
-           transition-all duration-300
-           flex items-center justify-center gap-2;
+  .liquid-glass-solid::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      rgba(255, 255, 255, 0.15),
+      transparent
+    );
+    pointer-events: none;
   }
 
-  .input-field {
-    @apply w-full px-4 py-3 rounded-xl
-           bg-white/5 border border-white/10
-           text-white placeholder-white/40
-           focus:outline-none focus:border-primary-500/50 focus:bg-white/10
+  .liquid-glass-solid::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -150%;
+    width: 150%;
+    height: 100%;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      rgba(99, 102, 241, 0.03),
+      rgba(139, 92, 246, 0.03),
+      transparent
+    );
+    animation: shimmer 4s ease-in-out infinite;
+    pointer-events: none;
+  }
+
+  /* -----------------------------------------------
+     LIQUID BUTTONS
+     Fluid, responsive buttons with glow effects
+     ----------------------------------------------- */
+  .btn-liquid-primary {
+    @apply relative w-full py-3 px-4 rounded-xl font-semibold text-white
+           flex items-center justify-center gap-2
+           transition-all duration-300 transform
+           disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100;
+    background: linear-gradient(
+      135deg,
+      #6366f1 0%,
+      #818cf8 50%,
+      #6366f1 100%
+    );
+    background-size: 200% 200%;
+    animation: gradient-shift 3s ease infinite;
+    box-shadow:
+      0 4px 20px rgba(99, 102, 241, 0.35),
+      0 0 40px rgba(99, 102, 241, 0.1),
+      inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  }
+
+  .btn-liquid-primary:hover:not(:disabled) {
+    @apply scale-[1.02];
+    box-shadow:
+      0 6px 30px rgba(99, 102, 241, 0.5),
+      0 0 60px rgba(99, 102, 241, 0.2),
+      inset 0 1px 0 rgba(255, 255, 255, 0.25);
+  }
+
+  .btn-liquid-primary:active:not(:disabled) {
+    @apply scale-[0.98];
+  }
+
+  .btn-liquid-secondary {
+    @apply relative py-2.5 px-4 rounded-xl font-medium
+           flex items-center justify-center gap-2
            transition-all duration-300;
+    background: linear-gradient(
+      135deg,
+      rgba(255, 255, 255, 0.08) 0%,
+      rgba(255, 255, 255, 0.04) 100%
+    );
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    color: rgba(255, 255, 255, 0.9);
+    box-shadow:
+      0 2px 10px rgba(0, 0, 0, 0.2),
+      inset 0 1px 0 rgba(255, 255, 255, 0.08);
   }
 
-  .stat-card {
-    @apply flex items-center gap-3 p-3 rounded-xl bg-white/5 border border-white/10;
+  .btn-liquid-secondary:hover {
+    background: linear-gradient(
+      135deg,
+      rgba(255, 255, 255, 0.12) 0%,
+      rgba(255, 255, 255, 0.06) 100%
+    );
+    border-color: rgba(255, 255, 255, 0.2);
+    box-shadow:
+      0 4px 20px rgba(0, 0, 0, 0.3),
+      inset 0 1px 0 rgba(255, 255, 255, 0.12);
   }
 
-  .platform-item {
-    @apply flex items-center justify-between p-3 rounded-xl bg-white/5
-           border border-white/10 hover:bg-white/10 transition-colors duration-200;
+  /* -----------------------------------------------
+     LIQUID INPUT FIELDS
+     Crystalline input with focus glow
+     ----------------------------------------------- */
+  .input-liquid {
+    @apply w-full px-4 py-3 rounded-xl
+           text-white placeholder-white/40
+           transition-all duration-300;
+    background: linear-gradient(
+      135deg,
+      rgba(255, 255, 255, 0.04) 0%,
+      rgba(255, 255, 255, 0.02) 100%
+    );
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
   }
 
+  .input-liquid:focus {
+    @apply outline-none;
+    background: linear-gradient(
+      135deg,
+      rgba(255, 255, 255, 0.06) 0%,
+      rgba(255, 255, 255, 0.03) 100%
+    );
+    border-color: rgba(99, 102, 241, 0.5);
+    box-shadow:
+      0 0 0 3px rgba(99, 102, 241, 0.15),
+      inset 0 2px 4px rgba(0, 0, 0, 0.1),
+      0 0 20px rgba(99, 102, 241, 0.1);
+  }
+
+  /* -----------------------------------------------
+     LIQUID STAT CARDS
+     Mini info cards with icon + value
+     ----------------------------------------------- */
+  .stat-liquid {
+    @apply relative flex items-center gap-3 p-3 rounded-xl overflow-hidden;
+    background: linear-gradient(
+      145deg,
+      rgba(255, 255, 255, 0.05) 0%,
+      rgba(255, 255, 255, 0.02) 100%
+    );
+    border: 1px solid rgba(255, 255, 255, 0.06);
+  }
+
+  .stat-liquid::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      rgba(255, 255, 255, 0.1),
+      transparent
+    );
+  }
+
+  /* -----------------------------------------------
+     LIQUID PLATFORM ITEMS
+     List items for platform connections
+     ----------------------------------------------- */
+  .platform-liquid {
+    @apply relative flex items-center justify-between p-3 rounded-xl
+           transition-all duration-200 overflow-hidden;
+    background: linear-gradient(
+      145deg,
+      rgba(255, 255, 255, 0.04) 0%,
+      rgba(255, 255, 255, 0.01) 100%
+    );
+    border: 1px solid rgba(255, 255, 255, 0.06);
+  }
+
+  .platform-liquid:hover {
+    background: linear-gradient(
+      145deg,
+      rgba(255, 255, 255, 0.08) 0%,
+      rgba(255, 255, 255, 0.03) 100%
+    );
+    border-color: rgba(255, 255, 255, 0.1);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+  }
+
+  /* -----------------------------------------------
+     STATUS BADGES
+     Colored indicators for states
+     ----------------------------------------------- */
   .status-badge {
-    @apply px-2 py-0.5 rounded-full text-xs font-medium;
+    @apply px-2.5 py-1 rounded-full text-xs font-medium;
   }
 
   .status-badge-success {
-    @apply bg-emerald-500/20 text-emerald-400;
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.2) 0%, rgba(16, 185, 129, 0.1) 100%);
+    color: #34d399;
+    border: 1px solid rgba(16, 185, 129, 0.2);
+    box-shadow: 0 0 10px rgba(16, 185, 129, 0.1);
   }
 
   .status-badge-error {
-    @apply bg-red-500/20 text-red-400;
+    background: linear-gradient(135deg, rgba(239, 68, 68, 0.2) 0%, rgba(239, 68, 68, 0.1) 100%);
+    color: #f87171;
+    border: 1px solid rgba(239, 68, 68, 0.2);
+    box-shadow: 0 0 10px rgba(239, 68, 68, 0.1);
   }
 
   .status-badge-warning {
-    @apply bg-amber-500/20 text-amber-400;
+    background: linear-gradient(135deg, rgba(245, 158, 11, 0.2) 0%, rgba(245, 158, 11, 0.1) 100%);
+    color: #fbbf24;
+    border: 1px solid rgba(245, 158, 11, 0.2);
+    box-shadow: 0 0 10px rgba(245, 158, 11, 0.1);
+  }
+
+  /* -----------------------------------------------
+     ICON CONTAINERS
+     Colored icon backgrounds
+     ----------------------------------------------- */
+  .icon-liquid-primary {
+    @apply w-10 h-10 rounded-lg flex items-center justify-center;
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.25) 0%, rgba(99, 102, 241, 0.15) 100%);
+    color: #818cf8;
+    box-shadow: 0 0 15px rgba(99, 102, 241, 0.15);
+  }
+
+  .icon-liquid-blue {
+    @apply w-10 h-10 rounded-lg flex items-center justify-center;
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.25) 0%, rgba(59, 130, 246, 0.15) 100%);
+    color: #60a5fa;
+    box-shadow: 0 0 15px rgba(59, 130, 246, 0.15);
+  }
+
+  .icon-liquid-red {
+    @apply w-10 h-10 rounded-lg flex items-center justify-center;
+    background: linear-gradient(135deg, rgba(239, 68, 68, 0.25) 0%, rgba(239, 68, 68, 0.15) 100%);
+    color: #f87171;
+    box-shadow: 0 0 15px rgba(239, 68, 68, 0.15);
+  }
+
+  .icon-liquid-green {
+    @apply w-10 h-10 rounded-lg flex items-center justify-center;
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.25) 0%, rgba(16, 185, 129, 0.15) 100%);
+    color: #34d399;
+    box-shadow: 0 0 15px rgba(16, 185, 129, 0.15);
+  }
+
+  .icon-liquid-yellow {
+    @apply w-10 h-10 rounded-lg flex items-center justify-center;
+    background: linear-gradient(135deg, rgba(245, 158, 11, 0.25) 0%, rgba(245, 158, 11, 0.15) 100%);
+    color: #fbbf24;
+    box-shadow: 0 0 15px rgba(245, 158, 11, 0.15);
+  }
+
+  /* -----------------------------------------------
+     LOADING STATES
+     Animated spinner and progress
+     ----------------------------------------------- */
+  .btn-loader {
+    @apply hidden w-5 h-5 rounded-full;
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    border-top-color: white;
+    animation: spin 0.8s linear infinite;
+  }
+
+  .loading .btn-text {
+    @apply hidden;
+  }
+
+  .loading .btn-loader {
+    @apply inline-block;
+  }
+
+  /* Progress bar liquid style */
+  .progress-liquid {
+    @apply h-2 rounded-full overflow-hidden;
+    background: linear-gradient(
+      90deg,
+      rgba(255, 255, 255, 0.05) 0%,
+      rgba(255, 255, 255, 0.08) 100%
+    );
+  }
+
+  .progress-liquid-fill {
+    @apply h-full rounded-full transition-all duration-500;
+    background: linear-gradient(
+      90deg,
+      #6366f1 0%,
+      #818cf8 50%,
+      #a5b4fc 100%
+    );
+    box-shadow: 0 0 10px rgba(99, 102, 241, 0.4);
   }
 }
 
-/* Background orbs animation */
+/* ===============================================
+   BACKGROUND EFFECTS
+   Animated blobs and ambient lighting
+   =============================================== */
+
 @layer utilities {
-  .bg-orb {
-    @apply absolute rounded-full blur-3xl opacity-30;
+  /* Liquid Blobs - Bright, visible background elements */
+  .liquid-blob {
+    @apply absolute rounded-full;
+    filter: blur(40px);
+    opacity: 0.7;
   }
 
-  .bg-orb-1 {
-    @apply w-72 h-72 bg-primary-500 -top-20 -left-20 animate-float;
+  .liquid-blob-1 {
+    @apply w-72 h-72;
+    background: radial-gradient(circle, #818cf8 0%, #6366f1 40%, transparent 70%);
+    top: -3rem;
+    left: -3rem;
+    animation: morph 8s ease-in-out infinite, pulse-glow 4s ease-in-out infinite;
   }
 
-  .bg-orb-2 {
-    @apply w-64 h-64 bg-purple-500 -bottom-16 -right-16 animate-float-delayed;
+  .liquid-blob-2 {
+    @apply w-64 h-64;
+    background: radial-gradient(circle, #c084fc 0%, #8b5cf6 40%, transparent 70%);
+    bottom: -2rem;
+    right: -3rem;
+    animation: morph 8s ease-in-out 2s infinite reverse, pulse-glow 4s ease-in-out 1s infinite;
   }
 
-  .bg-orb-3 {
-    @apply w-48 h-48 bg-pink-500 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 animate-float;
+  .liquid-blob-3 {
+    @apply w-48 h-48;
+    background: radial-gradient(circle, #f472b6 0%, #ec4899 40%, transparent 70%);
+    top: 40%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    animation: morph 8s ease-in-out 4s infinite, pulse-glow 4s ease-in-out 2s infinite;
   }
 }
 
-/* Scrollbar styling */
-::-webkit-scrollbar {
-  width: 4px;
+/* ===============================================
+   ANIMATIONS
+   Keyframes for liquid effects
+   =============================================== */
+
+@keyframes shimmer {
+  0% {
+    left: -150%;
+  }
+  50%, 100% {
+    left: 150%;
+  }
 }
 
-::-webkit-scrollbar-track {
-  background: transparent;
+@keyframes gradient-shift {
+  0%, 100% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
 }
 
-::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.2);
-  border-radius: 4px;
+@keyframes morph {
+  0%, 100% {
+    border-radius: 60% 40% 30% 70% / 60% 30% 70% 40%;
+    transform: translate(0, 0) rotate(0deg);
+  }
+  25% {
+    border-radius: 30% 60% 70% 40% / 50% 60% 30% 60%;
+    transform: translate(5px, -5px) rotate(5deg);
+  }
+  50% {
+    border-radius: 50% 60% 30% 60% / 30% 50% 70% 50%;
+    transform: translate(-5px, 5px) rotate(-5deg);
+  }
+  75% {
+    border-radius: 60% 40% 60% 40% / 70% 30% 50% 60%;
+    transform: translate(5px, 5px) rotate(3deg);
+  }
 }
 
-::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.3);
-}
-
-/* Loading spinner */
 @keyframes spin {
   to {
     transform: rotate(360deg);
   }
 }
 
-.btn-loader {
-  @apply hidden w-5 h-5 border-2 border-white/30 border-t-white rounded-full;
-  animation: spin 0.8s linear infinite;
+@keyframes pulse-glow {
+  0%, 100% {
+    opacity: 0.6;
+    filter: blur(40px);
+  }
+  50% {
+    opacity: 0.9;
+    filter: blur(50px);
+  }
 }
 
-.loading .btn-text {
-  @apply hidden;
+@keyframes pulse-ring {
+  0% {
+    transform: scale(0.8);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(2);
+    opacity: 0;
+  }
 }
 
-.loading .btn-loader {
-  @apply inline-block;
-}
+/* ===============================================
+   SCAN ANIMATION
+   Pulsing rings for scanning state
+   =============================================== */
 
-/* Scanning animation rings */
 .scan-ring {
-  @apply absolute w-16 h-16 border-2 border-primary-500/50 rounded-full;
+  @apply absolute w-16 h-16 rounded-full;
+  border: 2px solid rgba(99, 102, 241, 0.5);
   animation: pulse-ring 1.5s ease-out infinite;
 }
 
@@ -133,4 +483,91 @@
 
 .scan-ring:nth-child(3) {
   animation-delay: 1s;
+}
+
+/* ===============================================
+   SCROLLBAR
+   Minimal, semi-transparent scrollbar
+   =============================================== */
+
+::-webkit-scrollbar {
+  width: 4px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.25);
+}
+
+/* ===============================================
+   BACKWARD COMPATIBILITY
+   Map old class names to new liquid classes
+   =============================================== */
+
+.glass-card {
+  @apply liquid-glass;
+}
+
+.glass-card-solid {
+  @apply liquid-glass-solid;
+}
+
+.btn-primary {
+  @apply btn-liquid-primary;
+}
+
+.btn-secondary {
+  @apply btn-liquid-secondary;
+}
+
+.input-field {
+  @apply input-liquid;
+}
+
+.stat-card {
+  @apply stat-liquid;
+}
+
+.platform-item {
+  @apply platform-liquid;
+}
+
+/* Map old background orbs to liquid blobs */
+.bg-orb {
+  @apply absolute rounded-full;
+  filter: blur(40px);
+  opacity: 0.7;
+}
+
+.bg-orb-1 {
+  @apply w-72 h-72;
+  background: radial-gradient(circle, #818cf8 0%, #6366f1 40%, transparent 70%);
+  top: -3rem;
+  left: -3rem;
+  animation: morph 8s ease-in-out infinite, pulse-glow 4s ease-in-out infinite;
+}
+
+.bg-orb-2 {
+  @apply w-64 h-64;
+  background: radial-gradient(circle, #c084fc 0%, #8b5cf6 40%, transparent 70%);
+  bottom: -2rem;
+  right: -3rem;
+  animation: morph 8s ease-in-out 2s infinite reverse, pulse-glow 4s ease-in-out 1s infinite;
+}
+
+.bg-orb-3 {
+  @apply w-48 h-48;
+  background: radial-gradient(circle, #f472b6 0%, #ec4899 40%, transparent 70%);
+  top: 40%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  animation: morph 8s ease-in-out 4s infinite, pulse-glow 4s ease-in-out 2s infinite;
 }
