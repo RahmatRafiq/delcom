@@ -60,6 +60,9 @@ return [
             'https://www.googleapis.com/auth/youtube.force-ssl',
             'https://www.googleapis.com/auth/youtube.readonly',
         ],
+        // Quota settings (adjustable for GCP quota upgrades)
+        'daily_quota' => (int) env('YOUTUBE_DAILY_QUOTA', 10000),
+        'max_requests_per_minute' => (int) env('YOUTUBE_MAX_REQUESTS_PER_MINUTE', 30),
     ],
 
     // Facebook (for Instagram Business API)

@@ -16,9 +16,21 @@ class YouTubeRateLimiter
         'search' => 100,
     ];
 
-    public const DEFAULT_DAILY_QUOTA = 10000;
+    /**
+     * Get daily quota limit from config (upgradeable via GCP)
+     */
+    public static function getDailyQuotaLimit(): int
+    {
+        return config('services.youtube.daily_quota', 10000);
+    }
 
-    public const MAX_REQUESTS_PER_MINUTE = 30;
+    /**
+     * Get max requests per minute from config
+     */
+    public static function getMaxRequestsPerMinute(): int
+    {
+        return config('services.youtube.max_requests_per_minute', 30);
+    }
 
     public function canPerformAction(User $user): bool
     {
@@ -38,7 +50,7 @@ class YouTubeRateLimiter
         $key = "youtube_rate_limit:user:{$user->id}";
         $requests = Cache::get($key, 0);
 
-        return $requests >= self::MAX_REQUESTS_PER_MINUTE;
+        return $requests >= self::getMaxRequestsPerMinute();
     }
 
     public function incrementRequestCount(User $user): void
@@ -59,16 +71,16 @@ class YouTubeRateLimiter
 
         Cache::put($dailyKey, $newUsage, now()->endOfDay());
 
-        $percentUsed = ($newUsage / self::DEFAULT_DAILY_QUOTA) * 100;
+        $percentUsed = ($newUsage / self::getDailyQuotaLimit()) * 100;
         if ($percentUsed >= 80 && $percentUsed < 81) {
             Log::warning('YouTubeRateLimiter: Quota usage at 80%', [
                 'used' => $newUsage,
-                'limit' => self::DEFAULT_DAILY_QUOTA,
+                'limit' => self::getDailyQuotaLimit(),
             ]);
         } elseif ($percentUsed >= 95) {
             Log::critical('YouTubeRateLimiter: Quota usage at 95%', [
                 'used' => $newUsage,
-                'limit' => self::DEFAULT_DAILY_QUOTA,
+                'limit' => self::getDailyQuotaLimit(),
             ]);
         }
 
@@ -84,7 +96,7 @@ class YouTubeRateLimiter
 
     public function getRemainingDailyQuota(): int
     {
-        return max(0, self::DEFAULT_DAILY_QUOTA - $this->getDailyQuotaUsage());
+        return max(0, self::getDailyQuotaLimit() - $this->getDailyQuotaUsage());
     }
 
     public function hasQuotaFor(string $operation, int $count = 1): bool
@@ -97,7 +109,7 @@ class YouTubeRateLimiter
     public function getQuotaStats(): array
     {
         $used = $this->getDailyQuotaUsage();
-        $limit = self::DEFAULT_DAILY_QUOTA;
+        $limit = self::getDailyQuotaLimit();
         $remaining = max(0, $limit - $used);
 
         return [
@@ -117,9 +129,9 @@ class YouTubeRateLimiter
 
         return [
             'requests_this_minute' => $requests,
-            'max_per_minute' => self::MAX_REQUESTS_PER_MINUTE,
-            'is_limited' => $requests >= self::MAX_REQUESTS_PER_MINUTE,
-            'remaining' => max(0, self::MAX_REQUESTS_PER_MINUTE - $requests),
+            'max_per_minute' => self::getMaxRequestsPerMinute(),
+            'is_limited' => $requests >= self::getMaxRequestsPerMinute(),
+            'remaining' => max(0, self::getMaxRequestsPerMinute() - $requests),
         ];
     }
 
