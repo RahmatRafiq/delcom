@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class Filter extends Model
 {
     use HasFactory;
+
     protected $fillable = [
         'filter_group_id',
         'type',

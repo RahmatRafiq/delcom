@@ -59,6 +59,13 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     case 'showNotification':
       showNotification(message.title, message.body);
       break;
+
+    case 'storeAuth':
+      // Handle auth token from SSO page
+      storeAuthToken(message.token, sender.tab?.id).then(() => {
+        sendResponse({ success: true });
+      });
+      return true;
   }
 });
 
@@ -169,39 +176,36 @@ chrome.contextMenus.onClicked.addListener((info, tab) => {
 });
 
 // ========================================
-// Tab Updates (Detect Instagram navigation & OAuth callback)
+// Tab Updates (Detect Instagram navigation & SSO callback)
 // ========================================
 
 chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
-  // Handle OAuth callback - check tab.url (not changeInfo.url) for fragments
-  if (changeInfo.status === 'complete' && tab.url && tab.url.includes('/api/auth/extension-callback')) {
-    console.log('OAuth callback detected:', tab.url);
+  // Handle SSO authorize page - inject content script to receive token
+  if (changeInfo.status === 'complete' && tab.url) {
+    // Check for extension authorize or callback page
+    if (tab.url.includes('/extension/authorize') || tab.url.includes('/extension/callback')) {
+      console.log('SSO page detected:', tab.url);
 
-    // Extract token from URL fragment
-    const tokenMatch = tab.url.match(/#token=([^&]+)/);
-    if (tokenMatch && tokenMatch[1]) {
-      const token = tokenMatch[1];
-      console.log('Token extracted, length:', token.length);
-
-      // Store token
-      await chrome.storage.local.set({ authToken: token });
-
-      // Get user info
+      // Inject a script to listen for auth token
       try {
-        const userInfo = await handleApiRequest('GET', '/auth/me', null);
-        if (userInfo.success) {
-          await chrome.storage.local.set({ user: userInfo.user });
-          console.log('User info stored:', userInfo.user.email);
-
-          // Show notification
-          showNotification('Login Successful', `Welcome, ${userInfo.user.name}!`);
-        }
+        await chrome.scripting.executeScript({
+          target: { tabId },
+          func: listenForAuthToken,
+        });
       } catch (error) {
-        console.error('Failed to get user info:', error);
+        console.log('Could not inject auth listener:', error.message);
       }
+    }
 
-      // Close the OAuth tab
-      chrome.tabs.remove(tabId);
+    // Legacy: Handle old OAuth callback with token in URL fragment
+    if (tab.url.includes('/api/auth/extension-callback')) {
+      console.log('Legacy OAuth callback detected:', tab.url);
+
+      const tokenMatch = tab.url.match(/#token=([^&]+)/);
+      if (tokenMatch && tokenMatch[1]) {
+        const token = tokenMatch[1];
+        await storeAuthToken(token, tabId);
+      }
     }
   }
 
@@ -211,3 +215,89 @@ chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
     chrome.action.setBadgeText({ tabId, text: '' });
   }
 });
+
+// Function to inject into SSO pages to listen for auth token
+function listenForAuthToken() {
+  // Check if token is already available on window
+  if (window.__DELCOM_AUTH__) {
+    chrome.runtime.sendMessage({
+      action: 'storeAuth',
+      token: window.__DELCOM_AUTH__.token,
+      user: window.__DELCOM_AUTH__.user,
+    });
+    return;
+  }
+
+  // Listen for custom event from the page
+  window.addEventListener('delcom:auth', (event) => {
+    if (event.detail && event.detail.token) {
+      chrome.runtime.sendMessage({
+        action: 'storeAuth',
+        token: event.detail.token,
+        user: event.detail.user,
+      });
+    }
+  });
+
+  // Check sessionStorage
+  try {
+    const stored = sessionStorage.getItem('delcom_auth_token');
+    if (stored) {
+      const data = JSON.parse(stored);
+      if (data.token && Date.now() - data.timestamp < 60000) {
+        chrome.runtime.sendMessage({
+          action: 'storeAuth',
+          token: data.token,
+          user: data.user,
+        });
+        sessionStorage.removeItem('delcom_auth_token');
+      }
+    }
+  } catch (e) {
+    console.log('Could not read sessionStorage');
+  }
+
+  // Poll for token in case it's set after script injection
+  let attempts = 0;
+  const pollInterval = setInterval(() => {
+    attempts++;
+    if (window.__DELCOM_AUTH__) {
+      chrome.runtime.sendMessage({
+        action: 'storeAuth',
+        token: window.__DELCOM_AUTH__.token,
+        user: window.__DELCOM_AUTH__.user,
+      });
+      clearInterval(pollInterval);
+    }
+    if (attempts >= 30) {
+      clearInterval(pollInterval);
+    }
+  }, 500);
+}
+
+// Helper to store auth token
+async function storeAuthToken(token, tabId) {
+  console.log('Token received, length:', token.length);
+
+  // Store token
+  await chrome.storage.local.set({ authToken: token });
+
+  // Get user info
+  try {
+    const userInfo = await handleApiRequest('GET', '/auth/me', null);
+    if (userInfo.success) {
+      await chrome.storage.local.set({ user: userInfo.user });
+      console.log('User info stored:', userInfo.user.email);
+
+      // Show notification
+      showNotification('Login Successful', `Welcome, ${userInfo.user.name}!`);
+    }
+  } catch (error) {
+    console.error('Failed to get user info:', error);
+  }
+
+  // Close the tab
+  if (tabId) {
+    chrome.tabs.remove(tabId);
+  }
+}

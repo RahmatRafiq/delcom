@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class Platform extends Model
 {
     use HasFactory;
+
     protected $fillable = [
         'name',
         'display_name',

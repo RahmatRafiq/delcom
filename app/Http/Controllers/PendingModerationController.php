@@ -210,6 +210,7 @@ class PendingModerationController extends Controller
             $platformName = $userPlatform->platform->name;
             if (! PlatformServiceFactory::supports($platformName)) {
                 Log::warning('PendingModeration: Platform not supported', ['platform' => $platformName]);
+
                 continue;
             }
 

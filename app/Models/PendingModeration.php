@@ -8,16 +8,25 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class PendingModeration extends Model
 {
     public const STATUS_PENDING = 'pending';
+
     public const STATUS_APPROVED = 'approved';
+
     public const STATUS_DISMISSED = 'dismissed';
+
     public const STATUS_DELETED = 'deleted';
+
     public const STATUS_FAILED = 'failed';
 
     public const TYPE_VIDEO = 'video';
+
     public const TYPE_POST = 'post';
+
     public const TYPE_REEL = 'reel';
+
     public const TYPE_STORY = 'story';
+
     public const TYPE_SHORT = 'short';
+
     public const TYPE_OTHER = 'other';
 
     protected $fillable = [

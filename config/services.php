@@ -111,4 +111,20 @@ return [
         ],
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | AI Services Configuration
+    |--------------------------------------------------------------------------
+    | Configure AI providers for spam detection
+    */
+
+    'ai' => [
+        'enabled' => env('AI_SPAM_DETECTION_ENABLED', false),
+        'provider' => env('AI_PROVIDER', 'openai'), // 'openai' or 'anthropic'
+        'model' => env('AI_MODEL', 'gpt-4o-mini'), // 'gpt-4o-mini', 'claude-3-haiku-20240307'
+        'spam_threshold' => (float) env('AI_SPAM_THRESHOLD', 0.7),
+        'openai_api_key' => env('OPENAI_API_KEY'),
+        'anthropic_api_key' => env('ANTHROPIC_API_KEY'),
+    ],
+
 ];

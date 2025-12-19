@@ -9,10 +9,15 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class UserContent extends Model
 {
     public const TYPE_VIDEO = 'video';
+
     public const TYPE_POST = 'post';
+
     public const TYPE_REEL = 'reel';
+
     public const TYPE_STORY = 'story';
+
     public const TYPE_SHORT = 'short';
+
     public const TYPE_OTHER = 'other';
 
     protected $fillable = [

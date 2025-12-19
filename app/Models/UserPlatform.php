@@ -11,6 +11,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class UserPlatform extends Model
 {
     use HasFactory;
+
     protected $fillable = [
         'user_id',
         'platform_id',

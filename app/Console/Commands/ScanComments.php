@@ -6,8 +6,8 @@ use App\Jobs\ScanCommentsJob;
 use App\Models\User;
 use App\Models\UserPlatform;
 use App\Services\FilterMatcher;
-use App\Services\PlatformServiceFactory;
 use App\Services\Platforms\Youtube\YouTubeRateLimiter;
+use App\Services\PlatformServiceFactory;
 use Illuminate\Console\Command;
 
 class ScanComments extends Command
@@ -44,6 +44,7 @@ class ScanComments extends Command
 
             if (! $user) {
                 $this->error("User not found: {$userOption}");
+
                 return Command::FAILURE;
             }
         }
@@ -65,6 +66,7 @@ class ScanComments extends Command
 
         if ($userPlatforms->isEmpty()) {
             $this->warn('No active platform connections found to scan.');
+
             return Command::SUCCESS;
         }
 
@@ -80,6 +82,7 @@ class ScanComments extends Command
 
             if (! PlatformServiceFactory::supports($userPlatform->platform->name)) {
                 $this->warn("  → Platform not supported: {$platformDisplay}");
+
                 continue;
             }
 
@@ -112,6 +115,7 @@ class ScanComments extends Command
 
         if ($filters->isEmpty()) {
             $this->warn('  No active filters found for this user.');
+
             return;
         }
 
@@ -121,16 +125,18 @@ class ScanComments extends Command
 
         $connectionTest = $service->testConnection();
         if (! $connectionTest['success']) {
-            $this->error("  Connection failed: ".($connectionTest['error'] ?? 'Unknown'));
+            $this->error('  Connection failed: '.($connectionTest['error'] ?? 'Unknown'));
+
             return;
         }
 
-        $this->info("  Account: ".($connectionTest['channel']['title'] ?? $connectionTest['account']['username'] ?? 'Connected'));
+        $this->info('  Account: '.($connectionTest['channel']['title'] ?? $connectionTest['account']['username'] ?? 'Connected'));
 
         $contentsData = $service->getContents($maxContents);
 
         if (empty($contentsData['items'])) {
             $this->warn('  No contents found.');
+
             return;
         }
 
@@ -149,6 +155,7 @@ class ScanComments extends Command
 
             if (! empty($commentsData['commentsDisabled'])) {
                 $this->line('    (comments disabled)');
+
                 continue;
             }
 
@@ -164,7 +171,7 @@ class ScanComments extends Command
                     $this->warn("    [MATCH] Filter: {$matchedFilter->pattern}");
                     $this->line("            Action: {$matchedFilter->action}");
                     $this->line('            Comment: '.mb_substr($commentText, 0, 80).'...');
-                    $this->line("            Author: ".($comment['authorDisplayName'] ?? 'Unknown'));
+                    $this->line('            Author: '.($comment['authorDisplayName'] ?? 'Unknown'));
                 }
             }
         }

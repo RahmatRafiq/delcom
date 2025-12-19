@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\ActivityLogController;
+use App\Http\Controllers\ExtensionSsoController;
 use App\Http\Controllers\SocialAuthController;
 use App\Models\AppSetting;
 use Illuminate\Support\Facades\Route;
@@ -27,6 +28,13 @@ Route::get('/terms-of-service', function () {
 Route::get('auth/{provider}/callback', [SocialAuthController::class, 'handleProviderCallback'])->name('auth.callback');
 Route::get('auth/{provider}', [SocialAuthController::class, 'redirectToProvider'])->name('auth.redirect')
     ->where('provider', 'google|facebook|github'); // Only allow specific providers
+
+// Extension SSO routes (requires web session auth)
+Route::middleware(['auth'])->prefix('extension')->group(function () {
+    Route::get('/authorize', [ExtensionSsoController::class, 'authorize'])->name('extension.authorize');
+    Route::post('/token', [ExtensionSsoController::class, 'generateToken'])->name('extension.token');
+    Route::get('/callback', [ExtensionSsoController::class, 'callback'])->name('extension.callback');
+});
 
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::prefix('dashboard')->group(function () {

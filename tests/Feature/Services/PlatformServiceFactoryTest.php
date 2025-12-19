@@ -3,9 +3,9 @@
 use App\Models\Platform;
 use App\Models\User;
 use App\Models\UserPlatform;
-use App\Services\PlatformServiceFactory;
 use App\Services\Platforms\Instagram\InstagramService;
 use App\Services\Platforms\Youtube\YouTubeService;
+use App\Services\PlatformServiceFactory;
 
 beforeEach(function () {
     $this->user = User::factory()->create();

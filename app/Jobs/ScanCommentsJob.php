@@ -24,12 +24,17 @@ class ScanCommentsJob implements ShouldQueue
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     public int $tries = 3;
+
     public int $backoff = 60;
+
     public int $timeout = 300;
 
     private UserPlatform $userPlatform;
+
     private int $maxContents;
+
     private int $maxCommentsPerContent;
+
     private ?string $specificContentId;
 
     public function __construct(
@@ -62,6 +67,7 @@ class ScanCommentsJob implements ShouldQueue
 
         if (! $useReviewQueue && ! $user->canPerformAction()) {
             Log::warning('ScanCommentsJob: User quota exceeded', ['user_id' => $user->id]);
+
             return;
         }
 
@@ -70,6 +76,7 @@ class ScanCommentsJob implements ShouldQueue
         if ($filters->isEmpty()) {
             Log::info('ScanCommentsJob: No active filters found', ['user_id' => $user->id]);
             $this->userPlatform->update(['last_scanned_at' => now()]);
+
             return;
         }
 
@@ -81,6 +88,7 @@ class ScanCommentsJob implements ShouldQueue
                 'user_platform_id' => $this->userPlatform->id,
                 'error' => $connectionTest['error'] ?? 'Unknown',
             ]);
+
             return;
         }
 
@@ -91,6 +99,7 @@ class ScanCommentsJob implements ShouldQueue
                 'platform' => $platform->name,
             ]);
             $this->userPlatform->update(['last_scanned_at' => now()]);
+
             return;
         }
 
@@ -121,6 +130,7 @@ class ScanCommentsJob implements ShouldQueue
 
             if (! $userContent->scan_enabled) {
                 Log::debug('ScanCommentsJob: Content scan disabled', ['content_id' => $contentId]);
+
                 continue;
             }
 
@@ -196,6 +206,7 @@ class ScanCommentsJob implements ShouldQueue
 
                 if ($existsInQueue || $existsInLog) {
                     Log::debug('ScanCommentsJob: Comment already processed', ['comment_id' => $comment['id']]);
+
                     continue;
                 }
 

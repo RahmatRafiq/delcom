@@ -15,8 +15,8 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-// Auth routes (public)
-Route::prefix('auth')->group(function () {
+// Auth routes (public) - with rate limiting
+Route::prefix('auth')->middleware('api.rate:auth')->group(function () {
     Route::post('login', [AuthController::class, 'login']);
     Route::post('register', [AuthController::class, 'register']);
 
@@ -53,25 +53,28 @@ Route::prefix('auth')->middleware('auth:api')->group(function () {
     Route::post('refresh', [AuthController::class, 'refresh']);
 });
 
-// Extension API (protected with JWT)
-Route::prefix('extension')->middleware('auth:api')->group(function () {
+// Extension API (protected with JWT + rate limiting)
+Route::prefix('extension')->middleware(['auth:api', 'api.rate:default'])->group(function () {
     // Connection verification
     Route::get('verify', [ExtensionController::class, 'verify']);
 
     // Platform connection
     Route::post('connect', [ExtensionController::class, 'connect']);
 
-    // Comment submission and scanning (with filter matching)
-    Route::post('comments', [ExtensionController::class, 'submitComments']);
+    // Comment submission and scanning (with filter matching) - stricter rate limit
+    Route::post('comments', [ExtensionController::class, 'submitComments'])
+        ->middleware('api.rate:comments');
 
     // Save ALL comments to review queue (no filtering - manual review)
-    Route::post('save-all', [ExtensionController::class, 'saveAllComments']);
+    Route::post('save-all', [ExtensionController::class, 'saveAllComments'])
+        ->middleware('api.rate:comments');
 
     // Get pending deletions for extension to execute
     Route::get('pending-deletions', [ExtensionController::class, 'getPendingDeletions']);
 
-    // Report deletion results
-    Route::post('report-deletions', [ExtensionController::class, 'reportDeletions']);
+    // Report deletion results - stricter rate limit for delete operations
+    Route::post('report-deletions', [ExtensionController::class, 'reportDeletions'])
+        ->middleware('api.rate:delete');
 
     // Get filters for local matching
     Route::get('filters', [ExtensionController::class, 'getFilters']);

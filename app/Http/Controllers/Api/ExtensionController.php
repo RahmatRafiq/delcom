@@ -456,6 +456,7 @@ class ExtensionController extends Controller
 
             if ($exists) {
                 $skipped++;
+
                 continue;
             }
 
@@ -466,6 +467,7 @@ class ExtensionController extends Controller
 
             if ($existsInLog) {
                 $skipped++;
+
                 continue;
             }
 
@@ -507,7 +509,7 @@ class ExtensionController extends Controller
             'total' => count($comments),
             'saved' => $saved,
             'skipped' => $skipped,
-            'message' => "Saved {$saved} comments to review queue" . ($skipped > 0 ? " ({$skipped} duplicates skipped)" : ''),
+            'message' => "Saved {$saved} comments to review queue".($skipped > 0 ? " ({$skipped} duplicates skipped)" : ''),
         ]);
     }
 

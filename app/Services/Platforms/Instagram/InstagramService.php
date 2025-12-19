@@ -14,7 +14,9 @@ class InstagramService implements PlatformServiceInterface
     private const GRAPH_API_BASE = 'https://graph.facebook.com/v21.0';
 
     private UserPlatform $userPlatform;
+
     private ?string $accessToken = null;
+
     private ?array $cachedAccount = null;
 
     public function __construct(UserPlatform $userPlatform)
@@ -78,6 +80,7 @@ class InstagramService implements PlatformServiceInterface
             Log::error('InstagramService: No access token available', [
                 'user_platform_id' => $this->userPlatform->id,
             ]);
+
             return false;
         }
 
@@ -94,6 +97,7 @@ class InstagramService implements PlatformServiceInterface
                     'user_platform_id' => $this->userPlatform->id,
                     'error' => $response->json(),
                 ]);
+
                 return false;
             }
 
@@ -116,6 +120,7 @@ class InstagramService implements PlatformServiceInterface
                 'user_platform_id' => $this->userPlatform->id,
                 'error' => $e->getMessage(),
             ]);
+
             return false;
         }
     }
@@ -145,6 +150,7 @@ class InstagramService implements PlatformServiceInterface
             Log::error('InstagramService: No Instagram user ID', [
                 'user_platform_id' => $this->userPlatform->id,
             ]);
+
             return null;
         }
 
@@ -157,6 +163,7 @@ class InstagramService implements PlatformServiceInterface
 
         if ($response->failed()) {
             Log::error('InstagramService: Failed to get account', ['error' => $response->json()]);
+
             return null;
         }
 
@@ -202,6 +209,7 @@ class InstagramService implements PlatformServiceInterface
 
         if ($response->failed()) {
             Log::error('InstagramService: Failed to get media', ['error' => $response->json()]);
+
             return ['items' => [], 'paging' => null];
         }
 
@@ -260,6 +268,7 @@ class InstagramService implements PlatformServiceInterface
 
             if (isset($error['error']['code']) && $error['error']['code'] === 100) {
                 Log::info('InstagramService: Comments may be disabled', ['media_id' => $contentId]);
+
                 return ['items' => [], 'paging' => null, 'commentsDisabled' => true];
             }
 
@@ -318,6 +327,7 @@ class InstagramService implements PlatformServiceInterface
 
         if ($response->successful()) {
             Log::info('InstagramService: Comment deleted successfully', ['comment_id' => $commentId]);
+
             return ['success' => true];
         }
 
@@ -364,6 +374,7 @@ class InstagramService implements PlatformServiceInterface
 
         if ($response->successful()) {
             Log::info('InstagramService: Comment hidden', ['comment_id' => $commentId, 'hidden' => $hide]);
+
             return ['success' => true];
         }
 
@@ -423,6 +434,7 @@ class InstagramService implements PlatformServiceInterface
 
         if ($response->failed()) {
             Log::error('InstagramService: Failed to get Facebook pages', ['error' => $response->json()]);
+
             return [];
         }
 

@@ -8,20 +8,31 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class ModerationLog extends Model
 {
     public const ACTION_DELETED = 'deleted';
+
     public const ACTION_HIDDEN = 'hidden';
+
     public const ACTION_FLAGGED = 'flagged';
+
     public const ACTION_REPORTED = 'reported';
+
     public const ACTION_FAILED = 'failed';
 
     public const SOURCE_BACKGROUND_JOB = 'background_job';
+
     public const SOURCE_EXTENSION = 'extension';
+
     public const SOURCE_MANUAL = 'manual';
 
     public const TYPE_VIDEO = 'video';
+
     public const TYPE_POST = 'post';
+
     public const TYPE_REEL = 'reel';
+
     public const TYPE_STORY = 'story';
+
     public const TYPE_SHORT = 'short';
+
     public const TYPE_OTHER = 'other';
 
     protected $fillable = [

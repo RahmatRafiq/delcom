@@ -12,11 +12,15 @@ use Illuminate\Support\Facades\Log;
 class YouTubeService implements PlatformServiceInterface
 {
     private const API_BASE = 'https://www.googleapis.com/youtube/v3';
+
     private const TOKEN_URL = 'https://oauth2.googleapis.com/token';
 
     private UserPlatform $userPlatform;
+
     private ?string $accessToken = null;
+
     private YouTubeRateLimiter $rateLimiter;
+
     private ?array $cachedChannel = null;
 
     public function __construct(UserPlatform $userPlatform)
@@ -61,6 +65,7 @@ class YouTubeService implements PlatformServiceInterface
 
         if ($this->rateLimiter->isRateLimited($user)) {
             Log::warning('YouTubeService: User rate limited', ['user_id' => $user->id]);
+
             return false;
         }
 
@@ -69,6 +74,7 @@ class YouTubeService implements PlatformServiceInterface
                 'operation' => $operation,
                 'remaining' => $this->rateLimiter->getRemainingDailyQuota(),
             ]);
+
             return false;
         }
 
@@ -117,6 +123,7 @@ class YouTubeService implements PlatformServiceInterface
             Log::error('YouTubeService: No refresh token available', [
                 'user_platform_id' => $this->userPlatform->id,
             ]);
+
             return false;
         }
 
@@ -133,6 +140,7 @@ class YouTubeService implements PlatformServiceInterface
                     'user_platform_id' => $this->userPlatform->id,
                     'error' => $response->json(),
                 ]);
+
                 return false;
             }
 
@@ -155,6 +163,7 @@ class YouTubeService implements PlatformServiceInterface
                 'user_platform_id' => $this->userPlatform->id,
                 'error' => $e->getMessage(),
             ]);
+
             return false;
         }
     }
@@ -205,6 +214,7 @@ class YouTubeService implements PlatformServiceInterface
 
         if ($response->failed()) {
             Log::error('YouTubeService: Failed to get channel', ['error' => $response->json()]);
+
             return null;
         }
 
@@ -258,6 +268,7 @@ class YouTubeService implements PlatformServiceInterface
 
         if ($response->failed()) {
             Log::error('YouTubeService: Failed to get channel videos', ['error' => $response->json()]);
+
             return ['items' => [], 'nextPageToken' => null];
         }
 
@@ -333,6 +344,7 @@ class YouTubeService implements PlatformServiceInterface
             if (isset($error['error']['errors'][0]['reason']) &&
                 $error['error']['errors'][0]['reason'] === 'commentsDisabled') {
                 Log::info('YouTubeService: Comments disabled for video', ['video_id' => $videoId]);
+
                 return ['items' => [], 'nextPageToken' => null, 'commentsDisabled' => true];
             }
 
@@ -422,6 +434,7 @@ class YouTubeService implements PlatformServiceInterface
 
         if (! $this->canMakeRequest('set_moderation_status')) {
             Log::warning('YouTubeService: Cannot make request - rate limited or quota exhausted');
+
             return ['success' => false, 'error' => 'Rate limit exceeded or quota exhausted'];
         }
 

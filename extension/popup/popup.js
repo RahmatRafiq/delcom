@@ -96,13 +96,14 @@ function setupEventListeners() {
 // ========================================
 
 async function handleGoogleLogin() {
-  // Open Google OAuth in a new tab
-  // Service worker will handle the callback and store the token
-  const authUrl = `${API_BASE.replace('/api', '')}/auth/google?extension=true`;
+  // Open the SSO authorize page
+  // If user is logged in on web, they just need to click "Authorize"
+  // If not logged in, they'll be redirected to login first
+  const authUrl = `${API_BASE.replace('/api', '')}/extension/authorize`;
 
   chrome.tabs.create({ url: authUrl });
 
-  // Close popup - service worker will handle the callback
+  // Close popup - content script will handle the callback
   // When user reopens popup, checkAuth() will find the token
   window.close();
 }

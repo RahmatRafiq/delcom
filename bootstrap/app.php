@@ -31,6 +31,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'role_or_permission' => \Spatie\Permission\Middleware\RoleOrPermissionMiddleware::class,
             'subscription.limit' => \App\Http\Middleware\CheckSubscriptionLimit::class,
             'platform.access' => \App\Http\Middleware\CheckPlatformAccess::class,
+            'api.rate' => \App\Http\Middleware\ApiRateLimiter::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
