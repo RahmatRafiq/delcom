@@ -6,9 +6,24 @@
  * - Auto-scanning on schedule
  * - Badge updates
  * - Cross-tab communication
+ * - Auth token management
  */
 
-const API_BASE = 'http://localhost:8000/api';
+// Environment detection
+const isDevelopment = !chrome.runtime.getManifest().update_url;
+
+const CONFIG = {
+  API_BASE: isDevelopment
+    ? 'http://127.0.0.1:8000/api'
+    : 'https://delcom.app/api',
+  WEB_BASE: isDevelopment
+    ? 'http://127.0.0.1:8000'
+    : 'https://delcom.app',
+  VERSION: chrome.runtime.getManifest().version,
+  IS_DEV: isDevelopment,
+};
+
+const API_BASE = CONFIG.API_BASE;
 
 // ========================================
 // Initialization
@@ -62,7 +77,8 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
     case 'storeAuth':
       // Handle auth token from SSO page
-      storeAuthToken(message.token, sender.tab?.id).then(() => {
+      console.log('[Delcom SW] Received storeAuth message');
+      storeAuthToken(message.token, message.user, sender.tab?.id).then(() => {
         sendResponse({ success: true });
       });
       return true;
@@ -165,7 +181,7 @@ chrome.runtime.onInstalled.addListener(() => {
     id: 'scanPage',
     title: 'Scan comments on this page',
     contexts: ['page'],
-    documentUrlPatterns: ['https://www.instagram.com/*'],
+    documentUrlPatterns: ['https://www.instagram.com/*', 'https://www.tiktok.com/*'],
   });
 });
 
@@ -199,12 +215,12 @@ chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
 
     // Legacy: Handle old OAuth callback with token in URL fragment
     if (tab.url.includes('/api/auth/extension-callback')) {
-      console.log('Legacy OAuth callback detected:', tab.url);
+      console.log('[Delcom SW] Legacy OAuth callback detected:', tab.url);
 
       const tokenMatch = tab.url.match(/#token=([^&]+)/);
       if (tokenMatch && tokenMatch[1]) {
         const token = tokenMatch[1];
-        await storeAuthToken(token, tabId);
+        await storeAuthToken(token, null, tabId);
       }
     }
   }
@@ -276,28 +292,47 @@ function listenForAuthToken() {
 }
 
 // Helper to store auth token
-async function storeAuthToken(token, tabId) {
-  console.log('Token received, length:', token.length);
+async function storeAuthToken(token, user, tabId) {
+  console.log('[Delcom SW] Token received, length:', token?.length);
+
+  if (!token) {
+    console.error('[Delcom SW] No token provided');
+    return;
+  }
 
   // Store token
   await chrome.storage.local.set({ authToken: token });
+  console.log('[Delcom SW] Token stored in storage');
 
-  // Get user info
-  try {
-    const userInfo = await handleApiRequest('GET', '/auth/me', null);
-    if (userInfo.success) {
-      await chrome.storage.local.set({ user: userInfo.user });
-      console.log('User info stored:', userInfo.user.email);
+  // Clear pending auth flag
+  await chrome.storage.local.remove(['pendingAuth']);
 
-      // Show notification
-      showNotification('Login Successful', `Welcome, ${userInfo.user.name}!`);
+  // If user info was provided, store it directly
+  if (user && user.id) {
+    await chrome.storage.local.set({ user: user });
+    console.log('[Delcom SW] User info stored:', user.email || user.name);
+    showNotification('Login Successful', `Welcome, ${user.name}!`);
+  } else {
+    // Get user info from API
+    try {
+      const userInfo = await handleApiRequest('GET', '/auth/me', null);
+      if (userInfo.success) {
+        await chrome.storage.local.set({ user: userInfo.user });
+        console.log('[Delcom SW] User info fetched:', userInfo.user.email);
+        showNotification('Login Successful', `Welcome, ${userInfo.user.name}!`);
+      }
+    } catch (error) {
+      console.error('[Delcom SW] Failed to get user info:', error);
     }
-  } catch (error) {
-    console.error('Failed to get user info:', error);
   }
 
   // Close the tab
   if (tabId) {
-    chrome.tabs.remove(tabId);
+    try {
+      await chrome.tabs.remove(tabId);
+      console.log('[Delcom SW] Auth tab closed');
+    } catch (e) {
+      console.log('[Delcom SW] Could not close tab:', e.message);
+    }
   }
 }

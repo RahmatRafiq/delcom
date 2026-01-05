@@ -3,8 +3,21 @@
  * Delcom Extension - Popup Script
  */
 
-// Configuration
-const API_BASE = 'http://localhost:8000/api';
+// Environment detection
+const isDevelopment = !chrome.runtime.getManifest().update_url;
+
+const CONFIG = {
+  API_BASE: isDevelopment
+    ? 'http://127.0.0.1:8000/api'
+    : 'https://delcom.app/api',
+  WEB_BASE: isDevelopment
+    ? 'http://127.0.0.1:8000'
+    : 'https://delcom.app',
+  VERSION: chrome.runtime.getManifest().version,
+  IS_DEV: isDevelopment,
+};
+
+const API_BASE = CONFIG.API_BASE;
 
 // DOM Elements
 const loginView = document.getElementById('login-view');
@@ -76,7 +89,7 @@ function setupEventListeners() {
 
   // Open dashboard
   openDashboardBtn.addEventListener('click', () => {
-    chrome.tabs.create({ url: 'http://localhost:8000/dashboard' });
+    chrome.tabs.create({ url: `${CONFIG.WEB_BASE}/dashboard` });
   });
 
   // Cancel scan
@@ -87,7 +100,7 @@ function setupEventListeners() {
   // Open register
   document.getElementById('open-register').addEventListener('click', (e) => {
     e.preventDefault();
-    chrome.tabs.create({ url: 'http://localhost:8000/register' });
+    chrome.tabs.create({ url: `${CONFIG.WEB_BASE}/register` });
   });
 }
 
@@ -99,13 +112,15 @@ async function handleGoogleLogin() {
   // Open the SSO authorize page
   // If user is logged in on web, they just need to click "Authorize"
   // If not logged in, they'll be redirected to login first
-  const authUrl = `${API_BASE.replace('/api', '')}/extension/authorize`;
+  const authUrl = `${CONFIG.WEB_BASE}/extension/authorize`;
+
+  // Store a flag so we know we're waiting for auth
+  await chrome.storage.local.set({ pendingAuth: true });
 
   chrome.tabs.create({ url: authUrl });
 
-  // Close popup - content script will handle the callback
-  // When user reopens popup, checkAuth() will find the token
-  window.close();
+  // Don't close popup immediately - show a message
+  showStatus('Please complete login in the new tab, then reopen extension.', 'info');
 }
 
 async function handleLogin(e) {
@@ -172,6 +187,52 @@ async function handleLogout() {
 }
 
 // ========================================
+// Platform Connection
+// ========================================
+
+/**
+ * Auto-connect a platform via extension
+ * Called when user tries to scan but hasn't connected this platform yet
+ */
+async function autoConnectPlatform(platform, username) {
+  try {
+    showStatus(`Connecting ${platform} account @${username}...`, 'info');
+
+    const response = await apiRequest('POST', '/extension/connect', {
+      platform: platform,
+      username: username,
+      user_id: null, // We don't have platform user ID from extension
+    });
+
+    if (response.success && response.connection_id) {
+      // Store connection ID
+      const connectionKey = `${platform}ConnectionId`;
+      await chrome.storage.local.set({ [connectionKey]: response.connection_id });
+
+      showStatus(`Connected @${username} successfully!`, 'success');
+
+      // Refresh platforms list
+      await loadPlatforms();
+
+      return true;
+    } else {
+      // Handle upgrade required
+      if (response.upgrade_required) {
+        showStatus(response.error || 'Please upgrade your plan to access this platform.', 'error');
+      } else {
+        showStatus(response.error || 'Failed to connect platform.', 'error');
+      }
+      console.error('Auto-connect failed:', response.error);
+      return false;
+    }
+  } catch (error) {
+    console.error('Auto-connect error:', error);
+    showStatus('Failed to connect. Please try again.', 'error');
+    return false;
+  }
+}
+
+// ========================================
 // Scanning
 // ========================================
 
@@ -179,9 +240,43 @@ async function handleScan() {
   // Get current tab
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
 
-  if (!tab.url.includes('instagram.com')) {
-    showStatus('Please navigate to Instagram first', 'error');
+  // Check if on supported platform
+  const isInstagram = tab.url.includes('instagram.com');
+  const isTikTok = tab.url.includes('tiktok.com');
+
+  if (!isInstagram && !isTikTok) {
+    showStatus('Please navigate to Instagram or TikTok first', 'error');
     return;
+  }
+
+  // Check if user can perform actions (quota check)
+  if (currentUser && currentUser.can_moderate === false) {
+    showStatus('Daily or monthly limit reached. Please upgrade your plan.', 'error');
+    return;
+  }
+
+  const platform = isInstagram ? 'instagram' : 'tiktok';
+  const connectionKey = `${platform}ConnectionId`;
+
+  // Check if platform is connected
+  const stored = await chrome.storage.local.get([connectionKey]);
+  if (!stored[connectionKey]) {
+    // Try to auto-connect by getting username from page
+    const pageInfo = await chrome.tabs.sendMessage(tab.id, { action: 'getPageInfo' });
+
+    if (pageInfo.username && pageInfo.username !== 'unknown') {
+      // Auto-connect this platform
+      const connected = await autoConnectPlatform(platform, pageInfo.username);
+      if (!connected) {
+        showStatus(`Could not connect ${platform}. Please try again.`, 'error');
+        return;
+      }
+    } else {
+      // No username found - user needs to be on their profile page
+      const platformName = platform.charAt(0).toUpperCase() + platform.slice(1);
+      showStatus(`Please navigate to your ${platformName} profile page first, or connect via the dashboard.`, 'error');
+      return;
+    }
   }
 
   // Show scanning overlay
@@ -207,20 +302,20 @@ async function handleScan() {
           `Found ${response.commentsCount} comments from ${response.postsScanned} posts...`;
 
         if (response.comments && response.comments.length > 0) {
-          await processProfileComments(response.comments, response.contentInfo, response.posts);
+          await processProfileComments(response.comments, response.contentInfo, response.posts, platform);
         } else {
           showStatus(`Scanned ${response.postsScanned} posts. No comments found.`, 'info');
         }
       }
-    } else if (pageInfo.isPostPage || pageInfo.isReelPage) {
-      // Single post - scan this post only
+    } else if (pageInfo.isPostPage || pageInfo.isReelPage || pageInfo.isVideoPage) {
+      // Single post/video - scan this content only
       response = await chrome.tabs.sendMessage(tab.id, { action: 'scan' });
 
       if (response.success) {
         document.getElementById('scan-progress').textContent = `Found ${response.commentsCount} comments...`;
 
         if (response.comments && response.comments.length > 0) {
-          await processComments(response.comments, response.contentInfo);
+          await processComments(response.comments, response.contentInfo, platform);
         } else {
           showStatus('No comments found on this post', 'info');
         }
@@ -251,122 +346,406 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   }
 });
 
-async function processComments(comments, contentInfo) {
+async function processComments(comments, contentInfo, platform = 'instagram') {
   try {
-    // Get connection ID from storage
-    const stored = await chrome.storage.local.get(['instagramConnectionId']);
+    console.log('Delcom: processComments called with', comments.length, 'comments');
 
-    if (!stored.instagramConnectionId) {
-      showStatus('Please connect your Instagram account first', 'error');
+    // Get connection ID from storage
+    const connectionKey = `${platform}ConnectionId`;
+    const stored = await chrome.storage.local.get([connectionKey]);
+    const connectionId = stored[connectionKey];
+
+    if (!connectionId) {
+      showStatus(`Please connect your ${platform.charAt(0).toUpperCase() + platform.slice(1)} account first`, 'error');
       return;
     }
 
-    document.getElementById('scan-progress').textContent = 'Saving to review queue...';
+    // Step 1: Fetch user's filters from API
+    document.getElementById('scan-progress').textContent = 'Loading filters...';
+    console.log(`Delcom: Fetching filters for ${platform}...`);
+    const filtersResponse = await apiRequest('GET', `/extension/filters?platform=${platform}`);
+    console.log('Delcom: Filters API response:', JSON.stringify(filtersResponse));
+    const filters = filtersResponse.success ? filtersResponse.filters : [];
 
-    // Use save-all endpoint to save ALL comments for manual review
-    const response = await apiRequest('POST', '/extension/save-all', {
-      connection_id: stored.instagramConnectionId,
-      content_id: contentInfo.postId,
-      content_title: contentInfo.caption || 'Instagram Post',
-      content_url: contentInfo.url,
-      comments: comments.map(c => ({
-        id: c.id,
-        text: c.text,
-        author_username: c.username,
-        author_id: c.userId || null,
-        author_profile_url: c.profileUrl || null,
-        created_at: c.timestamp || null,
-      })),
-    });
-
-    if (response.success) {
-      const { total, saved, skipped } = response;
-
-      if (saved > 0) {
-        showStatus(`Saved ${saved} comments to review queue!` + (skipped > 0 ? ` (${skipped} duplicates)` : ''), 'success');
-      } else if (skipped > 0) {
-        showStatus(`All ${skipped} comments already in queue`, 'info');
-      } else {
-        showStatus('No comments to save', 'info');
-      }
-
-      // Update stats
-      const stats = await chrome.storage.local.get(['stats']);
-      const currentStats = stats.stats || { scanned: 0, deleted: 0 };
-      currentStats.scanned += total;
-      await chrome.storage.local.set({ stats: currentStats });
-      updateStats();
-    } else {
-      showStatus(response.error || 'Failed to save comments', 'error');
+    console.log(`Delcom: Loaded ${filters.length} filters for ${platform}`);
+    if (filters.length > 0) {
+      console.log('Delcom: Filters:', JSON.stringify(filters));
     }
+
+    if (filters.length === 0) {
+      // No filters - just save all to review queue (old behavior)
+      document.getElementById('scan-progress').textContent = 'No filters configured. Saving to review queue...';
+      await saveAllToQueue(comments, contentInfo, connectionId, platform);
+      return;
+    }
+
+    // Step 2: Match comments against filters locally
+    document.getElementById('scan-progress').textContent = 'Matching comments against filters...';
+    console.log('Delcom: Comments to match:', comments.map(c => c.text));
+    const { toDelete, toReview, clean } = matchCommentsWithFilters(comments, filters);
+
+    console.log(`Delcom: Matched - Delete: ${toDelete.length}, Review: ${toReview.length}, Clean: ${clean.length}`);
+    if (toDelete.length > 0) {
+      console.log('Delcom: Comments to delete:', toDelete.map(c => c.text));
+    }
+
+    // Step 3: Auto-delete comments that match delete action
+    let deletedCount = 0;
+    if (toDelete.length > 0) {
+      document.getElementById('scan-progress').textContent = `Deleting ${toDelete.length} spam comments...`;
+
+      const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+      const deleteResult = await chrome.tabs.sendMessage(tab.id, {
+        action: 'deleteComments',
+        comments: toDelete,
+      });
+
+      if (deleteResult.success) {
+        deletedCount = deleteResult.deletedCount;
+        console.log(`Delcom: Deleted ${deletedCount} comments`);
+
+        // Report deletions to API
+        await reportDeletions(deleteResult.results, platform);
+      }
+    }
+
+    // Step 4: Save review comments to queue
+    let savedCount = 0;
+    if (toReview.length > 0) {
+      document.getElementById('scan-progress').textContent = `Saving ${toReview.length} comments for review...`;
+
+      const saveResponse = await apiRequest('POST', '/extension/save-all', {
+        connection_id: connectionId,
+        content_id: contentInfo.postId || contentInfo.videoId,
+        content_title: contentInfo.caption || `${platform.charAt(0).toUpperCase() + platform.slice(1)} Post`,
+        content_url: contentInfo.url,
+        comments: toReview.map(c => ({
+          id: c.id,
+          text: c.text,
+          author_username: c.username,
+          author_id: c.userId || null,
+          author_profile_url: c.profileUrl || null,
+          created_at: c.timestamp || null,
+          matched_filter_id: c.matchedFilter?.id || null,
+        })),
+      });
+
+      if (saveResponse.success) {
+        savedCount = saveResponse.saved;
+      }
+    }
+
+    // Step 5: Show results
+    const messages = [];
+    if (deletedCount > 0) messages.push(`Deleted ${deletedCount} spam`);
+    if (savedCount > 0) messages.push(`${savedCount} for review`);
+    if (clean.length > 0) messages.push(`${clean.length} clean`);
+
+    if (messages.length > 0) {
+      showStatus(messages.join(', '), deletedCount > 0 ? 'success' : 'info');
+    } else {
+      showStatus('No comments processed', 'info');
+    }
+
+    // Update stats
+    const stats = await chrome.storage.local.get(['stats']);
+    const currentStats = stats.stats || { scanned: 0, deleted: 0 };
+    currentStats.scanned += comments.length;
+    currentStats.deleted += deletedCount;
+    await chrome.storage.local.set({ stats: currentStats });
+    updateStats();
+
   } catch (error) {
     console.error('Process comments error:', error);
-    showStatus('Failed to save comments: ' + error.message, 'error');
+    showStatus('Failed to process comments: ' + error.message, 'error');
   }
 }
 
-async function processProfileComments(comments, contentInfo, posts) {
-  try {
-    // Get connection ID from storage
-    const stored = await chrome.storage.local.get(['instagramConnectionId']);
+/**
+ * Match comments against user's filters
+ * Returns { toDelete: [], toReview: [], clean: [] }
+ */
+function matchCommentsWithFilters(comments, filters) {
+  const toDelete = [];
+  const toReview = [];
+  const clean = [];
 
-    if (!stored.instagramConnectionId) {
-      showStatus('Please connect your Instagram account first', 'error');
-      return;
+  for (const comment of comments) {
+    let matched = false;
+
+    for (const filter of filters) {
+      if (matchesFilter(comment.text, filter)) {
+        comment.matchedFilter = filter;
+
+        if (filter.action === 'delete') {
+          toDelete.push(comment);
+        } else {
+          // action = 'review' or anything else
+          toReview.push(comment);
+        }
+
+        matched = true;
+        break; // Stop at first match
+      }
     }
 
-    document.getElementById('scan-progress').textContent = `Saving ${comments.length} comments from ${posts.length} posts...`;
+    if (!matched) {
+      clean.push(comment);
+    }
+  }
 
-    // Group comments by post and send to API
-    let totalSaved = 0;
-    let totalSkipped = 0;
+  return { toDelete, toReview, clean };
+}
 
-    // Send all comments in one batch with profile info
-    const response = await apiRequest('POST', '/extension/save-all', {
-      connection_id: stored.instagramConnectionId,
-      content_id: `profile_${contentInfo.username}`,
-      content_title: `@${contentInfo.username} Profile`,
-      content_url: contentInfo.profileUrl,
-      comments: comments.map(c => ({
-        id: c.id,
-        text: c.text,
-        author_username: c.username,
-        author_id: c.userId || null,
-        author_profile_url: c.profileUrl || null,
-        created_at: c.timestamp || null,
-        post_id: c.postId || null,
-        post_url: c.postUrl || null,
-      })),
-    });
+/**
+ * Check if comment text matches a filter pattern
+ */
+function matchesFilter(text, filter) {
+  if (!text || !filter.pattern) {
+    console.log(`Delcom: matchesFilter - text or pattern empty. text="${text}", pattern="${filter?.pattern}"`);
+    return false;
+  }
 
-    if (response.success) {
-      totalSaved = response.saved;
-      totalSkipped = response.skipped;
+  const normalizedText = filter.case_sensitive ? text : text.toLowerCase();
+  const pattern = filter.case_sensitive ? filter.pattern : filter.pattern.toLowerCase();
 
-      if (totalSaved > 0) {
-        showStatus(
-          `Saved ${totalSaved} comments from ${posts.length} posts!` +
-          (totalSkipped > 0 ? ` (${totalSkipped} duplicates)` : ''),
-          'success'
-        );
-      } else if (totalSkipped > 0) {
-        showStatus(`All ${totalSkipped} comments already in queue`, 'info');
-      } else {
-        showStatus('No new comments to save', 'info');
+  try {
+    let result = false;
+    if (filter.is_regex || filter.type === 'regex') {
+      // Regex matching
+      const regex = new RegExp(pattern, filter.case_sensitive ? '' : 'i');
+      result = regex.test(text);
+    } else {
+      // Keyword matching (contains)
+      result = normalizedText.includes(pattern);
+    }
+
+    console.log(`Delcom: matchesFilter - text="${text.substring(0, 50)}...", pattern="${pattern}", result=${result}`);
+    return result;
+  } catch (err) {
+    console.error('Filter match error:', err);
+    return false;
+  }
+}
+
+/**
+ * Fallback: Save all comments to review queue (when no filters configured)
+ */
+async function saveAllToQueue(comments, contentInfo, connectionId, platform) {
+  const response = await apiRequest('POST', '/extension/save-all', {
+    connection_id: connectionId,
+    content_id: contentInfo.postId || contentInfo.videoId,
+    content_title: contentInfo.caption || `${platform.charAt(0).toUpperCase() + platform.slice(1)} Post`,
+    content_url: contentInfo.url,
+    comments: comments.map(c => ({
+      id: c.id,
+      text: c.text,
+      author_username: c.username,
+      author_id: c.userId || null,
+      author_profile_url: c.profileUrl || null,
+      created_at: c.timestamp || null,
+    })),
+  });
+
+  if (response.success) {
+    const { total, saved, skipped } = response;
+
+    if (saved > 0) {
+      showStatus(`Saved ${saved} comments to review queue!` + (skipped > 0 ? ` (${skipped} duplicates)` : ''), 'success');
+    } else if (skipped > 0) {
+      showStatus(`All ${skipped} comments already in queue`, 'info');
+    } else {
+      showStatus('No comments to save', 'info');
+    }
+
+    // Update stats
+    const stats = await chrome.storage.local.get(['stats']);
+    const currentStats = stats.stats || { scanned: 0, deleted: 0 };
+    currentStats.scanned += total;
+    await chrome.storage.local.set({ stats: currentStats });
+    updateStats();
+  } else {
+    if (response.quota_exceeded) {
+      showStatus('Daily or monthly limit reached. Please upgrade your plan.', 'error');
+      if (currentUser) {
+        currentUser.can_moderate = false;
       }
-
-      // Update stats
-      const stats = await chrome.storage.local.get(['stats']);
-      const currentStats = stats.stats || { scanned: 0, deleted: 0 };
-      currentStats.scanned += comments.length;
-      await chrome.storage.local.set({ stats: currentStats });
-      updateStats();
     } else {
       showStatus(response.error || 'Failed to save comments', 'error');
     }
+  }
+}
+
+async function processProfileComments(comments, contentInfo, posts, platform = 'instagram') {
+  try {
+    // Get connection ID from storage
+    const connectionKey = `${platform}ConnectionId`;
+    const stored = await chrome.storage.local.get([connectionKey]);
+    const connectionId = stored[connectionKey];
+
+    if (!connectionId) {
+      showStatus(`Please connect your ${platform.charAt(0).toUpperCase() + platform.slice(1)} account first`, 'error');
+      return;
+    }
+
+    // Step 1: Fetch user's filters from API
+    document.getElementById('scan-progress').textContent = 'Loading filters...';
+    const filtersResponse = await apiRequest('GET', `/extension/filters?platform=${platform}`);
+    const filters = filtersResponse.success ? filtersResponse.filters : [];
+
+    console.log(`Delcom: Loaded ${filters.length} filters for ${platform}`);
+
+    if (filters.length === 0) {
+      // No filters - save all to review queue
+      document.getElementById('scan-progress').textContent = `No filters. Saving ${comments.length} comments...`;
+      await saveProfileCommentsToQueue(comments, contentInfo, posts, connectionId, platform);
+      return;
+    }
+
+    // Step 2: Match comments against filters locally
+    document.getElementById('scan-progress').textContent = 'Matching comments against filters...';
+    const { toDelete, toReview, clean } = matchCommentsWithFilters(comments, filters);
+
+    console.log(`Delcom: Profile matched - Delete: ${toDelete.length}, Review: ${toReview.length}, Clean: ${clean.length}`);
+
+    // Step 3: Auto-delete comments that match delete action
+    // NOTE: For profile scan, we need to re-open each post modal to delete
+    // This is complex - for now, we'll just mark them for deletion and let user handle
+    let deletedCount = 0;
+    if (toDelete.length > 0) {
+      // For profile scans, deletion is more complex as we need to navigate to each post
+      // For now, add them to review queue with a "delete" flag so user can bulk delete from web
+      document.getElementById('scan-progress').textContent = `Found ${toDelete.length} spam comments. Adding to queue for deletion...`;
+
+      // Mark these for auto-delete when user opens from web dashboard
+      const deleteResponse = await apiRequest('POST', '/extension/save-all', {
+        connection_id: connectionId,
+        content_id: `profile_${contentInfo.username}`,
+        content_title: `@${contentInfo.username} Profile`,
+        content_url: contentInfo.profileUrl,
+        comments: toDelete.map(c => ({
+          id: c.id,
+          text: c.text,
+          author_username: c.username,
+          author_id: c.userId || null,
+          author_profile_url: c.profileUrl || null,
+          created_at: c.timestamp || null,
+          post_id: c.postId || null,
+          post_url: c.postUrl || null,
+          matched_filter_id: c.matchedFilter?.id || null,
+          auto_action: 'delete', // Mark for auto-delete
+        })),
+      });
+
+      if (deleteResponse.success) {
+        deletedCount = deleteResponse.saved;
+      }
+    }
+
+    // Step 4: Save review comments to queue
+    let savedCount = 0;
+    if (toReview.length > 0) {
+      document.getElementById('scan-progress').textContent = `Saving ${toReview.length} comments for review...`;
+
+      const saveResponse = await apiRequest('POST', '/extension/save-all', {
+        connection_id: connectionId,
+        content_id: `profile_${contentInfo.username}`,
+        content_title: `@${contentInfo.username} Profile`,
+        content_url: contentInfo.profileUrl,
+        comments: toReview.map(c => ({
+          id: c.id,
+          text: c.text,
+          author_username: c.username,
+          author_id: c.userId || null,
+          author_profile_url: c.profileUrl || null,
+          created_at: c.timestamp || null,
+          post_id: c.postId || null,
+          post_url: c.postUrl || null,
+          matched_filter_id: c.matchedFilter?.id || null,
+        })),
+      });
+
+      if (saveResponse.success) {
+        savedCount = saveResponse.saved;
+      }
+    }
+
+    // Step 5: Show results
+    const messages = [];
+    if (deletedCount > 0) messages.push(`${deletedCount} spam queued for deletion`);
+    if (savedCount > 0) messages.push(`${savedCount} for review`);
+    if (clean.length > 0) messages.push(`${clean.length} clean`);
+
+    if (messages.length > 0) {
+      showStatus(`${posts.length} posts: ` + messages.join(', '), deletedCount > 0 ? 'success' : 'info');
+    } else {
+      showStatus(`Scanned ${posts.length} posts. No comments to process.`, 'info');
+    }
+
+    // Update stats
+    const stats = await chrome.storage.local.get(['stats']);
+    const currentStats = stats.stats || { scanned: 0, deleted: 0 };
+    currentStats.scanned += comments.length;
+    await chrome.storage.local.set({ stats: currentStats });
+    updateStats();
+
   } catch (error) {
     console.error('Process profile comments error:', error);
-    showStatus('Failed to save comments: ' + error.message, 'error');
+    showStatus('Failed to process comments: ' + error.message, 'error');
+  }
+}
+
+/**
+ * Fallback: Save profile comments to queue (when no filters configured)
+ */
+async function saveProfileCommentsToQueue(comments, contentInfo, posts, connectionId, platform) {
+  const response = await apiRequest('POST', '/extension/save-all', {
+    connection_id: connectionId,
+    content_id: `profile_${contentInfo.username}`,
+    content_title: `@${contentInfo.username} Profile`,
+    content_url: contentInfo.profileUrl,
+    comments: comments.map(c => ({
+      id: c.id,
+      text: c.text,
+      author_username: c.username,
+      author_id: c.userId || null,
+      author_profile_url: c.profileUrl || null,
+      created_at: c.timestamp || null,
+      post_id: c.postId || null,
+      post_url: c.postUrl || null,
+    })),
+  });
+
+  if (response.success) {
+    const { saved, skipped } = response;
+
+    if (saved > 0) {
+      showStatus(
+        `Saved ${saved} comments from ${posts.length} posts!` +
+        (skipped > 0 ? ` (${skipped} duplicates)` : ''),
+        'success'
+      );
+    } else if (skipped > 0) {
+      showStatus(`All ${skipped} comments already in queue`, 'info');
+    } else {
+      showStatus('No new comments to save', 'info');
+    }
+
+    // Update stats
+    const stats = await chrome.storage.local.get(['stats']);
+    const currentStats = stats.stats || { scanned: 0, deleted: 0 };
+    currentStats.scanned += comments.length;
+    await chrome.storage.local.set({ stats: currentStats });
+    updateStats();
+  } else {
+    if (response.quota_exceeded) {
+      showStatus('Daily or monthly limit reached. Please upgrade your plan.', 'error');
+      if (currentUser) {
+        currentUser.can_moderate = false;
+      }
+    } else {
+      showStatus(response.error || 'Failed to save comments', 'error');
+    }
   }
 }
 
@@ -391,14 +770,16 @@ async function executeDeletes(comments) {
   }
 }
 
-async function reportDeletions(results) {
-  const stored = await chrome.storage.local.get(['instagramConnectionId']);
+async function reportDeletions(results, platform = 'instagram') {
+  const connectionKey = `${platform}ConnectionId`;
+  const stored = await chrome.storage.local.get([connectionKey]);
+  const connectionId = stored[connectionKey];
 
-  if (!stored.instagramConnectionId) return;
+  if (!connectionId) return;
 
   try {
     await apiRequest('POST', '/extension/report-deletions', {
-      connection_id: stored.instagramConnectionId,
+      connection_id: connectionId,
       results: results,
     });
   } catch (error) {
@@ -460,7 +841,7 @@ async function loadPlatforms() {
         platformList.innerHTML = `
           <div class="text-center py-4">
             <p class="text-white/50 text-sm mb-3">No platforms connected</p>
-            <button class="btn-secondary text-xs px-4 py-2" onclick="chrome.tabs.create({url: 'http://localhost:8000/dashboard/connected-accounts'})">
+            <button class="btn-secondary text-xs px-4 py-2" onclick="chrome.tabs.create({url: '${CONFIG.WEB_BASE}/dashboard/connected-accounts'})">
               Connect Account
             </button>
           </div>
@@ -478,10 +859,26 @@ async function loadPlatforms() {
           </div>
         `).join('');
 
-        // Store Instagram connection ID if available
+        // Store connection IDs for each platform
+        const storageUpdates = {};
+
         const instagramConn = response.connections.find(c => c.platform === 'instagram');
         if (instagramConn) {
-          await chrome.storage.local.set({ instagramConnectionId: instagramConn.id });
+          storageUpdates.instagramConnectionId = instagramConn.id;
+        }
+
+        const tiktokConn = response.connections.find(c => c.platform === 'tiktok');
+        if (tiktokConn) {
+          storageUpdates.tiktokConnectionId = tiktokConn.id;
+        }
+
+        const youtubeConn = response.connections.find(c => c.platform === 'youtube');
+        if (youtubeConn) {
+          storageUpdates.youtubeConnectionId = youtubeConn.id;
+        }
+
+        if (Object.keys(storageUpdates).length > 0) {
+          await chrome.storage.local.set(storageUpdates);
         }
       }
     }
@@ -495,6 +892,8 @@ function getPlatformColor(platform) {
   switch (platform) {
     case 'instagram':
       return 'bg-gradient-to-br from-purple-500 to-pink-500 text-white';
+    case 'tiktok':
+      return 'bg-gradient-to-br from-cyan-400 to-pink-500 text-white';
     case 'youtube':
       return 'bg-red-500 text-white';
     default:
@@ -506,6 +905,8 @@ function getPlatformIcon(platform) {
   switch (platform) {
     case 'instagram':
       return `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/></svg>`;
+    case 'tiktok':
+      return `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-5.2 1.74 2.89 2.89 0 012.31-4.64 2.93 2.93 0 01.88.13V9.4a6.84 6.84 0 00-1-.05A6.33 6.33 0 005 20.1a6.34 6.34 0 0010.86-4.43v-7a8.16 8.16 0 004.77 1.52v-3.4a4.85 4.85 0 01-1-.1z"/></svg>`;
     case 'youtube':
       return `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M23.498 6.186a3.016 3.016 0 00-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 00.502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 002.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 002.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>`;
     default:

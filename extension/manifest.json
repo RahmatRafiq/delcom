@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "Delcom - Comment Moderator",
-  "version": "1.0.0",
-  "description": "Automatically moderate spam comments on Instagram, YouTube, and more",
+  "version": "1.1.0",
+  "description": "Automatically moderate spam comments on Instagram, TikTok, YouTube, and more",
   "permissions": [
     "storage",
     "activeTab",
@@ -14,7 +14,9 @@
   ],
   "host_permissions": [
     "https://www.instagram.com/*",
+    "https://www.tiktok.com/*",
     "https://www.youtube.com/*",
+    "http://127.0.0.1:8000/*",
     "http://localhost:8000/*",
     "https://delcom.app/*"
   ],
@@ -43,12 +45,27 @@
       "js": ["content/instagram.js"],
       "css": ["styles/content.css"],
       "run_at": "document_idle"
+    },
+    {
+      "matches": ["https://www.tiktok.com/*"],
+      "js": ["content/tiktok.js"],
+      "css": ["styles/content.css"],
+      "run_at": "document_idle"
+    },
+    {
+      "matches": [
+        "http://127.0.0.1:8000/extension/*",
+        "http://localhost:8000/extension/*",
+        "https://delcom.app/extension/*"
+      ],
+      "js": ["content/auth-listener.js"],
+      "run_at": "document_idle"
     }
   ],
   "web_accessible_resources": [
     {
-      "resources": ["assets/*", "styles/*"],
-      "matches": ["https://www.instagram.com/*"]
+      "resources": ["assets/*", "styles/*", "content/lib/*"],
+      "matches": ["https://www.instagram.com/*", "https://www.tiktok.com/*"]
     }
   ]
 }

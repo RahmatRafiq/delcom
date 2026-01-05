@@ -73,12 +73,48 @@ class ExtensionController extends Controller
         $platformName = $request->input('platform');
 
         // Find platform
-        $platform = Platform::where('name', $platformName)->first();
+        $platform = Platform::where('name', $platformName)
+            ->where('is_active', true)
+            ->first();
+
         if (! $platform) {
             return response()->json([
                 'success' => false,
-                'error' => 'Platform not found',
+                'error' => 'Platform not found or currently unavailable',
             ], 404);
+        }
+
+        // Check if user's plan allows this platform via extension
+        if (! $user->canAccessPlatform($platform->id, 'extension')) {
+            return response()->json([
+                'success' => false,
+                'error' => "Your plan doesn't include access to {$platform->display_name}. Please upgrade.",
+                'upgrade_required' => true,
+            ], 403);
+        }
+
+        // Check max platforms limit
+        $currentPlan = $user->getCurrentPlan();
+        if ($currentPlan && $currentPlan->max_platforms > 0) {
+            $connectedCount = UserPlatform::where('user_id', $user->id)
+                ->where('is_active', true)
+                ->count();
+
+            if ($connectedCount >= $currentPlan->max_platforms) {
+                // Check if this is an existing connection being reactivated
+                $existing = UserPlatform::where('user_id', $user->id)
+                    ->where('platform_id', $platform->id)
+                    ->where('connection_method', 'extension')
+                    ->first();
+
+                if (! $existing) {
+                    return response()->json([
+                        'success' => false,
+                        'error' => "You've reached the maximum number of connected platforms ({$currentPlan->max_platforms}). Please upgrade.",
+                        'upgrade_required' => true,
+                    ], 403);
+                }
+            }
         }
 
         // Check if already connected
@@ -150,17 +186,28 @@ class ExtensionController extends Controller
         $user = Auth::user();
         $connectionId = $request->input('connection_id');
 
+        // Check quota first
+        if (! $user->canPerformAction()) {
+            return response()->json([
+                'success' => false,
+                'error' => 'Daily or monthly limit reached. Please upgrade your plan.',
+                'quota_exceeded' => true,
+                'usage' => $user->getUsageStats(),
+            ], 429);
+        }
+
         // Verify ownership
         $userPlatform = UserPlatform::where('id', $connectionId)
             ->where('user_id', $user->id)
             ->where('connection_method', 'extension')
+            ->where('is_active', true)
             ->with('platform')
             ->first();
 
         if (! $userPlatform) {
             return response()->json([
                 'success' => false,
-                'error' => 'Connection not found or not authorized',
+                'error' => 'Connection not found, inactive, or not authorized',
             ], 403);
         }
 
@@ -427,6 +474,16 @@ class ExtensionController extends Controller
         $user = Auth::user();
         $connectionId = $request->input('connection_id');
 
+        // Check quota first
+        if (! $user->canPerformAction()) {
+            return response()->json([
+                'success' => false,
+                'error' => 'Daily or monthly limit reached. Please upgrade your plan.',
+                'quota_exceeded' => true,
+                'usage' => $user->getUsageStats(),
+            ], 429);
+        }
+
         // Verify ownership
         $userPlatform = UserPlatform::where('id', $connectionId)
             ->where('user_id', $user->id)
@@ -437,12 +494,12 @@ class ExtensionController extends Controller
         if (! $userPlatform) {
             return response()->json([
                 'success' => false,
-                'error' => 'Connection not found or not authorized',
+                'error' => 'Connection not found, inactive, or not authorized',
             ], 403);
         }
 
         $contentId = $request->input('content_id');
-        $contentTitle = $request->input('content_title', 'Instagram Post');
+        $contentTitle = $request->input('content_title') ?: ($userPlatform->platform->name === 'tiktok' ? 'TikTok Video' : 'Instagram Post');
         $comments = $request->input('comments');
 
         $saved = 0;
@@ -532,6 +589,7 @@ class ExtensionController extends Controller
                 'type' => $filter->type,
                 'action' => $filter->action,
                 'is_regex' => $filter->type === Filter::TYPE_REGEX,
+                'case_sensitive' => $filter->case_sensitive ?? false,
             ]);
 
         return response()->json([

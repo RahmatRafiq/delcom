@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Contracts\PlatformServiceInterface;
 use App\Models\UserPlatform;
 use App\Services\Platforms\Instagram\InstagramService;
+use App\Services\Platforms\TikTok\TikTokService;
 use App\Services\Platforms\Youtube\YouTubeService;
 use InvalidArgumentException;
 
@@ -13,6 +14,7 @@ class PlatformServiceFactory
     protected static array $services = [
         'youtube' => YouTubeService::class,
         'instagram' => InstagramService::class,
+        'tiktok' => TikTokService::class,
     ];
 
     public static function make(UserPlatform $userPlatform): PlatformServiceInterface
