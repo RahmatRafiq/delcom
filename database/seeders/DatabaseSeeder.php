@@ -25,11 +25,7 @@ class DatabaseSeeder extends Seeder
             // Users (will auto-get free subscription via model boot)
             UserSeeder::class,
             // Rest of DelCom seeders
-            PresetFilterSeeder::class,
-            IndonesianSpamKeywordSeeder::class,
             UserPlatformSeeder::class,
-            FilterGroupSeeder::class,
-            FilterSeeder::class,
             ModerationLogSeeder::class,
         ]);
     }
