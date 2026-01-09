@@ -4,7 +4,6 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Filter extends Model
@@ -110,14 +109,6 @@ class Filter extends Model
         self::ACTION_FLAG,
         self::ACTION_REPORT,
     ];
-
-    /**
-     * Get the filter group that owns this filter.
-     */
-    public function filterGroup(): BelongsTo
-    {
-        return $this->belongsTo(FilterGroup::class);
-    }
 
     /**
      * Get the moderation logs that used this filter.

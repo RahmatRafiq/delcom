@@ -15,8 +15,8 @@ export type { BillingCycle, Plan, Subscription, SubscriptionStatus, UsageRecord,
 // Platform types
 export type { AllowedMethod, ConnectionMethod, PlanPlatform, Platform, PlatformConnectionMethod, UserPlatform } from './platform';
 
-// Filter types
-export type { Filter, FilterAction, FilterGroup, FilterMatchType, FilterType, PresetFilter, PresetFilterData } from './filter';
+// Filter types (legacy constants only)
+export type { FilterAction, FilterMatchType, FilterType } from './filter';
 
 // Moderation types
 export type { ModerationActionSource, ModerationActionTaken, ModerationLog } from './moderation';

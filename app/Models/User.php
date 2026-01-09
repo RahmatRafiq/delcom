@@ -99,14 +99,6 @@ class User extends Authenticatable implements HasMedia, JWTSubject
     }
 
     /**
-     * Get the filter groups for this user.
-     */
-    public function filterGroups(): HasMany
-    {
-        return $this->hasMany(FilterGroup::class);
-    }
-
-    /**
      * Get the moderation logs for this user.
      */
     public function moderationLogs(): HasMany
