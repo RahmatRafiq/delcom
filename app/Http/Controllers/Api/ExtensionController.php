@@ -9,7 +9,7 @@ use App\Models\PendingModeration;
 use App\Models\Platform;
 use App\Models\UsageRecord;
 use App\Models\UserPlatform;
-use App\Services\FilterMatcher;
+use App\Services\HybridSpamDetector;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -166,8 +166,9 @@ class ExtensionController extends Controller
 
     /**
      * Receive comments from extension for scanning.
+     * Uses HybridSpamDetector for advanced multi-layered spam detection.
      */
-    public function submitComments(Request $request, FilterMatcher $filterMatcher): JsonResponse
+    public function submitComments(Request $request, HybridSpamDetector $spamDetector): JsonResponse
     {
         $request->validate([
             'connection_id' => 'required|integer|exists:user_platforms,id',
@@ -214,40 +215,52 @@ class ExtensionController extends Controller
         $platformName = $userPlatform->platform->name;
         $useReviewQueue = $userPlatform->usesReviewQueue();
 
-        // Get user's active filters for this platform
-        $filters = $user->getActiveFilters($platformName);
-
-        if ($filters->isEmpty()) {
-            return response()->json([
-                'success' => true,
-                'message' => 'No active filters configured',
-                'scanned' => count($request->input('comments')),
-                'matched' => 0,
-                'queued' => 0,
-            ]);
-        }
-
         $contentId = $request->input('content_id');
         $contentTitle = $request->input('content_title', 'Unknown');
         $comments = $request->input('comments');
 
-        $scanned = 0;
+        $scanned = count($comments);
         $matched = 0;
         $queued = 0;
         $actioned = 0;
         $matchedComments = [];
 
+        // Cluster Detection - Detect bot campaigns (ONLY METHOD)
+        // Focus on what YouTube CAN'T detect: coordinated spam attacks
+        $clusterAnalysis = $spamDetector->analyzeCommentBatch(
+            array_map(fn ($c) => [
+                'id' => $c['id'],
+                'text' => $c['text'],
+                'author' => $c['author_username'],
+            ], $comments)
+        );
+
+        // Mark comments that are part of spam campaigns
+        $campaignCommentIds = [];
+        foreach ($clusterAnalysis['spam_campaigns'] as $campaign) {
+            foreach ($campaign['comment_ids'] as $commentId) {
+                $campaignCommentIds[$commentId] = [
+                    'score' => $campaign['score'],
+                    'template' => $campaign['template'],
+                    'campaign_size' => $campaign['member_count'],
+                    'severity' => $this->getSeverityLevel($campaign['score']),
+                ];
+            }
+        }
+
+        // Process spam campaign comments
         foreach ($comments as $comment) {
-            $scanned++;
-
-            // Check if comment matches any filter
-            $matchedFilter = $filterMatcher->findMatch($comment['text'], $filters);
-
-            if (! $matchedFilter) {
+            // Only process if part of detected spam campaign
+            if (! isset($campaignCommentIds[$comment['id']])) {
                 continue;
             }
 
             $matched++;
+            $campaignData = $campaignCommentIds[$comment['id']];
+
+            $spamScore = $campaignData['score'];
+            $detectionMethod = 'spam_campaign';
+            $matchedPattern = "Campaign: {$campaignData['template']} ({$campaignData['campaign_size']} similar comments)";
 
             // Check if already processed
             $existsInQueue = PendingModeration::where('user_platform_id', $userPlatform->id)
@@ -263,7 +276,7 @@ class ExtensionController extends Controller
             }
 
             if ($useReviewQueue) {
-                // Add to review queue
+                // Add to review queue with spam campaign data
                 PendingModeration::create([
                     'user_id' => $user->id,
                     'user_platform_id' => $userPlatform->id,
@@ -274,25 +287,27 @@ class ExtensionController extends Controller
                     'commenter_id' => $comment['author_id'] ?? null,
                     'commenter_profile_url' => $comment['author_profile_url'] ?? null,
                     'comment_text' => mb_substr($comment['text'], 0, 1000),
-                    'matched_filter_id' => $matchedFilter->id,
-                    'matched_pattern' => $matchedFilter->pattern,
-                    'confidence_score' => 100,
+                    'matched_filter_id' => null, // No filter - cluster detection
+                    'matched_pattern' => $matchedPattern,
+                    'confidence_score' => $spamScore,
                     'status' => PendingModeration::STATUS_PENDING,
                     'detected_at' => now(),
                 ]);
 
                 $queued++;
-                $matchedFilter->incrementHitCount();
             } else {
                 // Return immediately for extension to delete
                 $matchedComments[] = [
                     'comment_id' => $comment['id'],
-                    'action' => $matchedFilter->action,
-                    'filter_pattern' => $matchedFilter->pattern,
+                    'action' => Filter::ACTION_FLAG, // Always flag for review
+                    'campaign_pattern' => $matchedPattern,
+                    'spam_score' => $spamScore,
+                    'confidence' => min($spamScore / 100, 1.0),
+                    'detection_method' => $detectionMethod,
+                    'severity' => $campaignData['severity'],
                 ];
 
                 $actioned++;
-                $matchedFilter->incrementHitCount();
             }
         }
 
@@ -305,6 +320,7 @@ class ExtensionController extends Controller
             'content_id' => $contentId,
             'scanned' => $scanned,
             'matched' => $matched,
+            'campaigns_detected' => count($clusterAnalysis['spam_campaigns']),
             'queued' => $queued,
             'actioned' => $actioned,
         ]);
@@ -314,8 +330,11 @@ class ExtensionController extends Controller
             'scanned' => $scanned,
             'matched' => $matched,
             'queued' => $queued,
+            'campaigns_detected' => count($clusterAnalysis['spam_campaigns']),
+            'campaign_summary' => $clusterAnalysis['summary'] ?? [],
             'to_delete' => $matchedComments, // For extension to execute
             'use_review_queue' => $useReviewQueue,
+            'detection_method' => 'cluster_analysis', // YouTube handles regex
         ]);
     }
 
@@ -596,6 +615,28 @@ class ExtensionController extends Controller
             'success' => true,
             'filters' => $filters,
             'count' => $filters->count(),
+            'note' => 'Filters are deprecated - cluster detection is now used',
         ]);
+    }
+
+    /**
+     * Get severity level based on spam campaign score.
+     *
+     * @param  int  $score  Campaign score (0-100)
+     * @return string Severity level
+     */
+    private function getSeverityLevel(int $score): string
+    {
+        if ($score >= 90) {
+            return 'CRITICAL';
+        }
+        if ($score >= 80) {
+            return 'HIGH';
+        }
+        if ($score >= 70) {
+            return 'MEDIUM';
+        }
+
+        return 'LOW';
     }
 }

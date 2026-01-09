@@ -47,6 +47,8 @@ class Filter extends Model
 
     public const TYPE_REPEAT_CHAR = 'repeat_char';
 
+    public const TYPE_UNICODE_SPAM = 'unicode_spam';
+
     /**
      * Match types available.
      */
@@ -59,6 +61,8 @@ class Filter extends Model
     public const MATCH_ENDS_WITH = 'ends_with';
 
     public const MATCH_REGEX = 'regex';
+
+    public const MATCH_FUZZY = 'fuzzy';
 
     /**
      * Actions available.
@@ -82,6 +86,7 @@ class Filter extends Model
         self::TYPE_URL,
         self::TYPE_EMOJI_SPAM,
         self::TYPE_REPEAT_CHAR,
+        self::TYPE_UNICODE_SPAM,
     ];
 
     /**
@@ -93,6 +98,7 @@ class Filter extends Model
         self::MATCH_STARTS_WITH,
         self::MATCH_ENDS_WITH,
         self::MATCH_REGEX,
+        self::MATCH_FUZZY,
     ];
 
     /**
@@ -166,6 +172,7 @@ class Filter extends Model
             self::TYPE_URL => 'URL Pattern',
             self::TYPE_EMOJI_SPAM => 'Emoji Spam',
             self::TYPE_REPEAT_CHAR => 'Repeated Characters',
+            self::TYPE_UNICODE_SPAM => 'Unicode Spam (Fancy Fonts)',
         ];
     }
 
@@ -180,6 +187,7 @@ class Filter extends Model
             self::MATCH_STARTS_WITH => 'Starts With',
             self::MATCH_ENDS_WITH => 'Ends With',
             self::MATCH_REGEX => 'Regex',
+            self::MATCH_FUZZY => 'Fuzzy Match (Obfuscation-resistant)',
         ];
     }
 
