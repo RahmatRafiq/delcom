@@ -2,7 +2,6 @@
 
 namespace Database\Seeders;
 
-use App\Models\Filter;
 use App\Models\ModerationLog;
 use App\Models\User;
 use App\Models\UserPlatform;
@@ -57,21 +56,19 @@ class ModerationLogSeeder extends Seeder
             return;
         }
 
-        $filters = Filter::whereHas('filterGroup', fn ($q) => $q->where('user_id', $admin->id))->get();
-
-        // Create spam logs (deleted)
+        // Create spam logs (deleted) - using cluster detection
         foreach ($this->spamComments as $comment) {
-            $this->createLog($admin->id, $userPlatforms->random(), $filters, $comment, 'deleted', 'background_job');
+            $this->createLog($admin->id, $userPlatforms->random(), $comment, 'deleted', 'extension', 'Cluster detection');
         }
 
         // Create promo logs (hidden/flagged)
         foreach ($this->promoComments as $comment) {
-            $this->createLog($admin->id, $userPlatforms->random(), $filters, $comment, fake()->randomElement(['hidden', 'flagged']), 'background_job');
+            $this->createLog($admin->id, $userPlatforms->random(), $comment, fake()->randomElement(['hidden', 'flagged']), 'extension', 'Cluster detection');
         }
 
         // Create manually flagged logs
         foreach ($this->normalComments as $comment) {
-            $this->createLog($admin->id, $userPlatforms->random(), collect(), $comment, 'flagged', 'manual');
+            $this->createLog($admin->id, $userPlatforms->random(), $comment, 'flagged', 'manual', null);
         }
 
         // Create additional random logs for admin
@@ -81,10 +78,10 @@ class ModerationLogSeeder extends Seeder
             $this->createLog(
                 $admin->id,
                 $userPlatforms->random(),
-                $isFiltered ? $filters : collect(),
                 $comment,
                 fake()->randomElement(['deleted', 'hidden', 'flagged']),
-                $isFiltered ? 'background_job' : 'manual'
+                $isFiltered ? 'extension' : 'manual',
+                $isFiltered ? 'Cluster detection' : null
             );
         }
     }
@@ -103,9 +100,7 @@ class ModerationLogSeeder extends Seeder
             return;
         }
 
-        $filters = Filter::whereHas('filterGroup', fn ($q) => $q->where('user_id', $user->id))->get();
-
-        // Create some spam logs for user
+        // Create some spam logs for user - using cluster detection
         $userSpamComments = [
             'Slot gacor maxwin hari ini! wa.me/6281234567890',
             'Togel singapore result hari ini, cek bit.ly/togel123',
@@ -113,7 +108,7 @@ class ModerationLogSeeder extends Seeder
         ];
 
         foreach ($userSpamComments as $comment) {
-            $this->createLog($user->id, $userPlatforms->random(), $filters, $comment, 'deleted', 'background_job');
+            $this->createLog($user->id, $userPlatforms->random(), $comment, 'deleted', 'extension', 'Cluster detection');
         }
 
         // Create some flagged comments
@@ -123,7 +118,7 @@ class ModerationLogSeeder extends Seeder
         ];
 
         foreach ($flaggedComments as $comment) {
-            $this->createLog($user->id, $userPlatforms->random(), $filters, $comment, 'flagged', 'background_job');
+            $this->createLog($user->id, $userPlatforms->random(), $comment, 'flagged', 'extension', 'Cluster detection');
         }
 
         // Create additional random logs for user
@@ -133,17 +128,16 @@ class ModerationLogSeeder extends Seeder
             $this->createLog(
                 $user->id,
                 $userPlatforms->random(),
-                $isFiltered ? $filters : collect(),
                 $comment,
                 fake()->randomElement(['deleted', 'hidden', 'flagged']),
-                $isFiltered ? 'background_job' : 'manual'
+                $isFiltered ? 'extension' : 'manual',
+                $isFiltered ? 'Cluster detection' : null
             );
         }
     }
 
-    private function createLog(int $userId, UserPlatform $userPlatform, $filters, string $comment, string $action, string $source): void
+    private function createLog(int $userId, UserPlatform $userPlatform, string $comment, string $action, string $source, ?string $pattern): void
     {
-        $filter = $filters->isNotEmpty() ? $filters->random() : null;
         $platformName = $userPlatform->platform->name ?? 'youtube';
         $contentType = match ($platformName) {
             'youtube' => fake()->randomElement(['video', 'short']),
@@ -161,8 +155,7 @@ class ModerationLogSeeder extends Seeder
             'commenter_username' => fake()->randomElement($this->usernames),
             'content_id' => fake()->regexify('[A-Za-z0-9]{11}'),
             'content_type' => $contentType,
-            'matched_filter_id' => $filter?->id,
-            'matched_pattern' => $filter?->pattern,
+            'matched_pattern' => $pattern,
             'action_taken' => $action,
             'action_source' => $source,
             'processed_at' => fake()->dateTimeBetween('-14 days', 'now'),
