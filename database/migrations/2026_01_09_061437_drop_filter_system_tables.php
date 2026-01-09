@@ -11,16 +11,20 @@ return new class extends Migration
      */
     public function up(): void
     {
-        // Drop foreign keys first
-        Schema::table('pending_moderations', function (Blueprint $table) {
-            $table->dropForeign(['matched_filter_id']);
-            $table->dropColumn('matched_filter_id');
-        });
+        // Drop foreign keys and columns only if they exist
+        if (Schema::hasColumn('pending_moderations', 'matched_filter_id')) {
+            Schema::table('pending_moderations', function (Blueprint $table) {
+                $table->dropForeign(['matched_filter_id']);
+                $table->dropColumn('matched_filter_id');
+            });
+        }
 
-        Schema::table('moderation_logs', function (Blueprint $table) {
-            $table->dropForeign(['matched_filter_id']);
-            $table->dropColumn('matched_filter_id');
-        });
+        if (Schema::hasColumn('moderation_logs', 'matched_filter_id')) {
+            Schema::table('moderation_logs', function (Blueprint $table) {
+                $table->dropForeign(['matched_filter_id']);
+                $table->dropColumn('matched_filter_id');
+            });
+        }
 
         // Drop filter tables in reverse dependency order
         Schema::dropIfExists('preset_filters');
