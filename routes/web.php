@@ -90,21 +90,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         // =====================================================
         // Comment Moderation Routes
         // =====================================================
-
-        // Filter Groups
-        Route::post('filter-groups/json', [\App\Http\Controllers\FilterGroupController::class, 'json'])->name('filter-groups.json');
-        Route::resource('filter-groups', \App\Http\Controllers\FilterGroupController::class);
-
-        // Filters
-        Route::post('filters/json', [\App\Http\Controllers\FilterController::class, 'json'])->name('filters.json');
-        Route::post('filters/test-pattern', [\App\Http\Controllers\FilterController::class, 'testPattern'])->name('filters.test-pattern');
-        Route::resource('filters', \App\Http\Controllers\FilterController::class);
-
-        // Preset Filters
-        Route::get('preset-filters', [\App\Http\Controllers\PresetFilterController::class, 'index'])->name('preset-filters.index');
-        Route::get('preset-filters/{id}', [\App\Http\Controllers\PresetFilterController::class, 'show'])->name('preset-filters.show');
-        Route::post('preset-filters/{id}/import', [\App\Http\Controllers\PresetFilterController::class, 'import'])->name('preset-filters.import');
-        Route::get('api/user-filter-groups', [\App\Http\Controllers\PresetFilterController::class, 'getUserFilterGroups'])->name('api.user-filter-groups');
+        // Note: Filter routes removed - now using cluster detection instead
 
         // Moderation Logs
         Route::get('moderation-logs', [\App\Http\Controllers\ModerationLogController::class, 'index'])->name('moderation-logs.index');

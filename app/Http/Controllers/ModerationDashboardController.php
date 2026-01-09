@@ -2,12 +2,10 @@
 
 namespace App\Http\Controllers;
 
-use App\Jobs\ScanCommentsJob;
 use App\Models\ModerationLog;
 use App\Models\PendingModeration;
 use App\Models\UserPlatform;
 use App\Services\Platforms\Youtube\YouTubeRateLimiter;
-use App\Services\PlatformServiceFactory;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
@@ -128,12 +126,8 @@ class ModerationDashboardController extends Controller
             return back()->with('error', 'Monthly action limit reached. Upgrade your plan for more.');
         }
 
-        $maxContents = $request->input('max_contents', 10);
-        $maxComments = $request->input('max_comments', 100);
-
-        ScanCommentsJob::dispatch($userPlatform, $maxContents, $maxComments);
-
-        return back()->with('success', 'Scan started! Results will appear in moderation logs shortly.');
+        // Manual scanning is deprecated - use browser extension with cluster detection
+        return back()->with('error', 'Manual scanning is deprecated. Please use the browser extension for cluster-based spam detection.');
     }
 
     /**
@@ -158,22 +152,8 @@ class ModerationDashboardController extends Controller
             return back()->with('error', 'No connected platforms found.');
         }
 
-        $maxContents = $request->input('max_contents', 10);
-        $maxComments = $request->input('max_comments', 100);
-        $dispatched = 0;
-
-        foreach ($platforms as $userPlatform) {
-            if (PlatformServiceFactory::supports($userPlatform->platform->name)) {
-                ScanCommentsJob::dispatch($userPlatform, $maxContents, $maxComments);
-                $dispatched++;
-            }
-        }
-
-        if ($dispatched === 0) {
-            return back()->with('error', 'No scannable platforms found.');
-        }
-
-        return back()->with('success', "Scan started for {$dispatched} platform(s)! Results will appear shortly.");
+        // Manual scanning is deprecated - use browser extension with cluster detection
+        return back()->with('error', 'Manual scanning is deprecated. Please use the browser extension for cluster-based spam detection.');
     }
 
     /**

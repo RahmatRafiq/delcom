@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Jobs\ScanCommentsJob;
 use App\Models\ModerationLog;
 use App\Models\Platform;
 use App\Models\UserPlatform;
@@ -140,12 +139,8 @@ class ConnectedAccountController extends Controller
             return back()->with('error', 'Monthly action limit reached. Upgrade your plan.');
         }
 
-        $maxContents = $request->input('max_contents', 10);
-        $maxComments = $request->input('max_comments', 100);
-
-        ScanCommentsJob::dispatch($userPlatform, $maxContents, $maxComments);
-
-        return back()->with('success', 'Scan started! Results will appear shortly.');
+        // Manual scanning is deprecated - use browser extension with cluster detection
+        return back()->with('error', 'Manual scanning is deprecated. Please use the browser extension for cluster-based spam detection.');
     }
 
     public function update(Request $request, $id)
