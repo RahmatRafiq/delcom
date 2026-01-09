@@ -26,6 +26,7 @@ class DatabaseSeeder extends Seeder
             UserSeeder::class,
             // Rest of DelCom seeders
             PresetFilterSeeder::class,
+            IndonesianSpamKeywordSeeder::class,
             UserPlatformSeeder::class,
             FilterGroupSeeder::class,
             FilterSeeder::class,
