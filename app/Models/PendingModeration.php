@@ -73,11 +73,6 @@ class PendingModeration extends Model
         return $this->belongsTo(UserContent::class);
     }
 
-    public function matchedFilter(): BelongsTo
-    {
-        return $this->belongsTo(Filter::class, 'matched_filter_id');
-    }
-
     public function scopePending($query)
     {
         return $query->where('status', self::STATUS_PENDING);

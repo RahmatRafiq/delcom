@@ -58,7 +58,7 @@ class PendingModerationController extends Controller
 
         $query = PendingModeration::query()
             ->where('user_id', $user->id)
-            ->with(['userPlatform.platform:id,name,display_name', 'matchedFilter:id,pattern,type']);
+            ->with(['userPlatform.platform:id,name,display_name']);
 
         // Filter by status
         if ($status && $status !== 'all') {
@@ -107,7 +107,6 @@ class PendingModerationController extends Controller
                 'commenter_profile_url' => $item->commenter_profile_url,
                 'comment_text' => $item->comment_text,
                 'matched_pattern' => $item->matched_pattern,
-                'matched_filter_type' => $item->matchedFilter?->type,
                 'confidence_score' => $item->confidence_score,
                 'status' => $item->status,
                 'detected_at' => $item->detected_at?->toDateTimeString(),
@@ -244,7 +243,6 @@ class PendingModerationController extends Controller
                             'commenter_username' => $item->commenter_username,
                             'commenter_id' => $item->commenter_id,
                             'comment_text' => $item->comment_text,
-                            'matched_filter_id' => $item->matched_filter_id,
                             'matched_pattern' => $item->matched_pattern,
                             'action_taken' => ModerationLog::ACTION_DELETED,
                             'action_source' => ModerationLog::SOURCE_MANUAL,

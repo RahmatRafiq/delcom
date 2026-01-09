@@ -66,11 +66,6 @@ class ModerationLog extends Model
         return $this->belongsTo(UserPlatform::class);
     }
 
-    public function matchedFilter(): BelongsTo
-    {
-        return $this->belongsTo(Filter::class, 'matched_filter_id');
-    }
-
     public function isSuccessful(): bool
     {
         return $this->action_taken !== self::ACTION_FAILED;

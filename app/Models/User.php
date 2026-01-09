@@ -296,22 +296,13 @@ class User extends Authenticatable implements HasMedia, JWTSubject
     /**
      * Get active filters for a specific platform.
      */
+    /**
+     * Get active filters for user (deprecated - now using cluster detection).
+     * Returns empty collection for backward compatibility.
+     */
     public function getActiveFilters(?string $platform = null): \Illuminate\Support\Collection
     {
-        $query = Filter::whereHas('filterGroup', function ($q) use ($platform) {
-            $q->where('user_id', $this->id)
-                ->where('is_active', true);
-
-            if ($platform) {
-                $q->where(function ($subQ) use ($platform) {
-                    $subQ->whereNull('applies_to_platforms')
-                        ->orWhereJsonContains('applies_to_platforms', $platform);
-                });
-            }
-        })->where('is_active', true)
-            ->orderBy('priority', 'desc');
-
-        return $query->get();
+        return collect();
     }
 
     /**

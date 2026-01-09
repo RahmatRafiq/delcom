@@ -63,7 +63,7 @@ class ModerationDashboardController extends Controller
             ->count();
 
         // Get recent moderation logs
-        $recentLogs = ModerationLog::with(['userPlatform.platform', 'matchedFilter'])
+        $recentLogs = ModerationLog::with(['userPlatform.platform'])
             ->where('user_id', $user->id)
             ->latest('processed_at')
             ->take(10)

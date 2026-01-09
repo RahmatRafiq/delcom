@@ -34,7 +34,7 @@ class ModerationLogController extends Controller
 
         $query = ModerationLog::query()
             ->whereIn('user_platform_id', $userPlatformIds)
-            ->with(['userPlatform.platform:id,name,display_name', 'matchedFilter:id,pattern,type']);
+            ->with(['userPlatform.platform:id,name,display_name']);
 
         $columns = [
             'id',
@@ -97,7 +97,6 @@ class ModerationLogController extends Controller
                 'commenter_username' => $log->commenter_username,
                 'comment_text' => $log->comment_text,
                 'matched_pattern' => $log->matched_pattern,
-                'matched_filter_type' => $log->matchedFilter?->type,
                 'action_taken' => $log->action_taken,
                 'action_source' => $log->action_source,
                 'failure_reason' => $log->failure_reason,
@@ -146,7 +145,7 @@ class ModerationLogController extends Controller
         $userPlatformIds = UserPlatform::where('user_id', Auth::id())->pluck('id');
 
         $logs = ModerationLog::whereIn('user_platform_id', $userPlatformIds)
-            ->with(['userPlatform.platform:id,name,display_name', 'matchedFilter:id,pattern,type'])
+            ->with(['userPlatform.platform:id,name,display_name'])
             ->orderBy('processed_at', 'desc')
             ->limit(1000)
             ->get();
