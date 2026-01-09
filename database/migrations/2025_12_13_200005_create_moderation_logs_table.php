@@ -18,7 +18,6 @@ return new class extends Migration
             $table->string('commenter_username', 255)->nullable();
             $table->string('commenter_id', 255)->nullable();
             $table->text('comment_text')->nullable();
-            $table->foreignId('matched_filter_id')->nullable()->constrained('filters')->onDelete('set null');
             $table->string('matched_pattern', 500)->nullable();
             $table->enum('action_taken', [
                 'deleted',

@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Models\Filter;
 use App\Models\ModerationLog;
 use App\Models\PendingModeration;
 use App\Models\Platform;
@@ -299,7 +298,7 @@ class ExtensionController extends Controller
                 // Return immediately for extension to delete
                 $matchedComments[] = [
                     'comment_id' => $comment['id'],
-                    'action' => Filter::ACTION_FLAG, // Always flag for review
+                    'action' => 'flag', // Always flag for review
                     'campaign_pattern' => $matchedPattern,
                     'spam_score' => $spamScore,
                     'confidence' => min($spamScore / 100, 1.0),
@@ -607,7 +606,7 @@ class ExtensionController extends Controller
                 'pattern' => $filter->pattern,
                 'type' => $filter->type,
                 'action' => $filter->action,
-                'is_regex' => $filter->type === Filter::TYPE_REGEX,
+                'is_regex' => $filter->type === 'regex',
                 'case_sensitive' => $filter->case_sensitive ?? false,
             ]);
 
