@@ -80,8 +80,9 @@ class SpamClusterDetector
         // Step 1: Normalize and prepare comments
         $normalizedComments = $this->normalizeComments($comments);
 
-        // Step 2: Find similar comment clusters
-        $clusters = $this->findSimilarClusters($normalizedComments);
+        // Step 2: Find similar comment clusters using multi-pass approach
+        // This uses N-gram + Levenshtein hybrid similarity and merges related clusters
+        $clusters = $this->findClustersMultiPass($normalizedComments);
 
         // Step 3: Score each cluster for spam campaign likelihood
         $spamCampaigns = [];
@@ -203,6 +204,148 @@ class SpamClusterDetector
     }
 
     /**
+     * Find clusters using multi-pass approach for better grouping.
+     *
+     * PASS 1 (Moderate): Find initial clusters with moderate similarity (40% threshold)
+     * PASS 2 (Merge): Combine related clusters using hybrid similarity (30% threshold)
+     *
+     * This catches spam campaigns that have variations:
+     * - Core cluster: ["Kunjungi M0NA4D!", "Main di M0NA4D!"] (very similar)
+     * - Related cluster: ["MON4D gacor!", "M0N4D trusted!"] (similar brand, different text)
+     * - MERGE: All 4 comments become one large campaign
+     *
+     * @param  array  $normalizedComments  Normalized comment data
+     * @return array Array of merged clusters
+     */
+    private function findClustersMultiPass(array $normalizedComments): array
+    {
+        // PASS 1: Find initial clusters (moderate threshold)
+        $strictClusters = $this->findSimilarClustersWithThreshold(
+            $normalizedComments,
+            threshold: 0.4 // 40% similarity required (same as TIER S)
+        );
+
+        // If we only found 0-1 clusters, no need to merge
+        if (count($strictClusters) <= 1) {
+            return $strictClusters;
+        }
+
+        // PASS 2: Merge related clusters
+        $mergedClusters = [];
+        $processedClusters = [];
+
+        foreach ($strictClusters as $i => $cluster1) {
+            // Skip if already merged
+            if (isset($processedClusters[$i])) {
+                continue;
+            }
+
+            // Try to find related clusters to merge
+            $mergedCluster = $cluster1;
+            $processedClusters[$i] = true;
+
+            foreach ($strictClusters as $j => $cluster2) {
+                // Skip same cluster or already processed
+                if ($i === $j || isset($processedClusters[$j])) {
+                    continue;
+                }
+
+                // Check if clusters are related by comparing representatives
+                if ($this->areClustersRelated($mergedCluster, $cluster2)) {
+                    // Merge cluster2 into mergedCluster
+                    $mergedCluster['members'] = array_merge(
+                        $mergedCluster['members'],
+                        $cluster2['members']
+                    );
+                    $mergedCluster['indices'] = array_merge(
+                        $mergedCluster['indices'],
+                        $cluster2['indices']
+                    );
+                    $processedClusters[$j] = true;
+                }
+            }
+
+            $mergedClusters[] = $mergedCluster;
+        }
+
+        return $mergedClusters;
+    }
+
+    /**
+     * Find clusters with custom similarity threshold.
+     *
+     * @param  array  $normalizedComments  Normalized comment data
+     * @param  float  $threshold  Similarity threshold (0.0 to 1.0)
+     * @return array Array of clusters
+     */
+    private function findSimilarClustersWithThreshold(array $normalizedComments, float $threshold): array
+    {
+        $clusters = [];
+        $processed = [];
+
+        foreach ($normalizedComments as $i => $comment1) {
+            if (isset($processed[$i])) {
+                continue;
+            }
+
+            $cluster = [
+                'members' => [$comment1],
+                'indices' => [$i],
+            ];
+
+            foreach ($normalizedComments as $j => $comment2) {
+                if ($i === $j || isset($processed[$j])) {
+                    continue;
+                }
+
+                // Use hybrid similarity (Levenshtein + N-gram)
+                $similarity = $this->calculateHybridSimilarity(
+                    $comment1['normalized_text'],
+                    $comment2['normalized_text']
+                );
+
+                if ($similarity >= $threshold) {
+                    $cluster['members'][] = $comment2;
+                    $cluster['indices'][] = $j;
+                    $processed[$j] = true;
+                }
+            }
+
+            if (count($cluster['members']) >= self::MIN_CLUSTER_SIZE) {
+                $processed[$i] = true;
+                $clusters[] = $cluster;
+            }
+        }
+
+        return $clusters;
+    }
+
+    /**
+     * Check if two clusters are related and should be merged.
+     *
+     * Clusters are related if their representative comments share structural patterns
+     * or common brand names (detected via hybrid similarity).
+     *
+     * @param  array  $cluster1  First cluster
+     * @param  array  $cluster2  Second cluster
+     * @return bool True if clusters should be merged
+     */
+    private function areClustersRelated(array $cluster1, array $cluster2): bool
+    {
+        // Get representatives (first comment of each cluster)
+        $rep1 = $cluster1['members'][0]['normalized_text'];
+        $rep2 = $cluster2['members'][0]['normalized_text'];
+
+        // Use hybrid similarity with looser threshold for merging
+        $similarity = $this->calculateHybridSimilarity($rep1, $rep2);
+
+        // Merge if similarity >= 30% (looser than initial clustering)
+        // This catches variations like "M0NA4D" vs "MON4D" across clusters
+        // N-gram component helps detect structural patterns even with character differences
+        return $similarity >= 0.30;
+    }
+
+    /**
      * Calculate similarity between two texts (0.0 = completely different, 1.0 = identical).
      *
      * Uses normalized Levenshtein distance for strings <= 255 chars.
@@ -261,6 +404,101 @@ class SpamClusterDetector
         similar_text($text1, $text2, $percent);
 
         return $percent / 100;
+    }
+
+    /**
+     * Extract character n-grams from text.
+     *
+     * N-grams are consecutive character sequences used for structural pattern matching.
+     * Example: "MONAD" with n=3 → ["MON", "ONA", "NAD"]
+     *
+     * @param  string  $text  Text to extract n-grams from
+     * @param  int  $n  N-gram size (default: 3 for trigrams)
+     * @return array Array of n-grams
+     */
+    private function extractNgrams(string $text, int $n = 3): array
+    {
+        $length = mb_strlen($text, 'UTF-8');
+        if ($length < $n) {
+            return [$text]; // Text too short for n-grams
+        }
+
+        $ngrams = [];
+        for ($i = 0; $i <= $length - $n; $i++) {
+            $ngrams[] = mb_substr($text, $i, $n, 'UTF-8');
+        }
+
+        return $ngrams;
+    }
+
+    /**
+     * Calculate N-gram based similarity (Jaccard Index).
+     *
+     * Uses character trigrams to detect structural patterns even when characters differ.
+     * Example:
+     * - "M0NA4D" → [M0N, 0NA, NA4, A4D]
+     * - "MONA4D" → [MON, ONA, NA4, A4D]
+     * - Intersection: {NA4, A4D} = 2
+     * - Union: {M0N, MON, 0NA, ONA, NA4, A4D} = 6
+     * - Similarity: 2/6 = 33%
+     *
+     * @param  string  $text1  First text
+     * @param  string  $text2  Second text
+     * @param  int  $n  N-gram size (default: 3)
+     * @return float Jaccard similarity (0.0 to 1.0)
+     */
+    private function calculateNgramSimilarity(string $text1, string $text2, int $n = 3): float
+    {
+        if ($text1 === $text2) {
+            return 1.0;
+        }
+
+        $ngrams1 = $this->extractNgrams($text1, $n);
+        $ngrams2 = $this->extractNgrams($text2, $n);
+
+        if (empty($ngrams1) && empty($ngrams2)) {
+            return 1.0; // Both empty = identical
+        }
+
+        if (empty($ngrams1) || empty($ngrams2)) {
+            return 0.0; // One empty = completely different
+        }
+
+        // Calculate Jaccard Index: |intersection| / |union|
+        $intersection = count(array_intersect($ngrams1, $ngrams2));
+        $union = count(array_unique(array_merge($ngrams1, $ngrams2)));
+
+        return $union > 0 ? $intersection / $union : 0.0;
+    }
+
+    /**
+     * Calculate hybrid similarity combining Levenshtein and N-gram approaches.
+     *
+     * Uses Levenshtein as primary + N-gram as bonus boost:
+     * - Levenshtein (base): Character-level edit distance (primary matcher)
+     * - N-gram (bonus): Adds up to +15% if structural patterns match
+     *
+     * This approach:
+     * - Preserves high Levenshtein scores (doesn't pull them down)
+     * - Boosts scores when N-gram detects additional structural similarity
+     * - Example: Lev 42% + Ngram 30% bonus = 42% + (30% * 0.15) = 46.5%
+     *
+     * @param  string  $text1  First text
+     * @param  string  $text2  Second text
+     * @return float Combined similarity score (0.0 to 1.0)
+     */
+    private function calculateHybridSimilarity(string $text1, string $text2): float
+    {
+        // Get both similarity scores
+        $levenshteinSim = $this->calculateSimilarity($text1, $text2);
+        $ngramSim = $this->calculateNgramSimilarity($text1, $text2);
+
+        // Use Levenshtein as base, N-gram adds bonus (up to +15%)
+        // This prevents N-gram from pulling down good Levenshtein scores
+        $hybrid = $levenshteinSim + ($ngramSim * 0.15);
+
+        // Cap at 100%
+        return min($hybrid, 1.0);
     }
 
     /**
