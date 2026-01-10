@@ -119,21 +119,6 @@ class ContextualAnalyzer
             $context = 'question';
             $isLegitimate = true;
         }
-        // Legitimate contexts reduce spam score (original logic)
-        else
-        if ($hasEducationalContext) {
-            $scoreAdjustment -= 30;
-            $context = 'educational';
-            $isLegitimate = true;
-        } elseif ($hasQuestionPattern && ! $hasPromotionalIndicators) {
-            $scoreAdjustment -= 20;
-            $context = 'question';
-            $isLegitimate = true;
-        } elseif ($hasWarningContext) {
-            $scoreAdjustment -= 25;
-            $context = 'warning';
-            $isLegitimate = true;
-        }
 
         // Promotional indicators increase spam score
         if ($hasPromotionalIndicators) {
