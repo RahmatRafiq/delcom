@@ -29,9 +29,20 @@ class SubscriptionService
 
     /**
      * Check if user can access a specific platform with a specific method.
+     *
+     * @throws \InvalidArgumentException If method is invalid
      */
     public function canUserAccessPlatform(User $user, Platform $platform, string $method): bool
     {
+        if (empty($method)) {
+            throw new \InvalidArgumentException('Connection method cannot be empty');
+        }
+
+        $validMethods = ['api', 'extension'];
+        if (! in_array($method, $validMethods, true)) {
+            throw new \InvalidArgumentException("Invalid connection method: {$method}. Must be one of: ".implode(', ', $validMethods));
+        }
+
         // Check if plan allows this platform with this method
         if (! $user->canAccessPlatform($platform->id, $method)) {
             return false;
@@ -65,9 +76,20 @@ class SubscriptionService
 
     /**
      * Upgrade user to a new plan.
+     *
+     * @throws \InvalidArgumentException If billing cycle is invalid
      */
     public function upgradePlan(User $user, Plan $newPlan, string $billingCycle = 'monthly'): Subscription
     {
+        $validCycles = ['monthly', 'yearly'];
+        if (! in_array($billingCycle, $validCycles, true)) {
+            throw new \InvalidArgumentException("Invalid billing cycle: {$billingCycle}. Must be one of: ".implode(', ', $validCycles));
+        }
+
+        if ($newPlan->slug === 'free' && $billingCycle !== 'monthly') {
+            throw new \InvalidArgumentException('Free plan only supports monthly billing');
+        }
+
         // Cancel existing subscription if any
         if ($user->subscription) {
             $user->subscription->update([

@@ -76,8 +76,8 @@ class FuzzyMatcher
         $normalized1 = $this->normalize($text1);
         $normalized2 = $this->normalize($text2);
 
-        // Calculate Levenshtein distance
-        $distance = levenshtein($normalized1, $normalized2);
+        // Calculate distance using safe method (handles 255+ chars)
+        $distance = $this->calculateDistance($normalized1, $normalized2);
 
         return $distance >= 0 && $distance <= $maxDistance;
     }
@@ -134,8 +134,8 @@ class FuzzyMatcher
                 continue;
             }
 
-            // Calculate distance
-            $distance = levenshtein($normalizedText, $normalizedKeyword);
+            // Calculate distance using safe method
+            $distance = $this->calculateDistance($normalizedText, $normalizedKeyword);
 
             // Update best match if this is closer
             if ($distance >= 0 && $distance < $bestDistance) {
@@ -268,11 +268,70 @@ class FuzzyMatcher
      *
      * @param  string  $text1  First string
      * @param  string  $text2  Second string
-     * @return int Distance value (or -1 if too long)
+     * @return int Distance value
      */
     public function getDistance(string $text1, string $text2): int
     {
-        return levenshtein($this->normalize($text1), $this->normalize($text2));
+        return $this->calculateDistance($this->normalize($text1), $this->normalize($text2));
+    }
+
+    /**
+     * Calculate distance between two strings (handles 255+ chars).
+     *
+     * Uses levenshtein for short strings (<= 255 chars).
+     * Uses similar_text for long strings (> 255 chars).
+     *
+     * @param  string  $text1  First string
+     * @param  string  $text2  Second string
+     * @return int Distance value
+     */
+    private function calculateDistance(string $text1, string $text2): int
+    {
+        $len1 = mb_strlen($text1, 'UTF-8');
+        $len2 = mb_strlen($text2, 'UTF-8');
+
+        // Use levenshtein for strings <= 255 chars
+        if ($len1 <= 255 && $len2 <= 255) {
+            $distance = levenshtein($text1, $text2);
+
+            if ($distance === -1) {
+                // Fallback if levenshtein fails
+                return $this->calculateDistanceFallback($text1, $text2);
+            }
+
+            return $distance;
+        }
+
+        // For long strings, use alternative algorithm
+        return $this->calculateDistanceFallback($text1, $text2);
+    }
+
+    /**
+     * Fallback distance calculation for long strings.
+     *
+     * Uses similar_text converted to distance metric.
+     *
+     * @param  string  $text1  First string
+     * @param  string  $text2  Second string
+     * @return int Approximate distance
+     */
+    private function calculateDistanceFallback(string $text1, string $text2): int
+    {
+        if ($text1 === $text2) {
+            return 0;
+        }
+
+        $maxLen = max(mb_strlen($text1, 'UTF-8'), mb_strlen($text2, 'UTF-8'));
+
+        if ($maxLen === 0) {
+            return 0;
+        }
+
+        // Get similarity percentage
+        similar_text($text1, $text2, $percent);
+
+        // Convert to distance (0% similar = maxLen distance, 100% similar = 0 distance)
+        return (int) round($maxLen * (1 - ($percent / 100)));
     }
 
     /**

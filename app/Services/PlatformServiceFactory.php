@@ -19,6 +19,10 @@ class PlatformServiceFactory
 
     public static function make(UserPlatform $userPlatform): PlatformServiceInterface
     {
+        if (! $userPlatform->platform) {
+            throw new InvalidArgumentException('UserPlatform has no associated platform');
+        }
+
         $platformName = strtolower($userPlatform->platform->name);
 
         if (! isset(self::$services[$platformName])) {
@@ -26,6 +30,10 @@ class PlatformServiceFactory
         }
 
         $serviceClass = self::$services[$platformName];
+
+        if (! method_exists($serviceClass, 'for')) {
+            throw new \RuntimeException("Service class {$serviceClass} must implement static ::for() method");
+        }
 
         return $serviceClass::for($userPlatform);
     }

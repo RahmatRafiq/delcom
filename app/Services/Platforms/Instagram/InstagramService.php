@@ -61,7 +61,7 @@ class InstagramService implements PlatformServiceInterface
         }
 
         if ($this->userPlatform->token_expires_at &&
-            $this->userPlatform->token_expires_at->subMinutes(5)->isPast()) {
+            $this->userPlatform->token_expires_at->copy()->subMinutes(5)->isPast()) {
             $this->refreshToken();
         }
 

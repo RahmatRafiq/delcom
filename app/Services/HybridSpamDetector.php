@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Services\SpamDetection\ContextualAnalyzer;
+use App\Services\SpamDetection\PatternAnalyzer;
 use App\Services\SpamDetection\SpamClusterDetector;
 use App\Services\SpamDetection\UnicodeDetector;
 
@@ -37,15 +38,170 @@ class HybridSpamDetector
     /**
      * Analyze a batch of comments for spam campaigns (PRIMARY DETECTION METHOD).
      *
-     * This is the main detection method that focuses on bot campaign detection,
-     * which YouTube's native filtering cannot detect.
+     * This is the main detection method that combines:
+     * 1. Cluster detection (bot campaigns)
+     * 2. Individual spam detection (Unicode, ALL CAPS, gambling)
      *
      * @param  array  $comments  Array of ['id' => string, 'text' => string, 'author' => string, ...]
      * @return array{clusters: array, spam_campaigns: array, summary: array}
      */
     public function analyzeCommentBatch(array $comments): array
     {
-        return $this->clusterDetector->analyzeCommentBatch($comments);
+        // Run cluster detection (existing logic)
+        $clusterResult = $this->clusterDetector->analyzeCommentBatch($comments);
+
+        // Run individual spam detection
+        $individualSpam = $this->detectIndividualSpam($comments);
+
+        // Merge results
+        return $this->mergeDetectionResults($clusterResult, $individualSpam);
+    }
+
+    /**
+     * Detect individual spam comments that don't form clusters.
+     *
+     * Catches:
+     * - Fancy Unicode gambling spam
+     * - ALL CAPS off-topic comments
+     * - Single promotional spam
+     *
+     * @param  array  $comments  Array of comments
+     * @return array Individual spam campaigns
+     */
+    private function detectIndividualSpam(array $comments): array
+    {
+        $individualSpam = [];
+
+        foreach ($comments as $comment) {
+            $text = $comment['text'] ?? '';
+            $normalizedText = $this->unicodeDetector->normalize($text);
+            $lowerText = mb_strtolower($normalizedText);
+
+            // Calculate spam score
+            $score = 0;
+            $signals = [];
+
+            // 1. Fancy Unicode detection (+95 points) - CRITICAL - NEVER LEGITIMATE
+            // Gambling spammers use fancy Unicode (𝐏𝐒𝐓𝐎𝐓𝐎, 𝘽𝙀𝙍𝙆𝘼𝙃) to bypass filters
+            // This is the STRONGEST spam indicator
+            if ($this->unicodeDetector->hasFancyUnicode($text)) {
+                $score += 95;
+                $signals[] = 'Unicode fancy fonts detected (+95) - DEFINITE SPAM';
+            }
+
+            // 2. Pattern analysis (pass original normalized text for CAPS detection)
+            $patterns = app(PatternAnalyzer::class)->analyzePatterns($normalizedText);
+
+            if ($patterns['has_money']) {
+                $score += 20;
+                $signals[] = 'Money mentions detected (+20)';
+            }
+
+            if ($patterns['has_urgency']) {
+                $score += 15;
+                $signals[] = 'Urgency language detected (+15)';
+            }
+
+            if ($patterns['has_link_promotion']) {
+                $score += 15;
+                $signals[] = 'Link promotion detected (+15)';
+            }
+
+            // 3. ALL CAPS detection (+30 points for >90%, +10 for >50%)
+            // Note: ALL CAPS is often LEGITIMATE (enthusiastic users, corrections)
+            // Examples: "PLEASE REVIEW BRV", "HARGA NAIK!", user corrections
+            // This is a WEAK spam signal - needs other signals to confirm
+            if ($patterns['caps_ratio'] > 0.9) {
+                $score += 30;
+                $signals[] = sprintf('ALL CAPS detected (%.0f%%, +30) - needs review', $patterns['caps_ratio'] * 100);
+            } elseif ($patterns['caps_ratio'] > 0.5) {
+                $score += 10;
+                $signals[] = sprintf('High CAPS ratio (%.0f%%, +10)', $patterns['caps_ratio'] * 100);
+            }
+
+            // 4. Context analysis (reduce false positives)
+            // Note: Skip context analysis if strong spam signals present:
+            // - Unicode fancy fonts (NEVER legitimate on YouTube)
+            // - ALL CAPS >90% (strong spam signal)
+            $hasFancyUnicode = $this->unicodeDetector->hasFancyUnicode($text);
+            $skipContextAnalysis = $hasFancyUnicode || $patterns['caps_ratio'] > 0.9;
+
+            if (! $skipContextAnalysis) {
+                $contextAnalysis = $this->contextAnalyzer->analyzeContext($lowerText, $score);
+
+                if ($contextAnalysis['is_legitimate']) {
+                    // Legitimate content reduces score
+                    $score = max(0, $score - 30);
+                    $signals[] = sprintf('Legitimate context detected (%s, -30)', $contextAnalysis['context']);
+                } elseif ($contextAnalysis['context'] === 'promotional') {
+                    // Promotional content increases score
+                    $score += 10;
+                    $signals[] = 'Promotional indicators (+10)';
+                }
+            }
+
+            // 5. Threshold: 50 points = spam
+            // Unicode alone (95 points) = DEFINITE spam
+            // ALL CAPS alone (30 points) = NOT spam (needs more signals)
+            // Money (20) + Urgency (15) + ALL CAPS (30) = 65 points = spam
+            if ($score >= 50) {
+                $individualSpam[] = [
+                    'comment_ids' => [$comment['id']],
+                    'member_count' => 1,
+                    'authors' => [$comment['author']],
+                    'author_diversity' => 1.0,
+                    'template' => $normalizedText,
+                    'sample_text' => $text,
+                    'score' => $score,
+                    'signals' => $signals,
+                    'detection_type' => 'individual',
+                ];
+            }
+        }
+
+        return $individualSpam;
+    }
+
+    /**
+     * Merge results from cluster and individual detection.
+     *
+     * @param  array  $clusterResult  Result from cluster detector
+     * @param  array  $individualSpam  Individual spam detected
+     * @return array Merged results
+     */
+    private function mergeDetectionResults(array $clusterResult, array $individualSpam): array
+    {
+        // Get existing spam campaigns from cluster detection
+        $allSpamCampaigns = $clusterResult['spam_campaigns'] ?? [];
+
+        // Add individual spam to campaigns
+        foreach ($individualSpam as $spam) {
+            $allSpamCampaigns[] = $spam;
+        }
+
+        // Calculate affected comments
+        $affectedCommentIds = [];
+        foreach ($allSpamCampaigns as $campaign) {
+            $affectedCommentIds = array_merge($affectedCommentIds, $campaign['comment_ids']);
+        }
+        $affectedCommentIds = array_unique($affectedCommentIds);
+
+        // Update summary
+        $summary = $clusterResult['summary'] ?? [
+            'total_comments' => 0,
+            'clusters_found' => 0,
+            'spam_campaigns' => 0,
+            'affected_comments' => 0,
+        ];
+
+        $summary['spam_campaigns'] = count($allSpamCampaigns);
+        $summary['affected_comments'] = count($affectedCommentIds);
+
+        return [
+            'clusters' => $clusterResult['clusters'] ?? [],
+            'spam_campaigns' => $allSpamCampaigns,
+            'summary' => $summary,
+        ];
     }
 
     /**

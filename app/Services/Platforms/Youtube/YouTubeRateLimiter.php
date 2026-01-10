@@ -56,9 +56,13 @@ class YouTubeRateLimiter
     public function incrementRequestCount(User $user): void
     {
         $key = "youtube_rate_limit:user:{$user->id}";
-        $requests = Cache::get($key, 0);
 
-        Cache::put($key, $requests + 1, now()->addMinute());
+        // Use atomic increment to prevent race conditions
+        if (! Cache::has($key)) {
+            Cache::put($key, 0, now()->addMinute());
+        }
+
+        Cache::increment($key, 1);
     }
 
     public function trackQuotaUsage(string $operation, int $count = 1): int

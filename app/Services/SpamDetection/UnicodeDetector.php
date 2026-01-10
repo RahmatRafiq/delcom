@@ -70,6 +70,11 @@ class UnicodeDetector
             'end' => 0x1D63B,
             'name' => 'Mathematical Sans-Serif Italic',
         ],
+        'mathematical_sans_serif_bold_italic' => [
+            'start' => 0x1D63C,
+            'end' => 0x1D66F,
+            'name' => 'Mathematical Sans-Serif Bold Italic',
+        ],
         'mathematical_monospace' => [
             'start' => 0x1D670,
             'end' => 0x1D6A3,
@@ -100,10 +105,64 @@ class UnicodeDetector
             'end' => 0x1F189,
             'name' => 'Negative Squared',
         ],
+        'mathematical_bold_digits' => [
+            'start' => 0x1D7CE,
+            'end' => 0x1D7D7,
+            'name' => 'Mathematical Bold Digits',
+        ],
+        'mathematical_double_struck_digits' => [
+            'start' => 0x1D7D8,
+            'end' => 0x1D7E1,
+            'name' => 'Mathematical Double-Struck Digits',
+        ],
+        'mathematical_sans_serif_digits' => [
+            'start' => 0x1D7E2,
+            'end' => 0x1D7EB,
+            'name' => 'Mathematical Sans-Serif Digits',
+        ],
+        'mathematical_sans_serif_bold_digits' => [
+            'start' => 0x1D7EC,
+            'end' => 0x1D7F5,
+            'name' => 'Mathematical Sans-Serif Bold Digits',
+        ],
+        'mathematical_monospace_digits' => [
+            'start' => 0x1D7F6,
+            'end' => 0x1D7FF,
+            'name' => 'Mathematical Monospace Digits',
+        ],
+        'combining_diacritical_marks' => [
+            'start' => 0x0300,
+            'end' => 0x036F,
+            'name' => 'Combining Diacritical Marks',
+        ],
+        'combining_diacritical_extended' => [
+            'start' => 0x1AB0,
+            'end' => 0x1AFF,
+            'name' => 'Combining Diacritical Marks Extended',
+        ],
+        'combining_diacritical_supplement' => [
+            'start' => 0x1DC0,
+            'end' => 0x1DFF,
+            'name' => 'Combining Diacritical Marks Supplement',
+        ],
+        'combining_marks_for_symbols' => [
+            'start' => 0x20D0,
+            'end' => 0x20FF,
+            'name' => 'Combining Diacritical Marks for Symbols',
+        ],
+        // NOTE: Variation Selectors (U+FE00-FE0F) removed from fancy ranges
+        // They are used in legitimate emojis (❤️, ☢️, etc) and should not be flagged as spam
+        // They are still counted in getCombiningMarksCount() for threshold detection
     ];
 
     /**
      * Check if text contains any fancy Unicode characters.
+     *
+     * NEW APPROACH: General anomaly detection instead of maintaining 30+ ranges
+     * Detects:
+     * 1. Combining marks (overlays, underlines, etc)
+     * 2. Mathematical/fancy alphabets
+     * 3. Visual anomalies (mixed scripts)
      *
      * @param  string  $text  The text to analyze
      * @return bool True if fancy Unicode detected, false otherwise
@@ -114,9 +173,13 @@ class UnicodeDetector
             return false;
         }
 
-        // Convert string to array of Unicode code points
-        $codePoints = $this->getCodePoints($text);
+        // Quick check: combining marks count
+        if ($this->getCombiningMarksCount($text) > 2) {
+            return true;
+        }
 
+        // Check fancy ranges (keep only high-value ranges)
+        $codePoints = $this->getCodePoints($text);
         foreach ($codePoints as $codePoint) {
             if ($this->isFancyCodePoint($codePoint)) {
                 return true;
@@ -124,6 +187,33 @@ class UnicodeDetector
         }
 
         return false;
+    }
+
+    /**
+     * Count combining marks in text (any diacritics/overlays).
+     * Legitimate text rarely has more than 1-2 combining marks.
+     * Spam uses many: S̳A̳A̳T̳4̳D̳ (6 combining marks)
+     *
+     * @param  string  $text  The text to analyze
+     * @return int Count of combining marks
+     */
+    private function getCombiningMarksCount(string $text): int
+    {
+        $count = 0;
+        $codePoints = $this->getCodePoints($text);
+
+        foreach ($codePoints as $codePoint) {
+            // Combining marks ranges (general check)
+            if (($codePoint >= 0x0300 && $codePoint <= 0x036F) ||  // Combining Diacritical
+                ($codePoint >= 0x1AB0 && $codePoint <= 0x1AFF) ||  // Extended
+                ($codePoint >= 0x1DC0 && $codePoint <= 0x1DFF) ||  // Supplement
+                ($codePoint >= 0x20D0 && $codePoint <= 0x20FF) ||  // For Symbols
+                ($codePoint >= 0xFE00 && $codePoint <= 0xFE0F)) {  // Variation Selectors
+                $count++;
+            }
+        }
+
+        return $count;
     }
 
     /**
@@ -308,9 +398,16 @@ class UnicodeDetector
     private function fancyToAscii(int $codePoint): string
     {
         // Determine which range and calculate offset
-        foreach (self::FANCY_RANGES as $range) {
+        foreach (self::FANCY_RANGES as $key => $range) {
             if ($codePoint >= $range['start'] && $codePoint <= $range['end']) {
                 $offset = $codePoint - $range['start'];
+
+                // Handle digit ranges (0-9)
+                if (str_contains($key, 'digits')) {
+                    if ($offset < 10) {
+                        return chr(48 + $offset); // 0-9
+                    }
+                }
 
                 // Map to ASCII A-Z (uppercase) or a-z (lowercase)
                 // Most fancy ranges follow alphabetical order

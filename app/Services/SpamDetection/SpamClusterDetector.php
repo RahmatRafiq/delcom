@@ -178,7 +178,8 @@ class SpamClusterDetector
     /**
      * Calculate similarity between two texts (0.0 = completely different, 1.0 = identical).
      *
-     * Uses normalized Levenshtein distance.
+     * Uses normalized Levenshtein distance for strings <= 255 chars.
+     * Uses similar_text for longer strings.
      *
      * @param  string  $text1  First text
      * @param  string  $text2  Second text
@@ -190,14 +191,49 @@ class SpamClusterDetector
             return 1.0;
         }
 
-        $maxLen = max(mb_strlen($text1, 'UTF-8'), mb_strlen($text2, 'UTF-8'));
+        $len1 = mb_strlen($text1, 'UTF-8');
+        $len2 = mb_strlen($text2, 'UTF-8');
+        $maxLen = max($len1, $len2);
+
         if ($maxLen === 0) {
             return 0.0;
         }
 
-        $distance = levenshtein($text1, $text2);
+        // Use levenshtein for short strings (<= 255 chars)
+        if ($len1 <= 255 && $len2 <= 255) {
+            $distance = levenshtein($text1, $text2);
 
-        return 1 - ($distance / $maxLen);
+            // Handle levenshtein failure
+            if ($distance === -1) {
+                return $this->calculateSimilarityFallback($text1, $text2);
+            }
+
+            return 1 - ($distance / $maxLen);
+        }
+
+        // For long strings, use alternative algorithm
+        return $this->calculateSimilarityFallback($text1, $text2);
+    }
+
+    /**
+     * Fallback similarity calculation for long strings.
+     *
+     * Uses similar_text for strings > 255 chars.
+     *
+     * @param  string  $text1  First text
+     * @param  string  $text2  Second text
+     * @return float Similarity score (0.0 to 1.0)
+     */
+    private function calculateSimilarityFallback(string $text1, string $text2): float
+    {
+        if ($text1 === $text2) {
+            return 1.0;
+        }
+
+        // Get similarity percentage directly
+        similar_text($text1, $text2, $percent);
+
+        return $percent / 100;
     }
 
     /**

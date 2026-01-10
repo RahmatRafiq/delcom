@@ -1,0 +1,1913 @@
+{
+    "test_metadata": {
+        "description": "YouTube comments from Honda Jazz GK5 review video (Video 3)",
+        "source": "Real YouTube comments - Carmudi Honda Jazz GK5 review",
+        "total_comments": 204,
+        "date_collected": "2026-01-09",
+        "test_categories": [
+            "Legitimate comments",
+            "Spam with fancy Unicode",
+            "Gambling promotions",
+            "Self-promotion"
+        ]
+    },
+    "video_metadata": {
+        "video_id": "video_003",
+        "title": "Honda Jazz GK5 Review - Carmudi Indonesia",
+        "channel": "Carmudi Indonesia"
+    },
+    "comments": [
+        {
+            "id": "1",
+            "video_id": "video_003",
+            "text": "Review Mobil di Indonesia paling niat dan keren 🎉",
+            "author": "@tentangkita8194",
+            "timestamp": "2 days ago",
+            "expected_result": "clean",
+            "reason": "Legitimate comment"
+        },
+        {
+            "id": "2",
+            "video_id": "video_003",
+            "text": "Akhirnya carmudi review mobkas lagi",
+            "author": "@dayanarung",
+            "timestamp": "2 days ago",
+            "expected_result": "clean",
+            "reason": "Legitimate comment"
+        },
+        {
+            "id": "3",
+            "video_id": "video_003",
+            "text": "Ini mobil terperfect sih. Dr exterior ataupun interior",
+            "author": "@hanifavandi",
+            "timestamp": "1 day ago",
+            "expected_result": "clean",
+            "reason": "Legitimate comment"
+        },
+        {
+            "id": "4",
+            "video_id": "video_003",
+            "text": "Ganteng parah mobil ini sih. Meski sdh 10th",
+            "author": "@hanifavandi",
+            "timestamp": "1 day ago",
+            "expected_result": "clean",
+            "reason": "Legitimate comment"
+        },
+        {
+            "id": "5",
+            "video_id": "video_003",
+            "text": "Bisa santay ga editor carmudi, makin kesini makin gacor. Semoga komen saya bisa menaikan insentif editor😂",
+            "author": "@ht3496",
+            "timestamp": "18 hours ago",
+            "expected_result": "clean",
+            "reason": "Legitimate comment"
+        },
+        {
+            "id": "6",
+            "video_id": "video_003",
+            "text": "Intro video ga kaleng²..., salut Mas editor",
+            "author": "@chandrajp7589",
+            "timestamp": "1 day ago",
+            "expected_result": "clean",
+            "reason": "Legitimate comment"
+        },
+        {
+            "id": "7",
+            "video_id": "video_003",
+            "text": "Bahas mobil lawas kayak dulu lagi bang , biar gak bosen sama mobil cina yang canggih dan gitu\"Mulu",
+            "author": "@indrax3775",
+            "timestamp": "1 day ago",
+            "expected_result": "clean",
+            "reason": "Legitimate comment"
+        },
+        {
+            "id": "8",
+            "video_id": "video_003",
+            "text": "Niceeee om sano...next request mokas nissan march 1.5 fl dong, hehe.. thx om",
+            "author": "@Palv64",
+            "timestamp": "2 days ago",
+            "expected_result": "clean",
+            "reason": "Legitimate comment"
+        },
+        {
+            "id": "9",
+            "video_id": "video_003",
+            "text": "Mantab intronya kek opening NFS.",
+            "author": "@andrewb7562",
+            "timestamp": "2 days ago",
+            "expected_result": "clean",
+            "reason": "Legitimate comment"
+        },
+        {
+            "id": "10",
+            "video_id": "video_003",
+            "text": "0:34 emang ada gatchback yg engga kompek?",
+            "author": "@AhmadMPrayogo",
+            "timestamp": "1 day ago",
+            "expected_result": "clean",
+            "reason": "Legitimate comment"
+        },
+        {
+            "id": "11",
+            "video_id": "video_003",
+            "text": "Banyakin review mobil bekas kak Rosano, soalnya meski banyak yg review mobil bekas tpi kebanyakan dari orang\" yg udah nonton Carmudi GK bisa move on dari reviewnya carmudi. Soalnya senyaman itu nonton kak Rosano nge-review.",
+            "author": "@HjAlfiyahIbriyah",
+            "timestamp": "1 day ago",
+            "expected_result": "clean",
+            "reason": "Legitimate comment"
+        },
+        {
+            "id": "12",
+            "video_id": "video_003",
+            "text": "kirain dibuat lg jazzz nya 😂",
+            "author": "@yell-o5072",
+            "timestamp": "43 minutes ago",
+            "expected_result": "clean",
+            "reason": "Legitimate comment"
+        },
+        {
+            "id": "13",
+            "video_id": "video_003",
+            "text": "Inilah raja pada jamannya sebelum trend Suv ceper menodai",
+            "author": "@rakahs26",
+            "timestamp": "14 hours ago",
+            "expected_result": "clean",
+            "reason": "Legitimate comment"
+        },
+        {
+            "id": "14",
+            "video_id": "video_003",
+            "text": "generasi jazz yg cukup nyaman. pengalaman pakai 6 tahun sampai sekarang (meskipun lebih banyak digarasi).\nkaki depan rawan bunyi ngik-ngik.\ndikabin suka ada suara kletek, entah dari mana asalnya.\nlumayan irit lah ya 1 : 10-11 situasi macet-lenggang kota bandung.\nac anehnya dingin buat \"honda\".\nlampu bawaan yg tipe rs kayak lampu led motor cahayanya.\nbiaya kaca film lebih \"mahal\" dibanding biaya pasang di brand lain sekelasnya (tips: kalau pasang kaca film depan usahakan jangan yg terlalu hitam\/berwarna pekat dan saran saya jangan lebih dari 40%. sangat mengganggu sekali nantinya ke pengelihatan pengemudi, karena landai dan panjang sangat mudah memantulkan bayangan dashboard).\ntransmisinya yg matik mirip-mirip karakternya mobilio, ya udah lah ya ngga lemot banget sih.\nbiaya aki-oli ngga neko-neko, cari yg terjangkau saja asal asli-sesuai spek kebutuhan mobil bukan kw\/palsu gak akan rewel.\nganti oli transmisi harus total, jangan setengah-setengah.\nmanuver kalau parkir ditempat sempit sangat baik, enak banget parkirin mobil ini.\nkalau hujan berisik atapnya.\nitu aja sih sampai sekarang awet. pajak tahunan 2014 kota bandung sekitar 3.465.000 type rs non progresif.",
+            "author": "@appleshu7509",
+            "timestamp": "2 days ago",
+            "expected_result": "clean",
+            "reason": "Legitimate comment"
+        },
+        {
+            "id": "15",
+            "video_id": "video_003",
+            "text": "GE8 lebih gak ada obat masih ganteng sampe sekarang bang...mobil idaman bgt",
+            "author": "@Gustianalfi",
+            "timestamp": "1 hour ago",
+            "expected_result": "clean",
+            "reason": "Legitimate comment"
+        },
+        {
+            "id": "16",
+            "video_id": "video_003",
+            "text": "Kaget liat Jazz di thumbnail, eh GK5 bekas haha. Dikira dihidupkan lagi",
+            "author": "@dreamEnd",
+            "timestamp": "2 days ago",
+            "expected_result": "clean",
+            "reason": "Legitimate comment"
+        },
+        {
+            "id": "17",
+            "video_id": "video_003",
+            "text": "Mending beli Jazz bekas atau Baleno bekas?",
+            "author": "@yogaalfian511",
+            "timestamp": "9 hours ago",
+            "expected_result": "clean",
+            "reason": "Legitimate comment"
+        },
+        {
+            "id": "18",
+            "video_id": "video_003",
+            "text": "oh Tuhan mobil yang aku idam idam kan, apalagi yang facelift tahun terakhir sebelum discontinue..😭😭",
+            "author": "@ademaulana2204",
+            "timestamp": "2 days ago",
+            "expected_result": "clean",
+            "reason": "Legitimate comment"
+        },
+        {
+            "id": "19",
+            "video_id": "video_003",
+            "text": "ini adalah mobil yang saya idam idamkan waktu kecil",
+            "author": "@bangdon9",
+            "timestamp": "2 days ago",
+            "expected_result": "clean",
+            "reason": "Legitimate comment"
+        },
+        {
+            "id": "20",
+            "video_id": "video_003",
+            "text": "Parahhh banget..\nJago baget nih edtor video intronya",
+            "author": "@AGB94",
+            "timestamp": "2 days ago",
+            "expected_result": "clean",
+            "reason": "Legitimate comment"
+        },
+        {
+            "id": "21",
+            "video_id": "video_003",
+            "text": "Carmudi review paling jelas paling lengkap",
+            "author": "@enybcbc-wx3zd",
+            "timestamp": "2 days ago",
+            "expected_result": "clean",
+            "reason": "Legitimate comment"
+        },
+        {
+            "id": "22",
+            "video_id": "video_003",
+            "text": "Chanel review otomotif dgn editing terniat dan terbaik!",
+            "author": "@lukmanginanjar2722",
+            "timestamp": "2 days ago",
+            "expected_result": "clean",
+            "reason": "Legitimate comment"
+        },
+        {
+            "id": "23",
+            "video_id": "video_003",
+            "text": "Trims reviewnya.\nSehat² ya Fransiscus R  ... Amen  ... Amen  ... Amen  ...",
+            "author": "@FerryOfficial-j2l",
+            "timestamp": "2 days ago",
+            "expected_result": "clean",
+            "reason": "Legitimate comment"
+        },
+        {
+            "id": "24",
+            "video_id": "video_003",
+            "text": "Semoga honda jazz dimasukkan lagi ke indonesia❤",
+            "author": "@andrayp2828",
+            "timestamp": "2 days ago",
+            "expected_result": "clean",
+            "reason": "Legitimate comment"
+        },
+        {
+            "id": "25",
+            "video_id": "video_003",
+            "text": "Aku suka otomotif sudah 25 tahun yang masih doyan Honda Jazz gk5 alhamdulillah",
+            "author": "@muhammadfabila",
+            "timestamp": "2 days ago",
+            "expected_result": "clean",
+            "reason": "Legitimate comment"
+        },
+        {
+            "id": "26",
+            "video_id": "video_003",
+            "text": "please review wuling darion bang...",
+            "author": "@hermantodesign9793",
+            "timestamp": "1 day ago",
+            "expected_result": "clean",
+            "reason": "Legitimate comment"
+        },
+        {
+            "id": "27",
+            "video_id": "video_003",
+            "text": "Bang. Request Suzuki Splash 2013-2015 dong.",
+            "author": "@nugrohoagung1671",
+            "timestamp": "17 hours ago",
+            "expected_result": "clean",
+            "reason": "Legitimate comment"
+        },
+        {
+            "id": "28",
+            "video_id": "video_003",
+            "text": "lama lama... bisa bikin film layar lebar eh bioskop mantulllll.\ndurasi 1 jam setengah udah. opening cinematic keren....",
+            "author": "@afanmu7033",
+            "timestamp": "2 days ago (edited)",
+            "expected_result": "clean",
+            "reason": "Legitimate comment"
+        },
+        {
+            "id": "29",
+            "video_id": "video_003",
+            "text": "Idaman smpai skrg Jazz sama Swift ❤️",
+            "author": "@mR_Trickey",
+            "timestamp": "2 days ago",
+            "expected_result": "clean",
+            "reason": "Legitimate comment"
+        },
+        {
+            "id": "30",
+            "video_id": "video_003",
+            "text": "Wiiihhh gillaaaa openingnya udah make AI sekarang mantaaaap carmudiiii\nReview mobil yang sebenarnya bagus tapi di discontinue dan digantikan sama pengganti yang malah menurunkan pasar hatchbacknya Honda",
+            "author": "@nugiefix",
+            "timestamp": "2 days ago",
+            "expected_result": "clean",
+            "reason": "Legitimate comment"
+        },
+        {
+            "id": "31",
+            "video_id": "video_003",
+            "text": "Next Yaris Bakpao TRD om",
+            "author": "@bachtiarrifai3636",
+            "timestamp": "23 hours ago",
+            "expected_result": "clean",
+            "reason": "Legitimate comment"
+        },
+        {
+            "id": "32",
+            "video_id": "video_003",
+            "text": "BRV GEN 2 PLEASE ADMIN FULL REVIEW\nTOP SPEED JUGA 🙌🏼",
+            "author": "@hinggildr",
+            "timestamp": "2 days ago",
+            "expected_result": "suspicious",
+            "reason": "ALL CAPS detected"
+        },
+        {
+            "id": "33",
+            "video_id": "video_003",
+            "text": "Om review mobil Lexus lagi lah, terakhir 5 tahun lalu 😂",
+            "author": "@matchalalu17",
+            "timestamp": "2 days ago",
+            "expected_result": "clean",
+            "reason": "Legitimate comment"
+        },
+        {
+            "id": "34",
+            "video_id": "video_003",
+            "text": "komparasi brio vs GK5 , gila aja yang masih milih brio",
+            "author": "@darukalyanamita1072",
+            "timestamp": "1 day ago",
+            "expected_result": "clean",
+            "reason": "Legitimate comment"
+        },
+        {
+            "id": "35",
+            "video_id": "video_003",
+            "text": "Mending jazz gw mah… teman gw beli brio dari baru cepat banget pada karatan… parah",
+            "author": "@adowidodo54",
+            "timestamp": "2 days ago",
+            "expected_result": "clean",
+            "reason": "Legitimate comment"
+        },
+        {
+            "id": "36",
+            "video_id": "video_003",
+            "text": "semoga bisa ganti dari Jazz GD3 hehehhe",
+            "author": "@DwiNovanAnggaWicaksana-fc7ho",
+            "timestamp": "2 days ago",
+            "expected_result": "clean",
+            "reason": "Legitimate comment"
+        },
+        {
+            "id": "37",
+            "video_id": "video_003",
+            "text": "bagaimanapun ttp aja bekas tdk tau sejarahnya mobil itu sndiri",
+            "author": "@massee4295",
+            "timestamp": "2 days ago",
+            "expected_result": "clean",
+            "reason": "Legitimate comment"
+        },
+        {
+            "id": "38",
+            "video_id": "video_003",
+            "text": "Mobil idaman dari dulu, semoga kedepannya bisa dapat meminangnya",
+            "author": "@suryadarma8039",
+            "timestamp": "2 days ago",
+            "expected_result": "clean",
+            "reason": "Legitimate comment"
+        },
+        {
+            "id": "39",
+            "video_id": "video_003",
+            "text": "coba honda produksi lagi jazz yang model ini.... kayak toyota masih produksi innova reborn",
+            "author": "@arditoha7988",
+            "timestamp": "2 days ago",
+            "expected_result": "clean",
+            "reason": "Legitimate comment"
+        },
+        {
+            "id": "40",
+            "video_id": "video_003",
+            "text": "GK 5 ini sudah ada DRL yang posisinya disebelah vog lamp itu. Lampu kecil ada di dalam lampu bulat sebelah lampu projektor halogen.",
+            "author": "@roynoegroho4442",
+            "timestamp": "1 day ago",
+            "expected_result": "clean",
+            "reason": "Legitimate comment"
+        },
+        {
+            "id": "41",
+            "video_id": "video_003",
+            "text": "Wah ini idaman sibiru, yg belom kesampaian",
+            "author": "@agpchannel7917",
+            "timestamp": "2 days ago",
+            "expected_result": "clean",
+            "reason": "Legitimate comment"
+        },
+        {
+            "id": "42",
+            "video_id": "video_003",
+            "text": "REQ Odyssey RB 3 om, atau Civic FB FD deh tahun tahun nya Honda niat bikin mobil... Sekalian mobil rare nya kaya Elyson gitu...",
+            "author": "@HeyRadit",
+            "timestamp": "2 days ago",
+            "expected_result": "clean",
+            "reason": "Legitimate comment"
+        },
+        {
+            "id": "43",
+            "video_id": "video_003",
+            "text": "closingan khas carmudi",
+            "author": "@irfannursobirin",
+            "timestamp": "2 days ago",
+            "expected_result": "clean",
+            "reason": "Legitimate comment"
+        },
+        {
+            "id": "44",
+            "video_id": "video_003",
+            "text": "Worth it...mobil legend...",
+            "author": "@n4nd14hm",
+            "timestamp": "2 days ago",
+            "expected_result": "clean",
+            "reason": "Legitimate comment"
+        },
+        {
+            "id": "45",
+            "video_id": "video_003",
+            "text": "yah jd keliatan tuh ada dempulannya",
+            "author": "@SahabatPutin",
+            "timestamp": "1 day ago",
+            "expected_result": "clean",
+            "reason": "Legitimate comment"
+        },
+        {
+            "id": "46",
+            "video_id": "video_003",
+            "text": "Kalau untuk kelegaan kabin & bagasi jazz GE 8 yang paling lega sebab dimensinya juga lebih besar dari jazz gen 1 & gen 3.",
+            "author": "@roynoegroho4442",
+            "timestamp": "1 day ago",
+            "expected_result": "clean",
+            "reason": "Legitimate comment"
+        },
+        {
+            "id": "47",
+            "video_id": "video_003",
+            "text": "Nahhh mobil second pasti banyak viewer nya",
+            "author": "@AfterUsOnlySilence",
+            "timestamp": "2 days ago",
+            "expected_result": "clean",
+            "reason": "Legitimate comment"
+        },
+        {
+            "id": "48",
+            "video_id": "video_003",
+            "text": "untuk mobil second, pilih jazz atau hrv?",
+            "author": "@JustComment88",
+            "timestamp": "15 hours ago",
+            "expected_result": "clean",
+            "reason": "Legitimate comment"
+        },
+        {
+            "id": "49",
+            "video_id": "video_003",
+            "text": "Visualnya ciamik banget! 💕𝐌0𝐍𝐀𝟒𝐃🟣 bikin video ini kayak film Hollywood!",
+            "author": "@Nam-Vũ-Ngọc",
+            "timestamp": "3 days ago",
+            "expected_result": "spam",
+            "reason": "Unicode fancy fonts detected - gambling\/promotional spam"
+        },
+        {
+            "id": "50",
+            "video_id": "video_003",
+            "text": "Keren banget videonya! 💕𝐌0𝐍𝐀𝟒𝐃🟣 bikin suasana makin hidup, terus bikin penasaran sama konten berikutnya!\n@rerlangga10\n1 day ago\npernah pakai ge8-gk5-wrv, kangen banget sama ge8 lebih bandel rasanya🥲",
+            "author": "@nguyệtbảo1965",
+            "timestamp": "3 days ago",
+            "expected_result": "spam",
+            "reason": "Unicode fancy fonts detected - gambling\/promotional spam"
+        },
+        {
+            "id": "51",
+            "video_id": "video_003",
+            "text": "0:58 Di Kota saya sudah tutup 😭",
+            "author": "@hendra_car_channel",
+            "timestamp": "1 day ago",
+            "expected_result": "clean",
+            "reason": "Legitimate comment"
+        },
+        {
+            "id": "52",
+            "video_id": "video_003",
+            "text": "Timeless design emg jazz generasi ini, pling interiornya aja yg kureng",
+            "author": "@rianfachri2072",
+            "timestamp": "1 day ago",
+            "expected_result": "clean",
+            "reason": "Legitimate comment"
+        },
+        {
+            "id": "53",
+            "video_id": "video_003",
+            "text": "Akhirnya bahas mobkas lagi, jazz gk5 ini harganya nahan",
+            "author": "@aingmaun99",
+            "timestamp": "2 days ago",
+            "expected_result": "clean",
+            "reason": "Legitimate comment"
+        },
+        {
+            "id": "54",
+            "video_id": "video_003",
+            "text": "03:12 Udah pada tau ⭐ ️𝘽𝙀𝙍𝙆𝘼𝙃99 ⭐️ belum? Nih akun fenomenal!",
+            "author": "@maxgamesx2215",
+            "timestamp": "3 days ago",
+            "expected_result": "spam",
+            "reason": "Unicode fancy fonts detected - gambling\/promotional spam"
+        },
+        {
+            "id": "55",
+            "video_id": "video_003",
+            "text": "Review paling enak",
+            "author": "@UnyukTV",
+            "timestamp": "2 days ago",
+            "expected_result": "clean",
+            "reason": "Legitimate comment"
+        },
+        {
+            "id": "56",
+            "video_id": "video_003",
+            "text": "tolong bahas Kia Sportage gen 3 minn thanksss",
+            "author": "@nikadekeniwidyastuti9986",
+            "timestamp": "2 days ago",
+            "expected_result": "clean",
+            "reason": "Legitimate comment"
+        },
+        {
+            "id": "57",
+            "video_id": "video_003",
+            "text": "Impian bgt ini 😅",
+            "author": "@DZIHADAFFIN",
+            "timestamp": "2 days ago",
+            "expected_result": "clean",
+            "reason": "Legitimate comment"
+        },
+        {
+            "id": "58",
+            "video_id": "video_003",
+            "text": "mobil ganteng,irit parah, sparepart oke, cuma yg kurang racksteer aja tapi overall ajibbb❤",
+            "author": "@rifqiihsan2744",
+            "timestamp": "1 day ago",
+            "expected_result": "clean",
+            "reason": "Legitimate comment"
+        },
+        {
+            "id": "59",
+            "video_id": "video_003",
+            "text": "Sempet Bingung jazz atau wrv rs akhir nya ke wrv😅",
+            "author": "@hendrosuastomo3265",
+            "timestamp": "1 day ago",
+            "expected_result": "clean",
+            "reason": "Legitimate comment"
+        },
+        {
+            "id": "60",
+            "video_id": "video_003",
+            "text": "saya pakai, minusnya yg ketara kayak gerobak naikannya\nplusnya ganteng tampilannya, timeless, fun to drive jg.\nbtw ambil manual aja, cvtnya honda yg kelas ini gampang rontok, beda ama crv\/civic turbo, beda belt cvtnya",
+            "author": "@ghea.w",
+            "timestamp": "2 days ago",
+            "expected_result": "clean",
+            "reason": "Legitimate comment"
+        },
+        {
+            "id": "61",
+            "video_id": "video_003",
+            "text": "dari dulu paling suka jazz itu kursi ultra seatnya jadi bawa barang muat banyak  dulu punya Gen 1 suka pada hilang itu titik merahnya yang punya jazz gen 1 pasti kalian ngalamin juga 😅",
+            "author": "@putrayudistira5554",
+            "timestamp": "1 day ago",
+            "expected_result": "clean",
+            "reason": "Legitimate comment"
+        },
+        {
+            "id": "62",
+            "video_id": "video_003",
+            "text": "Bang sano, request review kek gini untuk confero S ACT dong kan mpv semua arahnya udah beda nih sisa confero doamg yang masih bertahan nah apalagi ACT kan ga umum ya, gimana kalau dipakai jangka panjang nya mungkin bisa diwakilin demgan review kek gini karena harga bekasnya affordable bangett",
+            "author": "@WilianLeonardo-q3r",
+            "timestamp": "1 day ago",
+            "expected_result": "clean",
+            "reason": "Legitimate comment"
+        },
+        {
+            "id": "63",
+            "video_id": "video_003",
+            "text": "Dari segi kehangatan juga lebih GE 8 sebab transmisi kembali pakai yang AT, bukan cvt dan dari kaki-kaki juga lebih kuat di banding jazz gen 1 & gen 3.",
+            "author": "@roynoegroho4442",
+            "timestamp": "1 day ago",
+            "expected_result": "clean",
+            "reason": "Legitimate comment"
+        },
+        {
+            "id": "64",
+            "video_id": "video_003",
+            "text": "Saran dong enak ambil gk5 apa xv50",
+            "author": "@ak_kelvinjovanka8429",
+            "timestamp": "1 day ago",
+            "expected_result": "clean",
+            "reason": "Legitimate comment"
+        },
+        {
+            "id": "65",
+            "video_id": "video_003",
+            "text": "Next Suzuki Xover omm yg tahun 2012\/ 2011 nyaa yaaa.. thanks",
+            "author": "@Alprid_zzi",
+            "timestamp": "2 days ago",
+            "expected_result": "clean",
+            "reason": "Legitimate comment"
+        },
+        {
+            "id": "66",
+            "video_id": "video_003",
+            "text": "Ada sirion 2018 - 2020 yg juga masuk list harga seken menarik, dgn kualitas dan fitur mobil yg jauh lebih oke dari LCGC baru.",
+            "author": "@ekyramadhan8527",
+            "timestamp": "1 day ago",
+            "expected_result": "clean",
+            "reason": "Legitimate comment"
+        },
+        {
+            "id": "67",
+            "video_id": "video_003",
+            "text": "Bahas hrv juga dong min",
+            "author": "@bimamahendra282",
+            "timestamp": "1 day ago",
+            "expected_result": "clean",
+            "reason": "Legitimate comment"
+        },
+        {
+            "id": "68",
+            "video_id": "video_003",
+            "text": "Alhamduliilah punya jazz meski ge8 2014 😇 yng penting at ga cvt 😄",
+            "author": "@hilmajayabike3997",
+            "timestamp": "15 hours ago",
+            "expected_result": "clean",
+            "reason": "Legitimate comment"
+        },
+        {
+            "id": "69",
+            "video_id": "video_003",
+            "text": "Baru tau jazz tahun ini gda sensor parkir. Punya kk ku yg tahun 2013 udh ada sensor parkirnyaa",
+            "author": "@54nd4r",
+            "timestamp": "1 day ago",
+            "expected_result": "clean",
+            "reason": "Legitimate comment"
+        },
+        {
+            "id": "70",
+            "video_id": "video_003",
+            "text": "kesalahan terbesar honda gantiin jazz ke city hatchback",
+            "author": "@flower_k8713",
+            "timestamp": "2 days ago",
+            "expected_result": "clean",
+            "reason": "Legitimate comment"
+        },
+        {
+            "id": "71",
+            "video_id": "video_003",
+            "text": "Impian",
+            "author": "@ahmadsyarifhidayatullah369",
+            "timestamp": "18 hours ago",
+            "expected_result": "clean",
+            "reason": "Legitimate comment"
+        },
+        {
+            "id": "72",
+            "video_id": "video_003",
+            "text": "Tks om....",
+            "author": "@gongtut7565",
+            "timestamp": "2 days ago",
+            "expected_result": "clean",
+            "reason": "Legitimate comment"
+        },
+        {
+            "id": "73",
+            "video_id": "video_003",
+            "text": "Semoga bisa kebeli dan punya mobil ini suatu hari nanti. Dengan uang haram hasil korupsinya partai atau hasil jackpot slot mungkin  petir Zeus mampir 😂😂😂😂....",
+            "author": "@whyme7989",
+            "timestamp": "1 day ago",
+            "expected_result": "clean",
+            "reason": "Legitimate comment"
+        },
+        {
+            "id": "74",
+            "video_id": "video_003",
+            "text": "21:33 nggak paham ngomong apa😂😂😂",
+            "author": "@michaeljothan",
+            "timestamp": "2 days ago (edited)",
+            "expected_result": "clean",
+            "reason": "Legitimate comment"
+        },
+        {
+            "id": "75",
+            "video_id": "video_003",
+            "text": "Saya punya tahun 2019 km baru 27000, jarang dipake soalnya alhamdulilah masih nyaman",
+            "author": "@boychannel2191",
+            "timestamp": "2 days ago",
+            "expected_result": "clean",
+            "reason": "Legitimate comment"
+        },
+        {
+            "id": "76",
+            "video_id": "video_003",
+            "text": "Alhamdulillah, terbeli di awal tahun 2021, dapat unit tahun 2017 dengan odometer 22 ribu diharga 195 juta. Tidak lama setelah itu harganya melambung 😁",
+            "author": "@VocalVoid_id",
+            "timestamp": "2 days ago",
+            "expected_result": "clean",
+            "reason": "Legitimate comment"
+        },
+        {
+            "id": "77",
+            "video_id": "video_003",
+            "text": "Pasti semakin tergoreng nih GK5\nAlhamdulillah baru dpt kuning lemon 2015",
+            "author": "@zhacky1",
+            "timestamp": "2 days ago",
+            "expected_result": "clean",
+            "reason": "Legitimate comment"
+        },
+        {
+            "id": "78",
+            "video_id": "video_003",
+            "text": "Sempet naksir nih.. keren aja bentuknya.. tapi berhubung ga di produksi lagi, jadinya ambir brv",
+            "author": "@Lugnar2001",
+            "timestamp": "2 days ago",
+            "expected_result": "clean",
+            "reason": "Legitimate comment"
+        },
+        {
+            "id": "79",
+            "video_id": "video_003",
+            "text": "ada yg kurang keknya, lampu depan udah auto leveling... dan kalo rusak sedep hrganya, tp termasuk awet jg sih tu lampu😄",
+            "author": "@Roo-day",
+            "timestamp": "2 days ago",
+            "expected_result": "clean",
+            "reason": "Legitimate comment"
+        },
+        {
+            "id": "80",
+            "video_id": "video_003",
+            "text": "Mobil impian saya waktu remaja tapi,, Apa daya sekarang sekennya aja harga bukan buat kaum mending2 😂😂😂",
+            "author": "@safiraekarahma",
+            "timestamp": "2 days ago",
+            "expected_result": "clean",
+            "reason": "Legitimate comment"
+        },
+        {
+            "id": "81",
+            "video_id": "video_003",
+            "text": "Delica dong om",
+            "author": "@masterjejep1386",
+            "timestamp": "2 days ago",
+            "expected_result": "clean",
+            "reason": "Legitimate comment"
+        },
+        {
+            "id": "82",
+            "video_id": "video_003",
+            "text": "Mobilku waktu kuliah pernah dibawa jkt pangandaran isi 6 orang dan mobilnya aman2 aja 😂",
+            "author": "@RifanRayyana",
+            "timestamp": "2 days ago",
+            "expected_result": "clean",
+            "reason": "Legitimate comment"
+        },
+        {
+            "id": "83",
+            "video_id": "video_003",
+            "text": "Di wilayahku harganya di goreng mulu, namba sedikit dapat suzuki frox baru 😂",
+            "author": "@theomalonda5195",
+            "timestamp": "2 days ago (edited)",
+            "expected_result": "clean",
+            "reason": "Legitimate comment"
+        },
+        {
+            "id": "84",
+            "video_id": "video_003",
+            "text": "mantap",
+            "author": "@hardimandjatmiko3020",
+            "timestamp": "2 days ago",
+            "expected_result": "clean",
+            "reason": "Legitimate comment"
+        },
+        {
+            "id": "85",
+            "video_id": "video_003",
+            "text": "Minn,coba review Xpeng G6 dong\nSepertinya menarikk",
+            "author": "@eril.2gd",
+            "timestamp": "2 days ago",
+            "expected_result": "clean",
+            "reason": "Legitimate comment"
+        },
+        {
+            "id": "86",
+            "video_id": "video_003",
+            "text": "Cakep yg ke2 lah",
+            "author": "@hoshiblack8411",
+            "timestamp": "2 days ago",
+            "expected_result": "clean",
+            "reason": "Legitimate comment"
+        },
+        {
+            "id": "87",
+            "video_id": "video_003",
+            "text": "Gw yang jual GK5 2019 balik lagi pakai GE8 MMC 2014 last edition.\nSama sama Motuba serius enakan GE8 om gak bohong.",
+            "author": "@kikyspradana",
+            "timestamp": "1 day ago",
+            "expected_result": "clean",
+            "reason": "Legitimate comment"
+        },
+        {
+            "id": "88",
+            "video_id": "video_003",
+            "text": "Lah ge 8 saya masih 4jt😅",
+            "author": "@Hendro2388",
+            "timestamp": "2 days ago",
+            "expected_result": "clean",
+            "reason": "Legitimate comment"
+        },
+        {
+            "id": "89",
+            "video_id": "video_003",
+            "text": "SSD (salam satu dashboard) (BRIO, BRV (GENLAMA), MOBILIO, JAZZ)",
+            "author": "@muhammadaffanalhanif6676",
+            "timestamp": "2 days ago",
+            "expected_result": "clean",
+            "reason": "Legitimate comment"
+        },
+        {
+            "id": "90",
+            "video_id": "video_003",
+            "text": "Dijual Jazz RS GK5 2017 abu metalik 60rb km area Jogja dan Solo Raya. Monggo mobil pribadi saya",
+            "author": "@yogaputra7008",
+            "timestamp": "1 day ago (edited)",
+            "expected_result": "suspicious",
+            "reason": "Self-promotion - selling items"
+        },
+        {
+            "id": "91",
+            "video_id": "video_003",
+            "text": "Kalo saya mending ini lah jelas drpd LCGC.",
+            "author": "@veroesports9728",
+            "timestamp": "2 days ago",
+            "expected_result": "clean",
+            "reason": "Legitimate comment"
+        },
+        {
+            "id": "92",
+            "video_id": "video_003",
+            "text": "Mobil ini interiornya terlihat luas. body kecil enak sat set. tarikan juga enak. cman sayangnya yg bkin saya g betah pakai gk5 itu road noisenya dan gluduk\" nyaringnya g ketolong. itu aja minusnya. bensin irit banget klo kata saya. saya biasa pakai bisa dpet 1:14 dalkot luar kota 1:14.9 (pertamax turbo) irit banget mnrt saya",
+            "author": "@edm-jt2gy",
+            "timestamp": "1 day ago",
+            "expected_result": "clean",
+            "reason": "Legitimate comment"
+        },
+        {
+            "id": "93",
+            "video_id": "video_003",
+            "text": "Siap2 harga nya tambah kegoreng gara2 video ini😅",
+            "author": "@iamtimmy16",
+            "timestamp": "2 days ago",
+            "expected_result": "clean",
+            "reason": "Legitimate comment"
+        },
+        {
+            "id": "94",
+            "video_id": "video_003",
+            "text": "kureng sih jazz gk5, yg ge8 ada ga?",
+            "author": "@ahmadali-bv9vj",
+            "timestamp": "2 days ago",
+            "expected_result": "clean",
+            "reason": "Legitimate comment"
+        },
+        {
+            "id": "95",
+            "video_id": "video_003",
+            "text": "Om sano bahas wuling confero sekarang bagaimana? Sekennya udh murah juga",
+            "author": "@ericajah2493",
+            "timestamp": "2 days ago",
+            "expected_result": "clean",
+            "reason": "Legitimate comment"
+        },
+        {
+            "id": "96",
+            "video_id": "video_003",
+            "text": "kursi buat rebahan tumben gabikin videonya kayak jazz yang 2017 om rosano wkwkkw",
+            "author": "@Killerjoker1980",
+            "timestamp": "2 days ago",
+            "expected_result": "clean",
+            "reason": "Legitimate comment"
+        },
+        {
+            "id": "97",
+            "video_id": "video_003",
+            "text": "mobil hampir 10 tahun, tapi harga ga turun dari pas awal launching. yang punya mobilnya dari baru untung banget ya, pake mobil tinggal isi bensin sama service. jual lagi kayak balik lagi uangnya. ibarat sewa mobil 0 Rp",
+            "author": "@kahfibonboy",
+            "timestamp": "2 days ago",
+            "expected_result": "clean",
+            "reason": "Legitimate comment"
+        },
+        {
+            "id": "98",
+            "video_id": "video_003",
+            "text": "FOYA-FOYA juga seru banget gara-gara PuIauwin",
+            "author": "@namlâmđông1972",
+            "timestamp": "3 days ago",
+            "expected_result": "clean",
+            "reason": "Legitimate comment"
+        },
+        {
+            "id": "99",
+            "video_id": "video_003",
+            "text": "Kesini Karna ad teh Yeyen ❤❤❤",
+            "author": "@sitisiti8311",
+            "timestamp": "3 days ago",
+            "expected_result": "clean",
+            "reason": "Legitimate comment"
+        },
+        {
+            "id": "100",
+            "video_id": "video_003",
+            "text": "Mohon maaf Bu kiky paketnya ketuker saya kurang fokus 😁🙏🙏🙏",
+            "author": "@WartimWartim-q4f",
+            "timestamp": "3 days ago (edited)",
+            "expected_result": "clean",
+            "reason": "Legitimate comment"
+        },
+        {
+            "id": "101",
+            "video_id": "video_003",
+            "text": "Tipsnya berguna banget! 💕𝐌0𝐍𝐀𝟒𝐃🟣 bikin aku langsung save video ini buat referensi!",
+            "author": "@Hạnh-Đàm-Ngọc",
+            "timestamp": "3 days ago",
+            "expected_result": "spam",
+            "reason": "Unicode fancy fonts detected - gambling\/promotional spam"
+        },
+        {
+            "id": "102",
+            "video_id": "video_003",
+            "text": "Yang terakir ngomong paan dah",
+            "author": "@Gak_sanggup_gak_usah_beli",
+            "timestamp": "2 days ago",
+            "expected_result": "clean",
+            "reason": "Legitimate comment"
+        },
+        {
+            "id": "103",
+            "video_id": "video_003",
+            "text": "Timeless.\nMurah di pajak juga",
+            "author": "@indonesiaraya26",
+            "timestamp": "2 days ago",
+            "expected_result": "clean",
+            "reason": "Legitimate comment"
+        },
+        {
+            "id": "104",
+            "video_id": "video_003",
+            "text": "Kalo saya lebih suka jazz ge8, lebih lega, tempat penyimpanan banyak, transmisi konvensional jadi bandel maticnya gampang perawatan",
+            "author": "@legendapradiptanuari1960",
+            "timestamp": "2 days ago",
+            "expected_result": "clean",
+            "reason": "Legitimate comment"
+        },
+        {
+            "id": "105",
+            "video_id": "video_003",
+            "text": "Ini cvt kan",
+            "author": "@mroppa6637",
+            "timestamp": "2 days ago",
+            "expected_result": "clean",
+            "reason": "Legitimate comment"
+        },
+        {
+            "id": "106",
+            "video_id": "video_003",
+            "text": "U know lah, slogan ter\"overprice\" ever, and jadul even yg sekarang pun kalah saing terutama interior",
+            "author": "@RURcubayy",
+            "timestamp": "2 days ago (edited)",
+            "expected_result": "clean",
+            "reason": "Legitimate comment"
+        },
+        {
+            "id": "107",
+            "video_id": "video_003",
+            "text": "Kalo mesin masih sehat full original mending jazz lah jauh kalo dibanding satya",
+            "author": "@mrlibra9364",
+            "timestamp": "2 days ago",
+            "expected_result": "clean",
+            "reason": "Legitimate comment"
+        },
+        {
+            "id": "108",
+            "video_id": "video_003",
+            "text": "Minus kaki kaki lemah, mesin bertenaga untuk kelasnya, bbm relatif 1:10 dalkot 1:14 rute tol",
+            "author": "@stevenw9541",
+            "timestamp": "2 days ago",
+            "expected_result": "clean",
+            "reason": "Legitimate comment"
+        },
+        {
+            "id": "109",
+            "video_id": "video_003",
+            "text": "Jaman HPM suka ngasih headunit bisulan",
+            "author": "@leinadyon",
+            "timestamp": "2 days ago",
+            "expected_result": "clean",
+            "reason": "Legitimate comment"
+        },
+        {
+            "id": "110",
+            "video_id": "video_003",
+            "text": "Hhmm.... brio baru lah😅\nLebih baru😂",
+            "author": "@khoirulilham7794",
+            "timestamp": "19 hours ago",
+            "expected_result": "clean",
+            "reason": "Legitimate comment"
+        },
+        {
+            "id": "111",
+            "video_id": "video_003",
+            "text": "Mending city nya daripada jazz nya, modelnya lebih oke, mesin sama, rasa berkendara sama, beda pajak aja",
+            "author": "@danzanzel",
+            "timestamp": "16 hours ago",
+            "expected_result": "clean",
+            "reason": "Legitimate comment"
+        },
+        {
+            "id": "112",
+            "video_id": "video_003",
+            "text": "saya make ge8 emg nyqman, irit dalam kota, bisa bawa 4 penumpang 1 sopir, bagasi lega, bisa di remap, huftttt😅",
+            "author": "@haikalzidanrusdiana3882",
+            "timestamp": "2 days ago",
+            "expected_result": "clean",
+            "reason": "Legitimate comment"
+        },
+        {
+            "id": "113",
+            "video_id": "video_003",
+            "text": "hmm apakah baleno bakal ditukar GK5 ini om sano?😁",
+            "author": "@faridmiftah2940",
+            "timestamp": "2 days ago",
+            "expected_result": "clean",
+            "reason": "Legitimate comment"
+        },
+        {
+            "id": "114",
+            "video_id": "video_003",
+            "text": "Honda jazz ge8 yg terbaik",
+            "author": "@Mama-Lena2018",
+            "timestamp": "2 days ago",
+            "expected_result": "clean",
+            "reason": "Legitimate comment"
+        },
+        {
+            "id": "115",
+            "video_id": "video_003",
+            "text": "Pernah 9 bulan pakai mobil ini...4000km...Dan akhirnya jual lagi...ciptaan manusia memang takpernah ada yg sempurna😢.",
+            "author": "@IsmaAtmaja",
+            "timestamp": "2 days ago",
+            "expected_result": "clean",
+            "reason": "Legitimate comment"
+        },
+        {
+            "id": "116",
+            "video_id": "video_003",
+            "text": "Mending brio jazz gk5 pajaknya muahall",
+            "author": "@overbodden",
+            "timestamp": "2 days ago",
+            "expected_result": "clean",
+            "reason": "Legitimate comment"
+        },
+        {
+            "id": "117",
+            "video_id": "video_003",
+            "text": "Pada bilang suka jazz tapi gak beli .haha .terbukti jazz di suntik mati.. omdo",
+            "author": "@MYWAY-lv6gn",
+            "timestamp": "1 day ago",
+            "expected_result": "clean",
+            "reason": "Legitimate comment"
+        },
+        {
+            "id": "118",
+            "video_id": "video_003",
+            "text": "Aduh video gorengan",
+            "author": "@gerlonggaul",
+            "timestamp": "2 days ago",
+            "expected_result": "clean",
+            "reason": "Legitimate comment"
+        },
+        {
+            "id": "119",
+            "video_id": "video_003",
+            "text": "Kemana-mana tetap Jazz lah paling OK ketimbang LCGC terbaru sekalipun, nama besar Jazz itu sendiri yg bikin naikin gengsi 😊",
+            "author": "@nurdiansyahpanji188",
+            "timestamp": "2 days ago",
+            "expected_result": "clean",
+            "reason": "Legitimate comment"
+        },
+        {
+            "id": "120",
+            "video_id": "video_003",
+            "text": "saking buru2nya sampe closingnya gak jelas wwwkwkwk",
+            "author": "@arka2202-i9d",
+            "timestamp": "2 days ago",
+            "expected_result": "clean",
+            "reason": "Legitimate comment"
+        },
+        {
+            "id": "121",
+            "video_id": "video_003",
+            "text": "YUTUB RIVIEW MOBIL YANG GAK SEDIKITPUN GUA SKIP. ANIMASI + narasumber  + detail",
+            "author": "@Masipaaan",
+            "timestamp": "2 days ago",
+            "expected_result": "clean",
+            "reason": "Legitimate comment"
+        },
+        {
+            "id": "122",
+            "video_id": "video_003",
+            "text": "Semoga bisa kebeli dan punya mobil ini suatu saat nanti. Dengan uang halal dan berkah pastinya. Bantu do'anya ya teman2 online semuaaa..😊😊❤❤",
+            "author": "@ddavproject1435",
+            "timestamp": "2 days ago",
+            "expected_result": "clean",
+            "reason": "Legitimate comment"
+        },
+        {
+            "id": "123",
+            "video_id": "video_003",
+            "text": "Jangankan dibanding brio, dibandingin sama city hb aja masih lebih gantengan jazz",
+            "author": "@nizarramadhan4325",
+            "timestamp": "1 day ago",
+            "expected_result": "clean",
+            "reason": "Legitimate comment"
+        },
+        {
+            "id": "124",
+            "video_id": "video_003",
+            "text": "Tetap Ge8 MMC 2013😂",
+            "author": "@raihanrere5907",
+            "timestamp": "2 days ago",
+            "expected_result": "clean",
+            "reason": "Legitimate comment"
+        },
+        {
+            "id": "125",
+            "video_id": "video_003",
+            "text": "KATRO mengCompare mobil bekas dengan mobil baru",
+            "author": "@ayasophiavoice",
+            "timestamp": "1 day ago",
+            "expected_result": "clean",
+            "reason": "Legitimate comment"
+        },
+        {
+            "id": "126",
+            "video_id": "video_003",
+            "text": "Mobil gorengan 😅",
+            "author": "@Putra10-m2e",
+            "timestamp": "2 days ago",
+            "expected_result": "clean",
+            "reason": "Legitimate comment"
+        },
+        {
+            "id": "127",
+            "video_id": "video_003",
+            "text": "ending ny ngomong apaa bgsd😂",
+            "author": "@wilsonmgtiviiiv305",
+            "timestamp": "1 day ago",
+            "expected_result": "clean",
+            "reason": "Legitimate comment"
+        },
+        {
+            "id": "128",
+            "video_id": "video_003",
+            "text": "Aku tetap pilih Honda Jazz RS GK5 Matic.. karena mobil nya Praktis, Irit, Fun to drive, Nyaman, Mewah, Elegan, Kencang, Powerfull (120 Ps), Torque Full (145 Nm), serta CVT 7 Speed dengan Paddle Shift \"+\/-\" (Mode Manual).. makanya itu termasuk mobil impian ke-5 aku❤",
+            "author": "@naufaljanuar4441",
+            "timestamp": "2 days ago",
+            "expected_result": "clean",
+            "reason": "Legitimate comment"
+        },
+        {
+            "id": "129",
+            "video_id": "video_003",
+            "text": "Insyaallah kesampean.\nList mobil budget ngepres 😁🤭\nhatchback\n- jaz\n- Yaris bakpou\nMobil keluarga.\n- Innova reborn\n- panther rajanya diesel\nMobil keluarga berencana .\n- CRV 2014\n- x trail urban selection\nMobil sedan\n- great Corolla\n- city 2014\n- Civic FB\n- Corolla Altis\nMudah mudahan ada rezekinya",
+            "author": "@fauzyafrizal8334",
+            "timestamp": "1 day ago",
+            "expected_result": "clean",
+            "reason": "Legitimate comment"
+        },
+        {
+            "id": "130",
+            "video_id": "video_003",
+            "text": "Mobil ini lenyap krn honda hrv yang jauh lebih bagus 😂",
+            "author": "@pdrseverance",
+            "timestamp": "19 hours ago",
+            "expected_result": "clean",
+            "reason": "Legitimate comment"
+        },
+        {
+            "id": "131",
+            "video_id": "video_003",
+            "text": "Mending jazzz wkwkw. Tapi Klo soal harga yaa mendingan Briooo jazz Msih mahall batt😂",
+            "author": "@Alprid_zzi",
+            "timestamp": "2 days ago",
+            "expected_result": "clean",
+            "reason": "Legitimate comment"
+        },
+        {
+            "id": "132",
+            "video_id": "video_003",
+            "text": "Ni mobil sampai saat ini 2026 masih banyak peminatnya apalagi di kalangan anak umur 30 an",
+            "author": "@oto_inspirasi",
+            "timestamp": "2 days ago",
+            "expected_result": "clean",
+            "reason": "Legitimate comment"
+        },
+        {
+            "id": "133",
+            "video_id": "video_003",
+            "text": "Lagi cari Jazz Biru GK5 tau2 dibahas Carmudi, gile bisa baca pikiran haha",
+            "author": "@pramudyandika",
+            "timestamp": "2 days ago",
+            "expected_result": "clean",
+            "reason": "Legitimate comment"
+        },
+        {
+            "id": "134",
+            "video_id": "video_003",
+            "text": "Pengguna Jazz ini ,, HRV gen 1 ,, GAK PERNAH naikin head rest belakang... Entah kenapa. Padahal jadi kayak naik datsun wkwkwkw...  Gua udah perhatiin ini sejak 8 tahun lalu. Aneh aja sih.",
+            "author": "@rizkyekaprasetyo2152",
+            "timestamp": "2 days ago",
+            "expected_result": "clean",
+            "reason": "Legitimate comment"
+        },
+        {
+            "id": "135",
+            "video_id": "video_003",
+            "text": "Honda Jazz, mobil yang dulu sempat jadi impian saya saat masih awal berkeluarga, tapi akhirnya malah beli Toyota Corolla bekas. Nggak menyesal, tapi sampai sekarang masih kepengen punya Honda Jazz. Harga bekas kalau sampai 100jt tinggi atau malah 200jt ya nggak masuk akal sih menurut saya, mengingat ini teknologi lama semua dan fitur jadul.",
+            "author": "@roboflier2000",
+            "timestamp": "2 days ago",
+            "expected_result": "clean",
+            "reason": "Legitimate comment"
+        },
+        {
+            "id": "136",
+            "video_id": "video_003",
+            "text": "gw yakin 15 thn lagi, mobil ini jadi the next estillo😂",
+            "author": "@nikorendy1604",
+            "timestamp": "2 days ago",
+            "expected_result": "clean",
+            "reason": "Legitimate comment"
+        },
+        {
+            "id": "137",
+            "video_id": "video_003",
+            "text": "Saran kalo beli mobil honda jangan bekas 😂",
+            "author": "@mahfudivan",
+            "timestamp": "1 day ago",
+            "expected_result": "clean",
+            "reason": "Legitimate comment"
+        },
+        {
+            "id": "138",
+            "video_id": "video_003",
+            "text": "kenapa jarang upload skrg? sekalinya upload malah motuba",
+            "author": "@coolzchaemz",
+            "timestamp": "2 days ago",
+            "expected_result": "clean",
+            "reason": "Legitimate comment"
+        },
+        {
+            "id": "139",
+            "video_id": "video_003",
+            "text": "\"RABU HARGA NAIK !\"",
+            "author": "@anugrahromi4851",
+            "timestamp": "2 days ago",
+            "expected_result": "suspicious",
+            "reason": "ALL CAPS detected"
+        },
+        {
+            "id": "140",
+            "video_id": "video_003",
+            "text": "Aku mau jual jazz ku guys, barangkali ada yg minat jazz RS GK5 thn 2019 matic warna merah, lokasi jaksel. Kilometer masih blm sampe 65rb, minusnya kamera blkg suka hidup & mati sendiri, overall baik2 saja. Aku mau jual 220jt",
+            "author": "@cikgurahmant5458",
+            "timestamp": "7 hours ago (edited)",
+            "expected_result": "suspicious",
+            "reason": "Self-promotion - selling items"
+        },
+        {
+            "id": "141",
+            "video_id": "video_003",
+            "text": "Dulu punya honda jazz yg facelift ini, ampun dah suara ban nguuunggg, kalo ujan klotoklotoklotoklotok sampe ngobrol sesama penumpang kaga bisa, suara kendaraan kiri kanan kedengeran ngeeenggg. Ku bingung apakah naik mobil harus denger sekeliling kayak naik motor?\nDah lagi sebagai penumpang di belakang kaga ada nyamannya. Headrest kecil dan pendek jd lebih nyaman istirahatin leher. Armrest pintu kekecilan",
+            "author": "@leomahendra1322",
+            "timestamp": "2 days ago",
+            "expected_result": "clean",
+            "reason": "Legitimate comment"
+        },
+        {
+            "id": "142",
+            "video_id": "video_003",
+            "text": "Pernah punya, dan sangaaaat puas...kecuali kaki2 yg agak suka jajan 😅😅,tapi untuk lain2nya sangat puas... Terutama feeling nyetirnya bener2 asik, ga bikin capek dan betah nyetir.",
+            "author": "@Juliamariska",
+            "timestamp": "2 days ago",
+            "expected_result": "clean",
+            "reason": "Legitimate comment"
+        },
+        {
+            "id": "143",
+            "video_id": "video_003",
+            "text": "Kalo sesuai thumbnail  mau lebih  lega dan fungsional ya ke mobilio ato brv, mesin persis sama dan harga bekas lbh murah pula 😅",
+            "author": "@djojoexonline",
+            "timestamp": "2 days ago (edited)",
+            "expected_result": "clean",
+            "reason": "Legitimate comment"
+        },
+        {
+            "id": "144",
+            "video_id": "video_003",
+            "text": "Loh kan 7 tahun lalu uda review ini om, sampai 2 part video pula...",
+            "author": "@lucky889s9",
+            "timestamp": "2 days ago",
+            "expected_result": "clean",
+            "reason": "Legitimate comment"
+        },
+        {
+            "id": "145",
+            "video_id": "video_003",
+            "text": "lebih fun to drive gk5 atau ge8??",
+            "author": "@OrangBiasa-sm2lc",
+            "timestamp": "2 days ago",
+            "expected_result": "clean",
+            "reason": "Legitimate comment"
+        },
+        {
+            "id": "146",
+            "video_id": "video_003",
+            "text": "GE 8 lah tetep.",
+            "author": "@davidandhika62",
+            "timestamp": "1 day ago",
+            "expected_result": "clean",
+            "reason": "Legitimate comment"
+        },
+        {
+            "id": "147",
+            "video_id": "video_003",
+            "text": "emang sekeren itu sih jazz ini, tapi entah kenapa malah ga di lanjut padahal jazz ini branding ny udh kuat bgt.",
+            "author": "@pandora3309",
+            "timestamp": "2 days ago",
+            "expected_result": "clean",
+            "reason": "Legitimate comment"
+        },
+        {
+            "id": "148",
+            "video_id": "video_003",
+            "text": "Sebenarnya bukan alasan model kurang sporty, jadi gak dimasukin generasi baru nya. Honda Fit sporty RS, Crosstar, Life sport, juga keren kok di luar negeri\nAlasan HPM simple stop Jazz: lebih untung jualan LCGC brio yang lebih laku. Orang awam anggap sama, ukuran juga hampir sama. Kebetulan orang sini doyan asal murah aja. Jadi malah kanibal merk sendiri. Makanya distop krn angka penjualan Jazz makin turun sejak 2017.\nSama nasibnya kayak Yaris bakpao dimakan Agya Ayla, padahal Toyota Vitz masih dijual sampai 2019. Astra lebih untung jualan LCGC yang modal nya gak sampai 100jt",
+            "author": "@lucky889s9",
+            "timestamp": "2 days ago",
+            "expected_result": "suspicious",
+            "reason": "Self-promotion - selling items"
+        },
+        {
+            "id": "149",
+            "video_id": "video_003",
+            "text": "Harga digoreng😂😂😂 sama kaya yaris😂😂😂 xl7 sexond keluaran awal aja thun 2019 harga nya sama dgn yaris jazz 2015-2017😂😂😂",
+            "author": "@aldilanovrizal9432",
+            "timestamp": "2 days ago",
+            "expected_result": "clean",
+            "reason": "Legitimate comment"
+        },
+        {
+            "id": "150",
+            "video_id": "video_003",
+            "text": "01:20 udah hatam ini mah tiap opening suka ga jelas, lah ini endingnya juga T_T\n21:34 lu ngomong apa sih bang T_T\nwas wes wos,, santai aja bang, padahal konten2 ny keren T_T sukses selalu team Carmudi 🥳",
+            "author": "@bebasjalanjalan",
+            "timestamp": "2 days ago",
+            "expected_result": "clean",
+            "reason": "Legitimate comment"
+        },
+        {
+            "id": "151",
+            "video_id": "video_003",
+            "text": "❤ 0:06",
+            "author": "@resyapahleviananda1214",
+            "timestamp": "2 days ago",
+            "expected_result": "clean",
+            "reason": "Legitimate comment"
+        },
+        {
+            "id": "152",
+            "video_id": "video_003",
+            "text": "Video ini seru, tapi percaya deh… 𝐏𝐒𝐓𝐎𝐓𝐎𝟗𝟗 tuh tempat orang-orang ngumpul pas gak tau mau ngapain 😆",
+            "author": "@owowowowowowowowowow2956",
+            "timestamp": "1 day ago",
+            "expected_result": "spam",
+            "reason": "Unicode fancy fonts detected - gambling\/promotional spam"
+        },
+        {
+            "id": "153",
+            "video_id": "video_003",
+            "text": "Kan Honda jazz sudah nggak di jual lagi",
+            "author": "@indahrosvita",
+            "timestamp": "2 days ago",
+            "expected_result": "clean",
+            "reason": "Legitimate comment"
+        },
+        {
+            "id": "154",
+            "video_id": "video_003",
+            "text": "Lagi rame banget di 𝐏𝐒𝐓𝐎𝐓𝐎𝟗𝟗, serius! Kalo telat tau, siap-siap jadi yang terakhir ngerti 😅",
+            "author": "@SukdebDey-c4n",
+            "timestamp": "1 day ago",
+            "expected_result": "spam",
+            "reason": "Unicode fancy fonts detected - gambling\/promotional spam"
+        },
+        {
+            "id": "155",
+            "video_id": "video_003",
+            "text": "Wow hrga secondnya sama kya HRV second.🫠",
+            "author": "@faqihilhami231",
+            "timestamp": "2 days ago",
+            "expected_result": "clean",
+            "reason": "Legitimate comment"
+        },
+        {
+            "id": "156",
+            "video_id": "video_003",
+            "text": "Botak, kalo ngomong biasa aja lah,kaga usah di hentak²  ngerock gitu, kayak lagi konser aja, Lebih bagus biasa aja",
+            "author": "@Ningrat-k1f4m",
+            "timestamp": "1 day ago",
+            "expected_result": "clean",
+            "reason": "Legitimate comment"
+        },
+        {
+            "id": "157",
+            "video_id": "video_003",
+            "text": "0:30 Emang sebenarnya kelas MPV 7 seater >400 jt an yang proper itu Innova Reborn Venturer hehe, ga neko2 lah buat bapak2 old money sayang keluarga, mau petrol tinggal isi pertamax, mau diesel tinggal isi dex.",
+            "author": "@bwxcrew",
+            "timestamp": "2 days ago (edited)",
+            "expected_result": "clean",
+            "reason": "Legitimate comment"
+        },
+        {
+            "id": "158",
+            "video_id": "video_003",
+            "text": "Komen pertama bang Ridwan...team Destinator❤",
+            "author": "@wawandwihartanto336",
+            "timestamp": "2 days ago",
+            "expected_result": "clean",
+            "reason": "Legitimate comment"
+        },
+        {
+            "id": "159",
+            "video_id": "video_003",
+            "text": "dr dulu gw gasuka liat toyota, yg sok prestige, harga mahal, tp minim fitur apalagi fitur safety🥱",
+            "author": "@RamzyBahrak",
+            "timestamp": "2 days ago",
+            "expected_result": "clean",
+            "reason": "Legitimate comment"
+        },
+        {
+            "id": "160",
+            "video_id": "video_003",
+            "text": "tim zenix karena luas. maklum saya sudah berkeluarga lebih mementingkan muat banyak drpd kenyamanan. apalagi punya anak gw yakin sepemikiran dgn gw, mengutamakan kepentingan keluarga :)",
+            "author": "@deddykristiawan3033",
+            "timestamp": "22 hours ago",
+            "expected_result": "clean",
+            "reason": "Legitimate comment"
+        },
+        {
+            "id": "161",
+            "video_id": "video_003",
+            "text": "Destinator saja ya ALLAH...",
+            "author": "@gunturakbar8833",
+            "timestamp": "2 days ago",
+            "expected_result": "clean",
+            "reason": "Legitimate comment"
+        },
+        {
+            "id": "162",
+            "video_id": "video_003",
+            "text": "CVT? Up letoy",
+            "author": "@pendakisantuy276",
+            "timestamp": "2 days ago",
+            "expected_result": "clean",
+            "reason": "Legitimate comment"
+        },
+        {
+            "id": "163",
+            "video_id": "video_003",
+            "text": "Walaupun mauk gimanapun tetap gk bisa mengalahkan toyota.karna toyota telah terbukti di hati masyarakat indonesia ap lg masyarakat menengah kebawah.salam konten",
+            "author": "@WIDODOproduction",
+            "timestamp": "1 day ago",
+            "expected_result": "clean",
+            "reason": "Legitimate comment"
+        },
+        {
+            "id": "164",
+            "video_id": "video_003",
+            "text": "Joknya destinator karakternya gimana Bang? Denger2 karakternya kayak joknya Outlander Sport -> bagian bawah tidak menopang paha secara penuh dan keras busanya.",
+            "author": "@pn6643",
+            "timestamp": "2 days ago (edited)",
+            "expected_result": "clean",
+            "reason": "Legitimate comment"
+        },
+        {
+            "id": "165",
+            "video_id": "video_003",
+            "text": "Destination baru vs camry 2nd?",
+            "author": "@ibrahimtanah1913",
+            "timestamp": "2 days ago",
+            "expected_result": "clean",
+            "reason": "Legitimate comment"
+        },
+        {
+            "id": "166",
+            "video_id": "video_003",
+            "text": "tiggo tiggo ke laut aje, ini khusus 7 seater proper, ada ac dan laku 😆",
+            "author": "@rizki3992",
+            "timestamp": "2 days ago",
+            "expected_result": "clean",
+            "reason": "Legitimate comment"
+        },
+        {
+            "id": "167",
+            "video_id": "video_003",
+            "text": "Kijang VS kuda akhirnya duel lagi ya😂\nDestinator dari bentuk bodynya keliatan bener porposinya kya Mitsubishi Kuda",
+            "author": "@ari151x",
+            "timestamp": "2 days ago",
+            "expected_result": "clean",
+            "reason": "Legitimate comment"
+        },
+        {
+            "id": "168",
+            "video_id": "video_003",
+            "text": "T8 CSH vs Zenix bisa kali next markidu",
+            "author": "@aguswirantowibowo429",
+            "timestamp": "2 days ago",
+            "expected_result": "clean",
+            "reason": "Legitimate comment"
+        },
+        {
+            "id": "169",
+            "video_id": "video_003",
+            "text": "BANG GC ZENIX 185MM LHO...BUKAN 244MM. MASAK SEKELAS RIDWAN HANIF SALAH WKWKWKWK (MENIT 4.47 DETIK)",
+            "author": "@WolverineRacing",
+            "timestamp": "2 days ago",
+            "expected_result": "suspicious",
+            "reason": "ALL CAPS detected"
+        },
+        {
+            "id": "170",
+            "video_id": "video_003",
+            "text": "sumpah liat fitmen zenix kaya jangkung banget anying 😭😭.... uograde velg + ban baruu oke sih",
+            "author": "@Nanasbananapersentase",
+            "timestamp": "2 days ago",
+            "expected_result": "clean",
+            "reason": "Legitimate comment"
+        },
+        {
+            "id": "171",
+            "video_id": "video_003",
+            "text": "Pertamax?",
+            "author": "@tama8444",
+            "timestamp": "2 days ago",
+            "expected_result": "clean",
+            "reason": "Legitimate comment"
+        },
+        {
+            "id": "172",
+            "video_id": "video_003",
+            "text": "Tahun baru kemarin di tol trans Jawa mengendarai Veloz MT 2024, dalam jarak tempuh 140 an km konsumsi bbmnya bisa 20,8 - 21 km per liter menggunakan bbm Pertalite (kecepatan konstan 70 - 95 km per jam).\nMuatan penuh dengan box inno diatasnya.",
+            "author": "@soemartonosaleh4607",
+            "timestamp": "2 days ago (edited)",
+            "expected_result": "clean",
+            "reason": "Legitimate comment"
+        },
+        {
+            "id": "173",
+            "video_id": "video_003",
+            "text": "Mocin be like : alah Segitu dwnk harga gk ngotak. 😂😂",
+            "author": "@irfancool3967",
+            "timestamp": "2 days ago",
+            "expected_result": "clean",
+            "reason": "Legitimate comment"
+        },
+        {
+            "id": "174",
+            "video_id": "video_003",
+            "text": "Gw pake Zenix Q Hybrid bener sih gampang capek klo nyetir udah 3 jam di tol",
+            "author": "@faiqabdillah3414",
+            "timestamp": "1 day ago",
+            "expected_result": "clean",
+            "reason": "Legitimate comment"
+        },
+        {
+            "id": "175",
+            "video_id": "video_003",
+            "text": "Assalamualaikum saya dari Malaysia hadir 🇲🇾😊 Mitsubishi X-Force baru je masuk untuk pasaran Malaysia",
+            "author": "@hafizyaakob5753",
+            "timestamp": "2 days ago",
+            "expected_result": "clean",
+            "reason": "Legitimate comment"
+        },
+        {
+            "id": "176",
+            "video_id": "video_003",
+            "text": "Zenix bannya mendeleb kedalem jadi wagu aneh",
+            "author": "@RajaYoutubeChannel",
+            "timestamp": "2 days ago (edited)",
+            "expected_result": "clean",
+            "reason": "Legitimate comment"
+        },
+        {
+            "id": "177",
+            "video_id": "video_003",
+            "text": "Alhamdulillah saat ini punya seekor xl7 untuk tb saya 173 mungkin mirip2 mas RH pas saya coba di baris ke 3 dengan jok tengah paling mundur legroom saya masih aman gak mentok mungkin masih 1 jari dan paha masih nyaman bgt tersanggah dengan baik😇🤲 Alhamdulillah krna sebelumnya user avanza 2012 yg baris ke 3 nya ngepas buat sy tb 173 dengan posisi kaki masih semi jongkok\/ dingklik bahasa germannya😂\nedit : semoga bisa upgrade ke zenix v bensin at krna istri sepertinya kode terus",
+            "author": "@m.zainulakbar139",
+            "timestamp": "2 days ago (edited)",
+            "expected_result": "clean",
+            "reason": "Legitimate comment"
+        },
+        {
+            "id": "178",
+            "video_id": "video_003",
+            "text": "Kok gak sama KIA Carens Mas?",
+            "author": "@erlanggaelang5530",
+            "timestamp": "2 days ago",
+            "expected_result": "clean",
+            "reason": "Legitimate comment"
+        },
+        {
+            "id": "179",
+            "video_id": "video_003",
+            "text": "Destinator itu X Force ug dipanjangin ya?",
+            "author": "@MOHAMMADBARIWIBOWO",
+            "timestamp": "2 days ago",
+            "expected_result": "clean",
+            "reason": "Legitimate comment"
+        },
+        {
+            "id": "180",
+            "video_id": "video_003",
+            "text": "Mantabb Pak Gubb 🎉",
+            "author": "@wahyupancanugraha4789",
+            "timestamp": "2 days ago",
+            "expected_result": "clean",
+            "reason": "Legitimate comment"
+        },
+        {
+            "id": "181",
+            "video_id": "video_003",
+            "text": "Terlepas fitur Untuk design sambil merem pilih zenix. Destinator designnya terlalu berani untuk ke konsep futuristik dan sepertinya masih belum di terima design seperti ini untuk masyarakat indonesia. Mengingat gantengnya design pajero",
+            "author": "@chanelanak2982",
+            "timestamp": "1 day ago",
+            "expected_result": "clean",
+            "reason": "Legitimate comment"
+        },
+        {
+            "id": "182",
+            "video_id": "video_003",
+            "text": "Lampu remnya secuprittt hahaha",
+            "author": "@budisugiawan8187",
+            "timestamp": "2 days ago",
+            "expected_result": "clean",
+            "reason": "Legitimate comment"
+        },
+        {
+            "id": "183",
+            "video_id": "video_003",
+            "text": "engga head to head itu destinator. tinggi 178cm sempit baris kedua nya. belum soal harga overprice sekali. udah gak relevan in this economy nowadays",
+            "author": "@MrAlpineZone",
+            "timestamp": "2 days ago",
+            "expected_result": "clean",
+            "reason": "Legitimate comment"
+        },
+        {
+            "id": "184",
+            "video_id": "video_003",
+            "text": "Keren bang sukses selalu",
+            "author": "@rbabahe4452",
+            "timestamp": "2 days ago",
+            "expected_result": "clean",
+            "reason": "Legitimate comment"
+        },
+        {
+            "id": "185",
+            "video_id": "video_003",
+            "text": "Bgitulah toyota astra skrg",
+            "author": "@Neminhermawan",
+            "timestamp": "2 days ago",
+            "expected_result": "clean",
+            "reason": "Legitimate comment"
+        },
+        {
+            "id": "186",
+            "video_id": "video_003",
+            "text": "Kalo sudah pernah merasakan pasti pilih zenix, meski dibilang pasaran tapi memang senyaman itu, sedangkan destinator serasa kayak mobil low mpv yg dipermanis.",
+            "author": "@Yanuaradil",
+            "timestamp": "2 days ago",
+            "expected_result": "clean",
+            "reason": "Legitimate comment"
+        },
+        {
+            "id": "187",
+            "video_id": "video_003",
+            "text": "Destinator ibarat manusia dia pake baju olahraga, sementara zenix pake kemeja formal yg membuat zenix bisa lebih luas segmen penggunanya,",
+            "author": "@wahyuramadhan7279",
+            "timestamp": "2 days ago",
+            "expected_result": "clean",
+            "reason": "Legitimate comment"
+        },
+        {
+            "id": "188",
+            "video_id": "video_003",
+            "text": "Destinator layak di sandingkan dengan Zenix",
+            "author": "@haryabd6871",
+            "timestamp": "2 days ago",
+            "expected_result": "clean",
+            "reason": "Legitimate comment"
+        },
+        {
+            "id": "189",
+            "video_id": "video_003",
+            "text": "Nah harusnya tambahin Tiggo 8 1.6T premium om, bener2 rival direct",
+            "author": "@aquaboy192",
+            "timestamp": "2 days ago",
+            "expected_result": "clean",
+            "reason": "Legitimate comment"
+        },
+        {
+            "id": "190",
+            "video_id": "video_003",
+            "text": "Destinator stoplamp nya minta ampun deh, kecil banget kaya kunang kunang, gak proporsional sama body mobilnya yang besar",
+            "author": "@munsorif3813",
+            "timestamp": "2 days ago",
+            "expected_result": "clean",
+            "reason": "Legitimate comment"
+        },
+        {
+            "id": "191",
+            "video_id": "video_003",
+            "text": "Beli destinator, selisih 50 jt buat selisih keiritan bensin",
+            "author": "@autoclubindonesia1653",
+            "timestamp": "2 days ago",
+            "expected_result": "clean",
+            "reason": "Legitimate comment"
+        },
+        {
+            "id": "192",
+            "video_id": "video_003",
+            "text": "Pd menjelek2an zenix,tp percayalah utk pasar indo org ttep lbh pilih kejelekan zenix krn balik lg utk harga jualnya lg lbh bgs drpd destinator 😂",
+            "author": "@hansendelapan",
+            "timestamp": "1 day ago",
+            "expected_result": "clean",
+            "reason": "Legitimate comment"
+        },
+        {
+            "id": "193",
+            "video_id": "video_003",
+            "text": "surya kayaknya bneran terobsesi sama yeyen😂",
+            "author": "@arif77910",
+            "timestamp": "2 days ago",
+            "expected_result": "clean",
+            "reason": "Legitimate comment"
+        },
+        {
+            "id": "194",
+            "video_id": "video_003",
+            "text": "perkara ban jadi ribet bgt 🤣😅",
+            "author": "@irielofficial09",
+            "timestamp": "2 days ago",
+            "expected_result": "clean",
+            "reason": "Legitimate comment"
+        },
+        {
+            "id": "195",
+            "video_id": "video_003",
+            "text": "Baru buka YouTube langsung nemu💦ℙ𝕌𝕃𝔸𝕌𝕎𝕀ℕ💦, pas banget vibe-nya.",
+            "author": "@SonNamiz5uqc_722",
+            "timestamp": "3 days ago",
+            "expected_result": "spam",
+            "reason": "Unicode fancy fonts detected - gambling\/promotional spam"
+        },
+        {
+            "id": "196",
+            "video_id": "video_003",
+            "text": "Parto jadiin pemain tetap pliss",
+            "author": "@vandejoel1856",
+            "timestamp": "3 days ago",
+            "expected_result": "clean",
+            "reason": "Legitimate comment"
+        },
+        {
+            "id": "197",
+            "video_id": "video_003",
+            "text": "Iya min ketawa recordnya ganggu ..\nMending ketawa yorobun aja udh cukup kayaknya ..",
+            "author": "@madhannn",
+            "timestamp": "3 days ago",
+            "expected_result": "clean",
+            "reason": "Legitimate comment"
+        },
+        {
+            "id": "198",
+            "video_id": "video_003",
+            "text": "Estetik banget sih, beneran P U L A U W I N vibes.",
+            "author": "@thắngphanvăn1958",
+            "timestamp": "3 days ago",
+            "expected_result": "clean",
+            "reason": "Legitimate comment"
+        },
+        {
+            "id": "199",
+            "video_id": "video_003",
+            "text": "Bismillah ka buat bayar cicilan, semoga bermanfaat,dan sukses selalu buat abangnya❤❤",
+            "author": "@BUDAKSUNDA804",
+            "timestamp": "1 day ago",
+            "expected_result": "clean",
+            "reason": "Legitimate comment"
+        },
+        {
+            "id": "200",
+            "video_id": "video_003",
+            "text": "irjen supono jadiin satu sama suster nunung cba😅",
+            "author": "@Rendi652",
+            "timestamp": "3 days ago",
+            "expected_result": "clean",
+            "reason": "Legitimate comment"
+        },
+        {
+            "id": "201",
+            "video_id": "video_003",
+            "text": "Tante Yeyen🤗😃",
+            "author": "@ahmadrifan9026",
+            "timestamp": "1 day ago",
+            "expected_result": "clean",
+            "reason": "Legitimate comment"
+        },
+        {
+            "id": "202",
+            "video_id": "video_003",
+            "text": "Surya sibuk banget 😂😂😂",
+            "author": "@riafitriana845",
+            "timestamp": "1 day ago",
+            "expected_result": "clean",
+            "reason": "Legitimate comment"
+        },
+        {
+            "id": "203",
+            "video_id": "video_003",
+            "text": "07:37 ijin, pak!!! Saya tiga hari udah maghrib 😂😂😂😂",
+            "author": "@KikiAgustian-b6b",
+            "timestamp": "2 days ago",
+            "expected_result": "clean",
+            "reason": "Legitimate comment"
+        },
+        {
+            "id": "204",
+            "video_id": "video_003",
+            "text": "ＰＵＬＡＵＷＩＮ tuh selalu muncul pas lagi pengen healing.",
+            "author": "@MinhTri_145",
+            "timestamp": "3 days ago",
+            "expected_result": "spam",
+            "reason": "Unicode fancy fonts detected - gambling\/promotional spam"
+        },
+        {
+            "id": "205",
+            "video_id": "video_003",
+            "text": "Game ini seru banget, fiturnya lengkap dan nggak bikin cepat bosan 🔥 dan pecahan nya tidak mengecewakan cuma di S̳A̳A̳T̳4̳D̳.",
+            "author": "@MinhTri_145",
+            "timestamp": "3 days ago",
+            "expected_result": "spam",
+            "reason": ""
+        },
+        {
+            "id": "206",
+            "video_id": "video_003",
+            "text": "TerimakasihP͟U͟L͟A͟U͟777 atas malam cuan penuh keberuntungan ❤️",
+            "author": "@MinhTri_145",
+            "timestamp": "3 days ago",
+            "expected_result": "spam",
+            "reason": ""
+        },
+        {
+            "id": "207",
+            "video_id": "video_003",
+            "text": "KYT4️⃣D ☢️ suka banget sama semangat di video ini.",
+            "author": "@MinhTri_145",
+            "timestamp": "3 days ago",
+            "expected_result": "spam",
+            "reason": ""
+        },
+        {
+            "id": "208",
+            "video_id": "video_003",
+            "text": "𝘼𝙮𝙤 𝙥𝙖𝙠 𝙖𝙝𝙤𝙠.. 𝙅𝙖𝙙𝙞𝙡𝙖𝙝. 𝙋𝙚𝙢𝙞𝙢𝙥𝙞𝙣 𝙧𝙖𝙠𝙮𝙖𝙩... 𝙆𝙧𝙣 𝙠𝙚𝙖𝙙𝙞𝙡𝙖𝙣 𝙩𝙞𝙙𝙖𝙠 𝙥𝙖𝙣𝙙𝙖𝙣𝙜 𝙖𝙜𝙖𝙢𝙖.. ❤❤",
+            "author": "@MinhTri_145",
+            "timestamp": "3 days ago",
+            "expected_result": "spam",
+            "reason": ""
+        }
+    ],
+    "expected_detection_summary": {
+        "clean": 190,
+        "suspicious": 6,
+        "spam": 8,
+        "breakdown": {
+            "spam_comments": {
+                "count": 8,
+                "ids": {
+                    "48": "49",
+                    "49": "50",
+                    "53": "54",
+                    "100": "101",
+                    "151": "152",
+                    "153": "154",
+                    "194": "195",
+                    "203": "204"
+                }
+            }
+        }
+    }
+}
