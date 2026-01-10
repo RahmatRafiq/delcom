@@ -71,7 +71,7 @@ class TestCompleteSpamDetection extends Command
             return 1;
         }
 
-        $this->info("📦 Loaded ".count($comments)." comments from fixture: {$fixtureFile}");
+        $this->info('📦 Loaded '.count($comments)." comments from fixture: {$fixtureFile}");
         $this->newLine();
 
         // Phase 1: Hybrid Detector (Batch Analysis)
@@ -130,7 +130,26 @@ class TestCompleteSpamDetection extends Command
             ];
         }, $comments, array_keys($comments));
 
-        $result = $this->hybridDetector->analyzeCommentBatch($formattedComments);
+        // TIER B: Channel + Video Context (Honda Jazz automotive review example)
+        $channelContext = [
+            'name' => 'Fitra Eri',
+            'description' => 'Channel review mobil dan motor Indonesia',
+            'category' => 'Autos & Vehicles',
+            'tags' => ['mobil', 'motor', 'review', 'otomotif', 'indonesia'],
+        ];
+
+        $videoContext = [
+            'title' => 'Review Honda Jazz 2024 - Mobil Hatchback Terbaik',
+            'description' => 'Review lengkap Honda Jazz 2024, spesifikasi, fitur, performa mesin',
+            'tags' => ['honda', 'jazz', 'review', 'mobil', 'hatchback'],
+            'category' => 'Autos & Vehicles',
+        ];
+
+        $this->line("\n📹 Testing with Context:");
+        $this->line("   Channel: {$channelContext['name']} ({$channelContext['category']})");
+        $this->line("   Video: {$videoContext['title']}\n");
+
+        $result = $this->hybridDetector->analyzeCommentBatch($formattedComments, $channelContext, $videoContext);
 
         $this->line('Cluster Detection Results:');
         $this->line("├─ Total Clusters: {$result['summary']['clusters_found']}");

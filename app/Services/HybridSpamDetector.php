@@ -41,17 +41,20 @@ class HybridSpamDetector
      * This is the main detection method that combines:
      * 1. Cluster detection (bot campaigns)
      * 2. Individual spam detection (Unicode, ALL CAPS, gambling)
+     * 3. Contextual analysis with channel + video metadata (TIER B)
      *
      * @param  array  $comments  Array of ['id' => string, 'text' => string, 'author' => string, ...]
+     * @param  array  $channelContext  Channel metadata ['name', 'description', 'category', 'tags']
+     * @param  array  $videoContext  Video metadata ['title', 'description', 'tags', 'category']
      * @return array{clusters: array, spam_campaigns: array, summary: array}
      */
-    public function analyzeCommentBatch(array $comments): array
+    public function analyzeCommentBatch(array $comments, array $channelContext = [], array $videoContext = []): array
     {
-        // Run cluster detection (existing logic)
-        $clusterResult = $this->clusterDetector->analyzeCommentBatch($comments);
+        // Run cluster detection with TIER B context (CRITICAL for reducing false positives)
+        $clusterResult = $this->clusterDetector->analyzeCommentBatch($comments, $channelContext, $videoContext);
 
-        // Run individual spam detection
-        $individualSpam = $this->detectIndividualSpam($comments);
+        // Run individual spam detection with context
+        $individualSpam = $this->detectIndividualSpam($comments, $channelContext, $videoContext);
 
         // Merge results
         return $this->mergeDetectionResults($clusterResult, $individualSpam);
@@ -65,10 +68,14 @@ class HybridSpamDetector
      * - ALL CAPS off-topic comments
      * - Single promotional spam
      *
+     * Uses TIER B double context (channel + video) to reduce false positives.
+     *
      * @param  array  $comments  Array of comments
+     * @param  array  $channelContext  Channel metadata
+     * @param  array  $videoContext  Video metadata
      * @return array Individual spam campaigns
      */
-    private function detectIndividualSpam(array $comments): array
+    private function detectIndividualSpam(array $comments, array $channelContext = [], array $videoContext = []): array
     {
         $individualSpam = [];
 
@@ -119,7 +126,7 @@ class HybridSpamDetector
                 $signals[] = sprintf('High CAPS ratio (%.0f%%, +10)', $patterns['caps_ratio'] * 100);
             }
 
-            // 4. Context analysis (reduce false positives)
+            // 4. Context analysis (reduce false positives) - TIER B with DOUBLE CONTEXT
             // Note: Skip context analysis if strong spam signals present:
             // - Unicode fancy fonts (NEVER legitimate on YouTube)
             // - ALL CAPS >90% (strong spam signal)
@@ -127,16 +134,31 @@ class HybridSpamDetector
             $skipContextAnalysis = $hasFancyUnicode || $patterns['caps_ratio'] > 0.9;
 
             if (! $skipContextAnalysis) {
-                $contextAnalysis = $this->contextAnalyzer->analyzeContext($lowerText, $score);
+                // Merge channel + video context for maximum accuracy
+                $fullContext = $this->mergeContexts($channelContext, $videoContext);
+
+                // Use TIER B video context matching if context available
+                if (! empty($fullContext)) {
+                    $contextAnalysis = $this->contextAnalyzer->analyzeWithVideoContext($lowerText, $score, $fullContext);
+                } else {
+                    // Fallback to generic context analysis
+                    $contextAnalysis = $this->contextAnalyzer->analyzeContext($lowerText, $score);
+                }
 
                 if ($contextAnalysis['is_legitimate']) {
-                    // Legitimate content reduces score
-                    $score = max(0, $score - 30);
-                    $signals[] = sprintf('Legitimate context detected (%s, -30)', $contextAnalysis['context']);
+                    // Legitimate content reduces score significantly
+                    $scoreReduction = $contextAnalysis['context'] === 'video_relevant' ? 40 : 30;
+                    $score = max(0, $score - $scoreReduction);
+                    $signals[] = sprintf('Legitimate context detected (%s, -%d)', $contextAnalysis['context'], $scoreReduction);
                 } elseif ($contextAnalysis['context'] === 'promotional') {
                     // Promotional content increases score
                     $score += 10;
                     $signals[] = 'Promotional indicators (+10)';
+                }
+
+                // Add video relevance signal if available
+                if (isset($contextAnalysis['video_relevance']) && $contextAnalysis['video_relevance'] > 0) {
+                    $signals[] = sprintf('Video relevance: %.0f%%', $contextAnalysis['video_relevance'] * 100);
                 }
             }
 
@@ -227,6 +249,42 @@ class HybridSpamDetector
     }
 
     /**
+     * Merge channel and video contexts for maximum accuracy.
+     *
+     * Combines metadata from both channel and video to create
+     * comprehensive context for spam detection.
+     *
+     * @param  array  $channelContext  Channel metadata
+     * @param  array  $videoContext  Video metadata
+     * @return array Merged context
+     */
+    private function mergeContexts(array $channelContext, array $videoContext): array
+    {
+        $merged = [];
+
+        // Add channel info
+        if (! empty($channelContext)) {
+            $merged['channel_name'] = $channelContext['name'] ?? '';
+            $merged['channel_description'] = $channelContext['description'] ?? '';
+            $merged['channel_category'] = $channelContext['category'] ?? '';
+            $merged['channel_tags'] = $channelContext['tags'] ?? [];
+        }
+
+        // Add video info (takes priority in title/description)
+        if (! empty($videoContext)) {
+            $merged['title'] = $videoContext['title'] ?? '';
+            $merged['description'] = $videoContext['description'] ?? '';
+            $merged['category'] = $videoContext['category'] ?? $merged['channel_category'] ?? '';
+            $merged['tags'] = array_merge(
+                $videoContext['tags'] ?? [],
+                $merged['channel_tags'] ?? []
+            );
+        }
+
+        return $merged;
+    }
+
+    /**
      * Get statistics about detection capabilities.
      */
     public function getCapabilities(): array
@@ -235,6 +293,7 @@ class HybridSpamDetector
             'cluster_detection' => true, // PRIMARY: Bot campaign detection
             'unicode_normalization' => true, // Fancy font bypass detection
             'contextual_analysis' => true, // Indonesian context understanding
+            'video_context_matching' => true, // TIER B: Video/channel context (NEW!)
             'pattern_analysis' => true, // Implicit gambling patterns
             'author_diversity' => true, // Bot vs. coordinated spam
             'template_extraction' => true, // Pattern identification

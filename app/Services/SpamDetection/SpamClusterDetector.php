@@ -27,6 +27,8 @@ class SpamClusterDetector
 
     private FuzzyMatcher $fuzzyMatcher;
 
+    private ContextualAnalyzer $contextAnalyzer;
+
     /**
      * Minimum cluster size to be considered spam campaign.
      */
@@ -59,15 +61,18 @@ class SpamClusterDetector
         $this->unicodeDetector = new UnicodeDetector;
         $this->patternAnalyzer = new PatternAnalyzer;
         $this->fuzzyMatcher = new FuzzyMatcher;
+        $this->contextAnalyzer = new ContextualAnalyzer;
     }
 
     /**
      * Analyze a batch of comments for spam campaigns.
      *
      * @param  array  $comments  Array of ['id' => string, 'text' => string, 'author' => string, ...]
+     * @param  array  $channelContext  Channel metadata for TIER B context matching
+     * @param  array  $videoContext  Video metadata for TIER B context matching
      * @return array{clusters: array, spam_campaigns: array, summary: array}
      */
-    public function analyzeCommentBatch(array $comments): array
+    public function analyzeCommentBatch(array $comments, array $channelContext = [], array $videoContext = []): array
     {
         if (empty($comments)) {
             return [
@@ -84,10 +89,10 @@ class SpamClusterDetector
         // This uses N-gram + Levenshtein hybrid similarity and merges related clusters
         $clusters = $this->findClustersMultiPass($normalizedComments);
 
-        // Step 3: Score each cluster for spam campaign likelihood
+        // Step 3: Score each cluster for spam campaign likelihood (with TIER B context)
         $spamCampaigns = [];
         foreach ($clusters as $cluster) {
-            $campaignScore = $this->scoreCluster($cluster);
+            $campaignScore = $this->scoreCluster($cluster, $channelContext, $videoContext);
 
             if ($campaignScore['score'] >= self::SPAM_CAMPAIGN_THRESHOLD) {
                 $spamCampaigns[] = $campaignScore;
@@ -544,11 +549,14 @@ class SpamClusterDetector
      * - Template specificity (more specific pattern = higher score)
      * - Spam signals (money mentions, urgency, emojis, etc.)
      * - Author diversity (same author = bot, different authors = coordinated)
+     * - TIER B: Video context matching (reduces false positives)
      *
      * @param  array  $cluster  Cluster data with members
+     * @param  array  $channelContext  Channel metadata for context matching
+     * @param  array  $videoContext  Video metadata for context matching
      * @return array Campaign score with details
      */
-    private function scoreCluster(array $cluster): array
+    private function scoreCluster(array $cluster, array $channelContext = [], array $videoContext = []): array
     {
         $members = $cluster['members'];
         $memberCount = count($members);
@@ -603,6 +611,58 @@ class SpamClusterDetector
         if ($hasUnicode) {
             $score += 15;
             $signals[] = 'Unicode fancy fonts detected (+15)';
+        }
+
+        // Factor 6: TIER B Video Context Matching (CRITICAL for reducing false positives)
+        // Check if cluster discusses video-relevant topic instead of spam
+        // Legitimate cluster types: questions, educational comments, video-relevant discussions
+        if (! empty($channelContext) || ! empty($videoContext)) {
+            // Merge channel + video context
+            $fullContext = $this->mergeContexts($channelContext, $videoContext);
+
+            // Analyze cluster template with video context
+            $lowerTemplate = mb_strtolower($template);
+            $contextAnalysis = $this->contextAnalyzer->analyzeWithVideoContext($lowerTemplate, $score, $fullContext);
+
+            // If cluster is legitimate (video relevant, educational, question, behavioral patterns)
+            // reduce score significantly - these are NOT spam campaigns
+            if ($contextAnalysis['is_legitimate']) {
+                // Score reduction varies by context type
+                // TIER C (behavioral) gets HIGHEST reduction - structure-based, not keywords
+                $scoreReduction = match ($contextAnalysis['context']) {
+                    // TIER C: Behavioral patterns (STRONGEST signals - no keywords)
+                    'short_genuine' => 60,      // 1-5 words, no links → genuine reaction
+                    'simple_praise' => 55,      // Short + exclamation → enthusiastic user
+
+                    // TIER B: Video context matching
+                    'video_relevant' => 40,     // Comment matches video topic
+
+                    // TIER A: Contextual patterns
+                    'educational', 'question', 'correction' => 30, // Legitimate engagement
+
+                    default => 0,
+                };
+
+                if ($scoreReduction > 0) {
+                    $score = max(0, $score - $scoreReduction);
+                    $videoRelevance = $contextAnalysis['video_relevance'] ?? 0;
+
+                    // Determine tier based on context type
+                    $tier = match ($contextAnalysis['context']) {
+                        'short_genuine', 'simple_praise' => 'TIER C (Behavioral)',
+                        'video_relevant' => 'TIER B (Video Context)',
+                        default => 'TIER A (Contextual)',
+                    };
+
+                    $signals[] = sprintf(
+                        '%s: %s (-%d, relevance: %.0f%%)',
+                        $tier,
+                        ucfirst(str_replace('_', ' ', $contextAnalysis['context'])),
+                        $scoreReduction,
+                        $videoRelevance * 100
+                    );
+                }
+            }
         }
 
         // Get comment IDs
@@ -773,5 +833,41 @@ class SpamClusterDetector
         }
 
         return 'LOW';
+    }
+
+    /**
+     * Merge channel and video contexts for maximum accuracy.
+     *
+     * Combines metadata from both channel and video to create
+     * comprehensive context for spam detection.
+     *
+     * @param  array  $channelContext  Channel metadata
+     * @param  array  $videoContext  Video metadata
+     * @return array Merged context
+     */
+    private function mergeContexts(array $channelContext, array $videoContext): array
+    {
+        $merged = [];
+
+        // Add channel info
+        if (! empty($channelContext)) {
+            $merged['channel_name'] = $channelContext['name'] ?? '';
+            $merged['channel_description'] = $channelContext['description'] ?? '';
+            $merged['channel_category'] = $channelContext['category'] ?? '';
+            $merged['channel_tags'] = $channelContext['tags'] ?? [];
+        }
+
+        // Add video info (takes priority in title/description)
+        if (! empty($videoContext)) {
+            $merged['title'] = $videoContext['title'] ?? '';
+            $merged['description'] = $videoContext['description'] ?? '';
+            $merged['category'] = $videoContext['category'] ?? $merged['channel_category'] ?? '';
+            $merged['tags'] = array_merge(
+                $videoContext['tags'] ?? [],
+                $merged['channel_tags'] ?? []
+            );
+        }
+
+        return $merged;
     }
 }
