@@ -13,6 +13,7 @@ use Illuminate\Console\Command;
 class TestCompleteSpamDetection extends Command
 {
     protected $signature = 'test:complete-spam-detection
+                          {--fixture=complete_sample_comments_02.json : Fixture filename to test}
                           {--detailed : Show detailed analysis for each comment}
                           {--limit=10 : Limit number of results to show}
                           {--export : Export categorized results to JSON file}
@@ -51,9 +52,12 @@ class TestCompleteSpamDetection extends Command
         $this->newLine();
 
         // Load fixture data
-        $fixturePath = base_path('tests/Fixtures/SpamDetection/complete_sample_comments_02.json');
+        $fixtureFile = $this->option('fixture');
+        $fixturePath = base_path("tests/Fixtures/SpamDetection/{$fixtureFile}");
+
         if (! file_exists($fixturePath)) {
-            $this->error('❌ Fixture file not found!');
+            $this->error("❌ Fixture file not found: {$fixtureFile}");
+            $this->line("   Path: {$fixturePath}");
 
             return 1;
         }
@@ -67,7 +71,7 @@ class TestCompleteSpamDetection extends Command
             return 1;
         }
 
-        $this->info('📦 Loaded '.count($comments).' comments from fixture');
+        $this->info("📦 Loaded ".count($comments)." comments from fixture: {$fixtureFile}");
         $this->newLine();
 
         // Phase 1: Hybrid Detector (Batch Analysis)
@@ -287,8 +291,8 @@ class TestCompleteSpamDetection extends Command
         // Get flagged IDs from batch result
         $flaggedIds = [];
         foreach ($batchResult['spam_campaigns'] ?? [] as $campaign) {
-            foreach ($campaign['comments'] ?? [] as $comment) {
-                $flaggedIds[] = $comment['id'];
+            foreach ($campaign['comment_ids'] ?? [] as $commentId) {
+                $flaggedIds[] = $commentId;
             }
         }
 
@@ -353,10 +357,10 @@ class TestCompleteSpamDetection extends Command
 
             $displayName = ucfirst($layerName);
             $this->line("<fg=cyan>{$displayName} Layer:</>");
-            $this->line("├─ Accuracy:  ".number_format($accuracy, 1).'%');
-            $this->line("├─ Precision: ".number_format($precision, 1).'%');
-            $this->line("├─ Recall:    ".number_format($recall, 1).'%');
-            $this->line("└─ F1 Score:  ".number_format($f1, 1).'%');
+            $this->line('├─ Accuracy:  '.number_format($accuracy, 1).'%');
+            $this->line('├─ Precision: '.number_format($precision, 1).'%');
+            $this->line('├─ Recall:    '.number_format($recall, 1).'%');
+            $this->line('└─ F1 Score:  '.number_format($f1, 1).'%');
             $this->newLine();
         }
     }
@@ -406,7 +410,7 @@ class TestCompleteSpamDetection extends Command
             $text = $comment['text'];
             $expected = $comment['expected_result'] ?? 'unknown';
 
-            $this->line("<fg=yellow>═══════════════════════════════════════════════════════════════</>");
+            $this->line('<fg=yellow>═══════════════════════════════════════════════════════════════</>');
             $this->line("<fg=cyan>Comment ID: {$id}</>");
             $this->line("<fg=gray>Expected: {$expected}</>");
             $this->line('Text: '.mb_substr($text, 0, 100).'...');
@@ -468,8 +472,8 @@ class TestCompleteSpamDetection extends Command
         // Get flagged IDs from batch result
         $flaggedIds = [];
         foreach ($batchResult['spam_campaigns'] ?? [] as $campaign) {
-            foreach ($campaign['comments'] ?? [] as $comment) {
-                $flaggedIds[] = $comment['id'];
+            foreach ($campaign['comment_ids'] ?? [] as $commentId) {
+                $flaggedIds[] = $commentId;
             }
         }
 
@@ -489,7 +493,7 @@ class TestCompleteSpamDetection extends Command
             $context = $layerResults['contextual'][$id] ?? [];
 
             $signals = [];
-            if (!empty($pattern['spam_signals'])) {
+            if (! empty($pattern['spam_signals'])) {
                 $signals = array_merge($signals, $pattern['spam_signals']);
             }
             if ($unicode['has_fancy_fonts'] ?? false) {
@@ -521,9 +525,9 @@ class TestCompleteSpamDetection extends Command
             // Legacy categorization (for accuracy comparison)
             if ($isSpam && $detectedAsSpam) {
                 $categorized['spam_detected'][] = $commentData;
-            } elseif (!$isSpam && !$detectedAsSpam) {
+            } elseif (! $isSpam && ! $detectedAsSpam) {
                 $categorized['clean_verified'][] = $commentData;
-            } elseif (!$isSpam && $detectedAsSpam) {
+            } elseif (! $isSpam && $detectedAsSpam) {
                 $categorized['false_positives'][] = $commentData;
             } else {
                 $categorized['false_negatives'][] = $commentData;
@@ -538,37 +542,37 @@ class TestCompleteSpamDetection extends Command
         $this->newLine();
 
         // 1. CRITICAL (70-100) - Auto Delete
-        if (!empty($categorized['critical'])) {
+        if (! empty($categorized['critical'])) {
             $count = count($categorized['critical']);
             $this->error("🔴 CRITICAL - AUTO DELETE ({$count} comments)");
             $this->line('Action: Hapus otomatis');
             $this->newLine();
             foreach (array_slice($categorized['critical'], 0, $limit) as $item) {
                 $this->line("<fg=red>ID: {$item['id']}</> | Score: {$item['spam_score']}/100 | Category: {$item['category']}");
-                $this->line("Signals: ".implode(', ', $item['signals']));
+                $this->line('Signals: '.implode(', ', $item['signals']));
                 $this->line("Text: {$item['text']}...");
                 $this->newLine();
             }
             if ($count > $limit) {
-                $this->line("<fg=gray>... and ".($count - $limit)." more</>");
+                $this->line('<fg=gray>... and '.($count - $limit).' more</>');
                 $this->newLine();
             }
         }
 
         // 2. MEDIUM (40-69) - Review Queue
-        if (!empty($categorized['medium'])) {
+        if (! empty($categorized['medium'])) {
             $count = count($categorized['medium']);
             $this->warn("🟡 MEDIUM - REVIEW QUEUE ({$count} comments)");
             $this->line('Action: Masuk queue untuk review manual');
             $this->newLine();
             foreach (array_slice($categorized['medium'], 0, $limit) as $item) {
                 $this->line("<fg=yellow>ID: {$item['id']}</> | Score: {$item['spam_score']}/100 | Category: {$item['category']}");
-                $this->line("Signals: ".implode(', ', $item['signals']));
+                $this->line('Signals: '.implode(', ', $item['signals']));
                 $this->line("Text: {$item['text']}...");
                 $this->newLine();
             }
             if ($count > $limit) {
-                $this->line("<fg=gray>... and ".($count - $limit)." more</>");
+                $this->line('<fg=gray>... and '.($count - $limit).' more</>');
                 $this->newLine();
             }
         }
@@ -584,53 +588,53 @@ class TestCompleteSpamDetection extends Command
         $this->newLine();
 
         // 1. Spam Detected (True Positives)
-        if (!empty($categorized['spam_detected'])) {
+        if (! empty($categorized['spam_detected'])) {
             $count = count($categorized['spam_detected']);
             $this->info("✅ SPAM CORRECTLY DETECTED ({$count} comments)");
             $this->newLine();
             foreach (array_slice($categorized['spam_detected'], 0, $limit) as $item) {
                 $this->line("<fg=green>ID: {$item['id']}</> | Score: {$item['spam_score']}/100");
-                $this->line("Signals: ".implode(', ', $item['signals']));
+                $this->line('Signals: '.implode(', ', $item['signals']));
                 $this->line("Text: {$item['text']}...");
                 $this->newLine();
             }
             if ($count > $limit) {
-                $this->line("<fg=gray>... and ".($count - $limit)." more</>");
+                $this->line('<fg=gray>... and '.($count - $limit).' more</>');
                 $this->newLine();
             }
         }
 
         // 2. False Positives
-        if (!empty($categorized['false_positives'])) {
+        if (! empty($categorized['false_positives'])) {
             $count = count($categorized['false_positives']);
             $this->error("❌ FALSE POSITIVES ({$count} comments)");
             $this->newLine();
             foreach (array_slice($categorized['false_positives'], 0, $limit) as $item) {
                 $this->line("<fg=yellow>ID: {$item['id']}</> | Score: {$item['spam_score']}/100");
-                $this->line("Signals: ".implode(', ', $item['signals']));
+                $this->line('Signals: '.implode(', ', $item['signals']));
                 $this->line("Context: {$item['context']}");
                 $this->line("Text: {$item['text']}...");
                 $this->newLine();
             }
             if ($count > $limit) {
-                $this->line("<fg=gray>... and ".($count - $limit)." more</>");
+                $this->line('<fg=gray>... and '.($count - $limit).' more</>');
                 $this->newLine();
             }
         }
 
         // 3. False Negatives (Missed Spam)
-        if (!empty($categorized['false_negatives'])) {
+        if (! empty($categorized['false_negatives'])) {
             $count = count($categorized['false_negatives']);
             $this->error("⚠️  MISSED SPAM ({$count} comments)");
             $this->newLine();
             foreach (array_slice($categorized['false_negatives'], 0, $limit) as $item) {
                 $this->line("<fg=red>ID: {$item['id']}</> | Score: {$item['spam_score']}/100");
-                $this->line("Reason: Score below threshold");
+                $this->line('Reason: Score below threshold');
                 $this->line("Text: {$item['text']}...");
                 $this->newLine();
             }
             if ($count > $limit) {
-                $this->line("<fg=gray>... and ".($count - $limit)." more</>");
+                $this->line('<fg=gray>... and '.($count - $limit).' more</>');
                 $this->newLine();
             }
         }
@@ -650,6 +654,26 @@ class TestCompleteSpamDetection extends Command
                 'fixture_file' => 'complete_sample_comments_02.json',
             ],
             'accuracy_metrics' => $accuracy,
+            'categorization_summary' => [
+                'critical' => [
+                    'count' => 0,
+                    'action' => 'Auto Delete',
+                    'threshold' => '70-100',
+                    'comments' => [],
+                ],
+                'medium' => [
+                    'count' => 0,
+                    'action' => 'Review Queue',
+                    'threshold' => '40-69',
+                    'comments' => [],
+                ],
+                'low' => [
+                    'count' => 0,
+                    'action' => 'Ignore',
+                    'threshold' => '0-39',
+                    'comments' => [],
+                ],
+            ],
             'categorized_comments' => [],
         ];
 
@@ -660,13 +684,20 @@ class TestCompleteSpamDetection extends Command
             $unicode = $layerResults['unicode'][$id] ?? [];
             $context = $layerResults['contextual'][$id] ?? [];
 
-            $exportData['categorized_comments'][] = [
+            $spamScore = $individual['spam_score'] ?? 0;
+            $category = $individual['category'] ?? 'LOW';
+            $signals = $individual['signals'] ?? [];
+
+            $commentData = [
                 'id' => $id,
                 'text' => $comment['text'],
+                'author' => $comment['author'] ?? 'Unknown',
                 'expected_result' => $comment['expected_result'] ?? 'unknown',
                 'detection_result' => [
                     'is_spam' => $individual['is_spam'] ?? false,
-                    'spam_score' => $individual['spam_score'] ?? 0,
+                    'spam_score' => $spamScore,
+                    'category' => $category,
+                    'signals' => $signals,
                 ],
                 'layer_details' => [
                     'pattern' => [
@@ -688,6 +719,22 @@ class TestCompleteSpamDetection extends Command
                     ],
                 ],
             ];
+
+            // Add to full list
+            $exportData['categorized_comments'][] = $commentData;
+
+            // Add to category-specific list
+            $categoryKey = strtolower($category);
+            if (isset($exportData['categorization_summary'][$categoryKey])) {
+                $exportData['categorization_summary'][$categoryKey]['comments'][] = [
+                    'id' => $id,
+                    'text' => $comment['text'],
+                    'author' => $comment['author'] ?? 'Unknown',
+                    'score' => $spamScore,
+                    'signals' => $signals,
+                ];
+                $exportData['categorization_summary'][$categoryKey]['count']++;
+            }
         }
 
         $filename = storage_path('app/spam_detection_results_'.now()->format('Y-m-d_His').'.json');
@@ -695,6 +742,9 @@ class TestCompleteSpamDetection extends Command
 
         $this->newLine();
         $this->info("📁 Results exported to: {$filename}");
+        $this->line("   - CRITICAL: {$exportData['categorization_summary']['critical']['count']} comments");
+        $this->line("   - MEDIUM: {$exportData['categorization_summary']['medium']['count']} comments");
+        $this->line("   - LOW: {$exportData['categorization_summary']['low']['count']} comments");
         $this->newLine();
     }
 
@@ -720,11 +770,11 @@ class TestCompleteSpamDetection extends Command
             }
         }
 
-        $this->info("🏆 Best Performing Layer: ".ucfirst($bestLayer).' (F1: '.number_format($bestF1, 1).'%)');
+        $this->info('🏆 Best Performing Layer: '.ucfirst($bestLayer).' (F1: '.number_format($bestF1, 1).'%)');
         $this->newLine();
 
         // Recommendations
-        $this->line('<fg=cyan>📋 Recommendations:</>', );
+        $this->line('<fg=cyan>📋 Recommendations:</>');
 
         $hybridMetrics = $accuracy['layers']['hybrid'];
         $hybridF1 = $this->calculateF1(

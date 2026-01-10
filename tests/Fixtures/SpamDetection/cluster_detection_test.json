@@ -1,0 +1,517 @@
+{
+  "description": "Cluster Detection Test - Spam Campaigns with Repetitive Patterns",
+  "test_focus": [
+    "SpamClusterDetector - Identify repetitive spam campaigns",
+    "FuzzyMatcher - Detect slight variations (M0NA4D, MONA4D, MON4D)",
+    "Pattern similarity - Same template, different text",
+    "Video-agnostic - Works on all video types"
+  ],
+  "expected_results": {
+    "total_comments": 50,
+    "spam_campaigns": 3,
+    "total_spam": 30,
+    "total_clean": 20,
+    "clusters": [
+      {
+        "campaign_id": "gambling_site_1",
+        "target": "M0NA4D / MONA4D variations",
+        "count": 12,
+        "technique": "Fuzzy matching - slight text variations"
+      },
+      {
+        "campaign_id": "gambling_site_2",
+        "target": "PULAUWIN variations",
+        "count": 10,
+        "technique": "Copy-paste spam with template"
+      },
+      {
+        "campaign_id": "promo_bot",
+        "target": "Generic promo template",
+        "count": 8,
+        "technique": "Structural similarity"
+      }
+    ]
+  },
+  "comments": [
+    {
+      "id": "spam_c1_01",
+      "video_id": "video_gaming_001",
+      "text": "Kunjungi M0NA4D sekarang! Menang terus disini 🎰",
+      "author": "@spammer_bot_1",
+      "timestamp": "1 hour ago",
+      "expected_result": "spam",
+      "reason": "Campaign 1 - M0NA4D promotion",
+      "cluster": "gambling_site_1"
+    },
+    {
+      "id": "spam_c1_02",
+      "video_id": "video_gaming_001",
+      "text": "Main di MONA4D yuk, gampang menang! 💰",
+      "author": "@spammer_bot_2",
+      "timestamp": "1 hour ago",
+      "expected_result": "spam",
+      "reason": "Campaign 1 - MONA4D variation (fuzzy match)",
+      "cluster": "gambling_site_1"
+    },
+    {
+      "id": "spam_c1_03",
+      "video_id": "video_tech_001",
+      "text": "MON4D lagi gacor nih, buruan coba! 🔥",
+      "author": "@userbot123",
+      "timestamp": "2 hours ago",
+      "expected_result": "spam",
+      "reason": "Campaign 1 - MON4D variation (fuzzy match)",
+      "cluster": "gambling_site_1"
+    },
+    {
+      "id": "spam_c1_04",
+      "video_id": "video_tech_001",
+      "text": "Cek M0NA4D deh, trusted banget! ⭐",
+      "author": "@realuser99",
+      "timestamp": "2 hours ago",
+      "expected_result": "spam",
+      "reason": "Campaign 1 - M0NA4D repeated",
+      "cluster": "gambling_site_1"
+    },
+    {
+      "id": "spam_c1_05",
+      "video_id": "video_cooking_001",
+      "text": "Yang belum tau M0NA4D rugi banget sih 😅",
+      "author": "@foodlover88",
+      "timestamp": "3 hours ago",
+      "expected_result": "spam",
+      "reason": "Campaign 1 - Cross-video spam",
+      "cluster": "gambling_site_1"
+    },
+    {
+      "id": "spam_c1_06",
+      "video_id": "video_cooking_001",
+      "text": "Baru nyoba MONA4D langsung untung banyak! 🤑",
+      "author": "@chef_pro",
+      "timestamp": "3 hours ago",
+      "expected_result": "spam",
+      "reason": "Campaign 1 - MONA4D on cooking video",
+      "cluster": "gambling_site_1"
+    },
+    {
+      "id": "spam_c1_07",
+      "video_id": "video_car_001",
+      "text": "MON4D emang juara, gak pernah zonk! 🏆",
+      "author": "@car_enthusiast",
+      "timestamp": "4 hours ago",
+      "expected_result": "spam",
+      "reason": "Campaign 1 - MON4D on car video",
+      "cluster": "gambling_site_1"
+    },
+    {
+      "id": "spam_c1_08",
+      "video_id": "video_car_001",
+      "text": "M0NA4D paling oke lah, gak ada yang ngalahin 💪",
+      "author": "@otomotif_lover",
+      "timestamp": "4 hours ago",
+      "expected_result": "spam",
+      "reason": "Campaign 1 - M0NA4D repeated pattern",
+      "cluster": "gambling_site_1"
+    },
+    {
+      "id": "spam_c1_09",
+      "video_id": "video_sports_001",
+      "text": "Udah coba MONA4D belum? Mantap banget! 🎯",
+      "author": "@sports_fan",
+      "timestamp": "5 hours ago",
+      "expected_result": "spam",
+      "reason": "Campaign 1 - MONA4D on sports video",
+      "cluster": "gambling_site_1"
+    },
+    {
+      "id": "spam_c1_10",
+      "video_id": "video_sports_001",
+      "text": "M0NA4D lagi bagi-bagi bonus nih guys! 🎁",
+      "author": "@athlete_99",
+      "timestamp": "5 hours ago",
+      "expected_result": "spam",
+      "reason": "Campaign 1 - M0NA4D bonus spam",
+      "cluster": "gambling_site_1"
+    },
+    {
+      "id": "spam_c1_11",
+      "video_id": "video_music_001",
+      "text": "MON4D pilihan terbaik, recommended! ✅",
+      "author": "@music_lover",
+      "timestamp": "6 hours ago",
+      "expected_result": "spam",
+      "reason": "Campaign 1 - MON4D on music video",
+      "cluster": "gambling_site_1"
+    },
+    {
+      "id": "spam_c1_12",
+      "video_id": "video_music_001",
+      "text": "Kalau mau menang, main di M0NA4D aja! 🎲",
+      "author": "@dj_remix",
+      "timestamp": "6 hours ago",
+      "expected_result": "spam",
+      "reason": "Campaign 1 - M0NA4D gambling spam",
+      "cluster": "gambling_site_1"
+    },
+    {
+      "id": "spam_c2_01",
+      "video_id": "video_gaming_002",
+      "text": "Baru buka YouTube langsung nemu PULAUWIN, pas banget vibe-nya. 🌴",
+      "author": "@gamer_pro_1",
+      "timestamp": "1 day ago",
+      "expected_result": "spam",
+      "reason": "Campaign 2 - PULAUWIN template 1",
+      "cluster": "gambling_site_2"
+    },
+    {
+      "id": "spam_c2_02",
+      "video_id": "video_gaming_002",
+      "text": "Baru buka YouTube langsung nemu PULAUWIN, cocok banget buat healing. 🌊",
+      "author": "@gamer_pro_2",
+      "timestamp": "1 day ago",
+      "expected_result": "spam",
+      "reason": "Campaign 2 - PULAUWIN template 1 variation",
+      "cluster": "gambling_site_2"
+    },
+    {
+      "id": "spam_c2_03",
+      "video_id": "video_tech_002",
+      "text": "PULAUWIN tuh selalu muncul pas lagi pengen healing. 🏝️",
+      "author": "@tech_geek",
+      "timestamp": "1 day ago",
+      "expected_result": "spam",
+      "reason": "Campaign 2 - PULAUWIN template 2",
+      "cluster": "gambling_site_2"
+    },
+    {
+      "id": "spam_c2_04",
+      "video_id": "video_tech_002",
+      "text": "PULAUWIN tuh selalu ada pas lagi butuh refreshing. 🌺",
+      "author": "@gadget_reviewer",
+      "timestamp": "1 day ago",
+      "expected_result": "spam",
+      "reason": "Campaign 2 - PULAUWIN template 2 variation",
+      "cluster": "gambling_site_2"
+    },
+    {
+      "id": "spam_c2_05",
+      "video_id": "video_cooking_002",
+      "text": "Lagi scrolling nemu PULAUWIN, langsung feel good. ☀️",
+      "author": "@chef_master",
+      "timestamp": "1 day ago",
+      "expected_result": "spam",
+      "reason": "Campaign 2 - PULAUWIN on cooking video",
+      "cluster": "gambling_site_2"
+    },
+    {
+      "id": "spam_c2_06",
+      "video_id": "video_cooking_002",
+      "text": "Lagi buka YT ketemu PULAUWIN, vibe-nya oke banget. 🎵",
+      "author": "@cooking_show",
+      "timestamp": "1 day ago",
+      "expected_result": "spam",
+      "reason": "Campaign 2 - PULAUWIN similar pattern",
+      "cluster": "gambling_site_2"
+    },
+    {
+      "id": "spam_c2_07",
+      "video_id": "video_car_002",
+      "text": "PULAUWIN emang pas banget buat hiburan. 🎪",
+      "author": "@car_vlogger",
+      "timestamp": "1 day ago",
+      "expected_result": "spam",
+      "reason": "Campaign 2 - PULAUWIN on car video",
+      "cluster": "gambling_site_2"
+    },
+    {
+      "id": "spam_c2_08",
+      "video_id": "video_car_002",
+      "text": "Baru nemu PULAUWIN, langsung cocok banget. 💯",
+      "author": "@automotive_news",
+      "timestamp": "1 day ago",
+      "expected_result": "spam",
+      "reason": "Campaign 2 - PULAUWIN repeated pattern",
+      "cluster": "gambling_site_2"
+    },
+    {
+      "id": "spam_c2_09",
+      "video_id": "video_sports_002",
+      "text": "PULAUWIN tuh selalu muncul pas mood lagi pengen santai. 🧘",
+      "author": "@fitness_coach",
+      "timestamp": "1 day ago",
+      "expected_result": "spam",
+      "reason": "Campaign 2 - PULAUWIN on sports video",
+      "cluster": "gambling_site_2"
+    },
+    {
+      "id": "spam_c2_10",
+      "video_id": "video_sports_002",
+      "text": "Baru buka app langsung ketemu PULAUWIN, perfect timing! ⏰",
+      "author": "@workout_daily",
+      "timestamp": "1 day ago",
+      "expected_result": "spam",
+      "reason": "Campaign 2 - PULAUWIN template variation",
+      "cluster": "gambling_site_2"
+    },
+    {
+      "id": "spam_c3_01",
+      "video_id": "video_gaming_003",
+      "text": "Untuk yang lagi cari tempat bermain terpercaya, coba GACOR88 deh! 🎮",
+      "author": "@promo_bot_1",
+      "timestamp": "2 days ago",
+      "expected_result": "spam",
+      "reason": "Campaign 3 - Generic promo template",
+      "cluster": "promo_bot"
+    },
+    {
+      "id": "spam_c3_02",
+      "video_id": "video_gaming_003",
+      "text": "Untuk yang lagi cari situs aman, cobain SLOTGACOR yuk! 🎰",
+      "author": "@promo_bot_2",
+      "timestamp": "2 days ago",
+      "expected_result": "spam",
+      "reason": "Campaign 3 - Same template, different site",
+      "cluster": "promo_bot"
+    },
+    {
+      "id": "spam_c3_03",
+      "video_id": "video_tech_003",
+      "text": "Untuk yang butuh platform bagus, main di WINRATE99 aja! 💰",
+      "author": "@promo_bot_3",
+      "timestamp": "2 days ago",
+      "expected_result": "spam",
+      "reason": "Campaign 3 - Same structure",
+      "cluster": "promo_bot"
+    },
+    {
+      "id": "spam_c3_04",
+      "video_id": "video_tech_003",
+      "text": "Buat yang cari yang terpercaya, MAXWIN77 recommended! ⭐",
+      "author": "@promo_bot_4",
+      "timestamp": "2 days ago",
+      "expected_result": "spam",
+      "reason": "Campaign 3 - Similar pattern",
+      "cluster": "promo_bot"
+    },
+    {
+      "id": "spam_c3_05",
+      "video_id": "video_cooking_003",
+      "text": "Yang lagi nyari yang aman, cobain BOSGACOR deh! 🔒",
+      "author": "@promo_bot_5",
+      "timestamp": "2 days ago",
+      "expected_result": "spam",
+      "reason": "Campaign 3 - Template spam on cooking",
+      "cluster": "promo_bot"
+    },
+    {
+      "id": "spam_c3_06",
+      "video_id": "video_cooking_003",
+      "text": "Untuk yang cari platform oke, RAJAGACOR pilihan terbaik! 👑",
+      "author": "@promo_bot_6",
+      "timestamp": "2 days ago",
+      "expected_result": "spam",
+      "reason": "Campaign 3 - Repeated template",
+      "cluster": "promo_bot"
+    },
+    {
+      "id": "spam_c3_07",
+      "video_id": "video_car_003",
+      "text": "Buat yang mau coba yang bagus, main di SULTANGACOR! 💎",
+      "author": "@promo_bot_7",
+      "timestamp": "2 days ago",
+      "expected_result": "spam",
+      "reason": "Campaign 3 - Template on car video",
+      "cluster": "promo_bot"
+    },
+    {
+      "id": "spam_c3_08",
+      "video_id": "video_car_003",
+      "text": "Yang lagi nyari tempat main, HOKIGACOR recommended banget! 🍀",
+      "author": "@promo_bot_8",
+      "timestamp": "2 days ago",
+      "expected_result": "spam",
+      "reason": "Campaign 3 - Same structure spam",
+      "cluster": "promo_bot"
+    },
+    {
+      "id": "clean_01",
+      "video_id": "video_gaming_001",
+      "text": "Gameplaynya keren banget! Grafisnya juga detail, suka deh sama konten ini. 🎮",
+      "author": "@real_gamer",
+      "timestamp": "1 hour ago",
+      "expected_result": "clean",
+      "reason": "Legitimate gaming comment"
+    },
+    {
+      "id": "clean_02",
+      "video_id": "video_gaming_001",
+      "text": "Tutorial yang sangat membantu, langsung bisa praktik. Terima kasih! 🙏",
+      "author": "@newbie_player",
+      "timestamp": "2 hours ago",
+      "expected_result": "clean",
+      "reason": "Legitimate appreciation comment"
+    },
+    {
+      "id": "clean_03",
+      "video_id": "video_tech_001",
+      "text": "Review HP ini sangat detail, membantu banget untuk pertimbangan beli. Harga 3 juta worth it gak ya? 📱",
+      "author": "@tech_buyer",
+      "timestamp": "3 hours ago",
+      "expected_result": "clean",
+      "reason": "Legitimate tech review comment with price mention"
+    },
+    {
+      "id": "clean_04",
+      "video_id": "video_tech_001",
+      "text": "Performa chipsetnya cepat banget, cocok buat gaming. Kamera juga jernih! 📸",
+      "author": "@gadget_fan",
+      "timestamp": "4 hours ago",
+      "expected_result": "clean",
+      "reason": "Legitimate tech specs discussion"
+    },
+    {
+      "id": "clean_05",
+      "video_id": "video_cooking_001",
+      "text": "Resep ini simple tapi enak! Modal cuma 20 ribu bisa bikin sendiri. Thanks for sharing! 🍳",
+      "author": "@home_cook",
+      "timestamp": "5 hours ago",
+      "expected_result": "clean",
+      "reason": "Legitimate cooking comment with budget mention"
+    },
+    {
+      "id": "clean_06",
+      "video_id": "video_cooking_001",
+      "text": "Penjelasannya detail banget, step by step jelas. Langsung pengen coba bikin! 👨‍🍳",
+      "author": "@food_enthusiast",
+      "timestamp": "6 hours ago",
+      "expected_result": "clean",
+      "reason": "Legitimate cooking appreciation"
+    },
+    {
+      "id": "clean_07",
+      "video_id": "video_car_001",
+      "text": "Mobil ini cepat banget akselerasinya! Review yang sangat informatif. 🚗",
+      "author": "@car_lover",
+      "timestamp": "1 day ago",
+      "expected_result": "clean",
+      "reason": "Legitimate car review comment"
+    },
+    {
+      "id": "clean_08",
+      "video_id": "video_car_001",
+      "text": "Untuk harga 500 juta, fitur-fiturnya lengkap banget. Fuel efficiency juga oke! ⛽",
+      "author": "@automotive_expert",
+      "timestamp": "1 day ago",
+      "expected_result": "clean",
+      "reason": "Legitimate car price discussion"
+    },
+    {
+      "id": "clean_09",
+      "video_id": "video_sports_001",
+      "text": "Teknik latihannya efektif banget, langsung kerasa hasilnya. Keep it up! 💪",
+      "author": "@gym_member",
+      "timestamp": "2 days ago",
+      "expected_result": "clean",
+      "reason": "Legitimate fitness comment"
+    },
+    {
+      "id": "clean_10",
+      "video_id": "video_sports_001",
+      "text": "Workout routine yang bagus, cocok untuk pemula. Durasi 15 menit pas banget! ⏱️",
+      "author": "@fitness_beginner",
+      "timestamp": "2 days ago",
+      "expected_result": "clean",
+      "reason": "Legitimate workout feedback"
+    },
+    {
+      "id": "clean_11",
+      "video_id": "video_music_001",
+      "text": "Lagunya enak banget di dengar, beat-nya catchy. Repeat terus nih! 🎵",
+      "author": "@music_addict",
+      "timestamp": "3 days ago",
+      "expected_result": "clean",
+      "reason": "Legitimate music comment"
+    },
+    {
+      "id": "clean_12",
+      "video_id": "video_music_001",
+      "text": "Vokalnya powerful, liriknya juga relate. Talented artist! 🎤",
+      "author": "@song_reviewer",
+      "timestamp": "3 days ago",
+      "expected_result": "clean",
+      "reason": "Legitimate music appreciation"
+    },
+    {
+      "id": "clean_13",
+      "video_id": "video_gaming_002",
+      "text": "Build character yang menarik, strategynya juga bagus. Bisa ditiru nih! 🎯",
+      "author": "@strategy_player",
+      "timestamp": "4 days ago",
+      "expected_result": "clean",
+      "reason": "Legitimate gaming strategy comment"
+    },
+    {
+      "id": "clean_14",
+      "video_id": "video_tech_002",
+      "text": "Unboxing yang detail, packaging-nya premium. First impression bagus! 📦",
+      "author": "@unbox_lover",
+      "timestamp": "4 days ago",
+      "expected_result": "clean",
+      "reason": "Legitimate unboxing comment"
+    },
+    {
+      "id": "clean_15",
+      "video_id": "video_cooking_002",
+      "text": "Bumbu rahasianya bikin perbedaan besar! Rasanya jadi authentic banget. 🌶️",
+      "author": "@taste_tester",
+      "timestamp": "4 days ago",
+      "expected_result": "clean",
+      "reason": "Legitimate cooking feedback"
+    },
+    {
+      "id": "clean_16",
+      "video_id": "video_car_002",
+      "text": "Desain interiornya modern, material juga premium. Comfortable untuk perjalanan jauh! 🛣️",
+      "author": "@long_drive_fan",
+      "timestamp": "5 days ago",
+      "expected_result": "clean",
+      "reason": "Legitimate car interior review"
+    },
+    {
+      "id": "clean_17",
+      "video_id": "video_sports_002",
+      "text": "Recovery tips yang berguna, bisa mencegah injury. Important banget nih! 🏥",
+      "author": "@health_conscious",
+      "timestamp": "5 days ago",
+      "expected_result": "clean",
+      "reason": "Legitimate fitness health tip"
+    },
+    {
+      "id": "clean_18",
+      "video_id": "video_gaming_003",
+      "text": "Easter eggs yang menarik, belum pernah tau sebelumnya. Nice discovery! 🥚",
+      "author": "@secret_hunter",
+      "timestamp": "5 days ago",
+      "expected_result": "clean",
+      "reason": "Legitimate gaming discovery"
+    },
+    {
+      "id": "clean_19",
+      "video_id": "video_tech_003",
+      "text": "Comparison dengan kompetitor sangat fair, objektif banget. Helpful review! ⚖️",
+      "author": "@comparison_shopper",
+      "timestamp": "6 days ago",
+      "expected_result": "clean",
+      "reason": "Legitimate product comparison"
+    },
+    {
+      "id": "clean_20",
+      "video_id": "video_cooking_003",
+      "text": "Plating presentationnya cantik, menggugah selera. Jadi pengen langsung cobain! 🍽️",
+      "author": "@food_photographer",
+      "timestamp": "6 days ago",
+      "expected_result": "clean",
+      "reason": "Legitimate food presentation comment"
+    }
+  ]
+}

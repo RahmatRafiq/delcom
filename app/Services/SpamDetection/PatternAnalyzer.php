@@ -30,8 +30,10 @@ class PatternAnalyzer
         'wd', 'withdraw', 'profit', 'untung', 'cuan', 'duit',
         'uang', 'modal', 'deposit', 'bayar', 'transfer',
 
-        // Gambling
+        // Gambling (EXPANDED for Indonesian online gambling spam)
         'jackpot', 'maxwin', 'bilek', 'gacor', 'scatter',
+        'menang', 'kalah', 'zonk', 'jepe', 'jp', 'bonus',
+        'depo', 'slot', 'toto', 'togel', 'bandar',
     ];
 
     /**

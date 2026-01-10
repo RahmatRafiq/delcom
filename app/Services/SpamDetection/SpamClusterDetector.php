@@ -37,8 +37,12 @@ class SpamClusterDetector
 
     /**
      * Spam campaign threshold score (0-100).
+     * Lowered from 70 to 50 to catch organized gambling spam campaigns that:
+     * - Use multiple accounts (high author diversity to look legit)
+     * - Avoid Unicode fonts (to evade simple detection)
+     * - Post repetitive promotional content across videos
      */
-    private const SPAM_CAMPAIGN_THRESHOLD = 70;
+    private const SPAM_CAMPAIGN_THRESHOLD = 50;
 
     public function __construct()
     {
