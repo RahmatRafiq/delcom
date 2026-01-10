@@ -25,6 +25,8 @@ class SpamClusterDetector
 
     private PatternAnalyzer $patternAnalyzer;
 
+    private FuzzyMatcher $fuzzyMatcher;
+
     /**
      * Minimum cluster size to be considered spam campaign.
      */
@@ -32,8 +34,16 @@ class SpamClusterDetector
 
     /**
      * Maximum similarity distance for clustering (lower = more strict).
+     *
+     * Lowered from 0.3 to 0.6 (40% similarity) to catch spam campaigns where
+     * only brand names match but surrounding text varies:
+     * - "Kunjungi M0NA4D sekarang" vs "Main di MONA4D yuk" = 42% similar
+     * - Both are spam for the same brand, should cluster together
+     *
+     * Note: With fuzzy matching normalization (M0NA4D → monaad), we can use
+     * lower threshold without risking false positives
      */
-    private const MAX_SIMILARITY_DISTANCE = 0.3; // 30% difference allowed
+    private const MAX_SIMILARITY_DISTANCE = 0.6; // 40% similarity required
 
     /**
      * Spam campaign threshold score (0-100).
@@ -48,6 +58,7 @@ class SpamClusterDetector
     {
         $this->unicodeDetector = new UnicodeDetector;
         $this->patternAnalyzer = new PatternAnalyzer;
+        $this->fuzzyMatcher = new FuzzyMatcher;
     }
 
     /**
@@ -111,10 +122,22 @@ class SpamClusterDetector
             $text = $comment['text'] ?? '';
             $commentId = $comment['id'] ?? null;
 
-            // Normalize Unicode fancy fonts to ASCII
+            // Step 1: Normalize Unicode fancy fonts to ASCII
             $normalizedText = $this->unicodeDetector->normalize($text);
 
-            // Lowercase and trim
+            // Step 2: Normalize each word separately for better clustering
+            // This catches variations like: M0NA4D → MONAAD while preserving sentence structure
+            $words = preg_split('/\s+/u', $normalizedText, -1, PREG_SPLIT_NO_EMPTY);
+            $normalizedWords = array_map(function ($word) {
+                // Remove punctuation from word
+                $cleaned = preg_replace('/[^\p{L}\p{N}]/u', '', $word);
+
+                // Apply fuzzy normalization (leet speak, etc)
+                return $this->fuzzyMatcher->normalize($cleaned);
+            }, $words);
+            $normalizedText = implode(' ', array_filter($normalizedWords));
+
+            // Step 3: Final cleanup
             $normalizedText = mb_strtolower(trim($normalizedText), 'UTF-8');
 
             $normalized[] = [
@@ -295,8 +318,15 @@ class SpamClusterDetector
         $score = 0;
         $signals = [];
 
-        // Factor 1: Cluster size (20-40 points)
-        $sizeScore = min(20 + ($memberCount * 5), 40);
+        // Factor 1: Cluster size (25-60 points, progressive)
+        // Larger campaigns get significantly higher penalties
+        $sizeScore = match (true) {
+            $memberCount >= 15 => 60,  // Massive campaign (viral spam)
+            $memberCount >= 10 => 50,  // Large campaign (organized)
+            $memberCount >= 5 => 40,   // Medium campaign (bot network)
+            $memberCount >= 3 => 30,   // Small campaign (multi-account)
+            default => 25,             // Minimal cluster (2 comments)
+        };
         $score += $sizeScore;
         $signals[] = "Cluster size: {$memberCount} comments (+{$sizeScore})";
 
@@ -312,12 +342,16 @@ class SpamClusterDetector
         $score += $patternScore['score'];
         $signals = array_merge($signals, $patternScore['signals']);
 
-        // Factor 4: Author diversity (low diversity = likely bot)
+        // Factor 4: Author diversity (both extremes are suspicious)
         $authorDiversity = $this->calculateAuthorDiversity($members);
-        if ($authorDiversity < 0.5) {
-            // Same author posting similar comments = very suspicious
+        if ($authorDiversity < 0.3) {
+            // Single bot posting repeatedly
+            $score += 25;
+            $signals[] = 'Very low author diversity (single bot) (+25)';
+        } elseif ($authorDiversity > 0.8 && $memberCount >= 8) {
+            // Organized campaign with multiple accounts to look legitimate
             $score += 20;
-            $signals[] = 'Low author diversity (likely bot) (+20)';
+            $signals[] = 'High author diversity in large cluster (coordinated attack) (+20)';
         }
 
         // Factor 5: Unicode spam indicator
@@ -366,6 +400,7 @@ class SpamClusterDetector
         $wordCount = str_word_count($template);
 
         if ($wordCount === 0) {
+
             return 0;
         }
 
